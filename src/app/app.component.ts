@@ -4,8 +4,8 @@ import { FormsModule } from "@angular/forms";
 import { HttpClientModule } from "@angular/common/http";
 import { finalize } from "rxjs/operators";
 
-import { SalesFactsApi } from "./core/sales-facts.api";
-import { SalesFact } from "./core/sales-facts.model";
+import { InventoryFactApi } from "./inventory/inventory-fact.api";
+import { InventoryFact } from "./inventory/inventory-fact.model";
 
 @Component({
   selector: "app-root",
@@ -15,20 +15,20 @@ import { SalesFact } from "./core/sales-facts.model";
 })
 export class AppComponent implements OnInit {
 
-  rows: readonly SalesFact[] = [];
+  rows: readonly InventoryFact[] = [];
   loading = false;
   error: string | null = null;
 
-  // NEW: принудительный мок
-  mockMode = true;
-
+  // фильтры
   accountId = 1;
-  sourcePlatform = "";
-  dateFrom: string | null = null;
-  dateTo: string | null = null;
+  marketplace = "OZON";
+  fromDate: string | null = null;
+  toDate: string | null = null;
+  warehouseId: number | null = null;
+  sourceProductId: string | null = null;
   limit = 200;
 
-  constructor(private readonly api: SalesFactsApi) {}
+  constructor(private readonly api: InventoryFactApi) {}
 
   ngOnInit(): void {
     this.load();
@@ -38,25 +38,25 @@ export class AppComponent implements OnInit {
     this.error = null;
     this.loading = true;
 
-    const params = {
+    const query = {
       accountId: this.accountId,
-      sourcePlatform: this.sourcePlatform || undefined,
-      dateFrom: this.dateFrom || undefined,
-      dateTo: this.dateTo || undefined,
-      limit: this.limit
+      marketplace: this.marketplace || undefined,
+      fromDate: this.fromDate || undefined,
+      toDate: this.toDate || undefined,
+      warehouseId: this.warehouseId ?? undefined,
+      sourceProductId: this.sourceProductId || undefined,
+      size: this.limit,
+      page: 0
     };
 
-    const source$ = this.mockMode
-      ? this.api.listMock()
-      : this.api.listWithFallback(params);
-
-    source$
+    this.api.list(query)
     .pipe(finalize(() => (this.loading = false)))
     .subscribe({
-      next: (data) => (this.rows = data),
-      error: () => {
+      next: (data: InventoryFact[]) => (this.rows = data),
+      error: (err) => {
+        console.error(err);
         this.rows = [];
-        this.error = "Failed to load sales facts (api + mock).";
+        this.error = "Failed to load inventory facts from /api/inventory-snapshots.";
       }
     });
   }

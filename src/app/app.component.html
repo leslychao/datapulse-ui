@@ -2,15 +2,10 @@
   <div class="topbar">
     <div>
       <div class="brand">Datapulse</div>
-      <div class="subtitle">Sales Fact</div>
+      <div class="subtitle">Inventory Fact</div>
     </div>
 
     <div style="display:flex; gap:10px; align-items:center;">
-      <label style="display:flex; gap:8px; align-items:center; color:var(--muted); font-size:12px;">
-        <input type="checkbox" [(ngModel)]="mockMode" />
-        Mock mode
-      </label>
-
       <button (click)="load()" [disabled]="loading">
         {{ loading ? 'Loading…' : 'Reload' }}
       </button>
@@ -23,20 +18,28 @@
         <input type="number" [(ngModel)]="accountId">
       </label>
 
-      <label>Platform
-        <select [(ngModel)]="sourcePlatform">
+      <label>Marketplace
+        <select [(ngModel)]="marketplace">
           <option value="">all</option>
-          <option value="ozon">ozon</option>
-          <option value="wildberries">wildberries</option>
+          <option value="OZON">OZON</option>
+          <option value="WILDBERRIES">WILDBERRIES</option>
         </select>
       </label>
 
       <label>From
-        <input type="date" [(ngModel)]="dateFrom">
+        <input type="date" [(ngModel)]="fromDate">
       </label>
 
       <label>To
-        <input type="date" [(ngModel)]="dateTo">
+        <input type="date" [(ngModel)]="toDate">
+      </label>
+
+      <label>Warehouse
+        <input type="number" [(ngModel)]="warehouseId">
+      </label>
+
+      <label>Product
+        <input type="text" [(ngModel)]="sourceProductId">
       </label>
 
       <label>Limit
@@ -53,30 +56,49 @@
         <thead>
         <tr>
           <th>ID</th>
+          <th>snapshotDate</th>
           <th>platform</th>
-          <th>event</th>
-          <th>order</th>
           <th>product</th>
-          <th>offer</th>
-          <th>qty</th>
-          <th>saleDate</th>
+          <th>warehouse</th>
+          <th>total</th>
+          <th>available</th>
+          <th>reserved</th>
+          <th>→ client</th>
+          <th>← client</th>
+          <th>ret to seller</th>
+          <th>ret from cust</th>
+          <th>price</th>
+          <th>discount</th>
           <th>created</th>
         </tr>
         </thead>
+
         <tbody>
         <tr *ngFor="let r of rows">
           <td class="mono">{{ r.id }}</td>
+          <td class="mono">{{ r.snapshotDate }}</td>
           <td>{{ r.sourcePlatform }}</td>
-          <td class="mono">{{ r.sourceEventId }}</td>
-          <td class="mono">{{ r.orderId || '—' }}</td>
-          <td class="mono">{{ r.sourceProductId || '—' }}</td>
-          <td class="mono">{{ r.offerId || '—' }}</td>
-          <td class="mono">{{ r.quantity }}</td>
-          <td class="mono">{{ r.saleDate }}</td>
+          <td class="mono">{{ r.sourceProductId }}</td>
+          <td class="mono">{{ r.warehouseId }}</td>
+
+          <td class="mono">{{ r.quantityTotal }}</td>
+          <td class="mono">{{ r.quantityAvailable }}</td>
+          <td class="mono">{{ r.quantityReserved }}</td>
+          <td class="mono">{{ r.quantityInWayToClient }}</td>
+          <td class="mono">{{ r.quantityInWayFromClient }}</td>
+          <td class="mono">{{ r.quantityReturnToSeller }}</td>
+          <td class="mono">{{ r.quantityReturnFromCustomer }}</td>
+
+          <td class="mono">{{ r.price }}</td>
+          <td class="mono">{{ r.discount }}</td>
           <td class="mono">{{ r.createdAt }}</td>
         </tr>
         </tbody>
       </table>
+    </div>
+
+    <div *ngIf="!loading && !rows.length">
+      No inventory data
     </div>
   </div>
 </div>
