@@ -1,23 +1,27 @@
-import { Injectable } from "@angular/core";
+import {Injectable} from "@angular/core";
+import {environment} from "../../../environments/environment";
 
-@Injectable({ providedIn: "root" })
+@Injectable({providedIn: "root"})
 export class AuthRedirectService {
 
   login(returnUrl: string = "/"): void {
-    window.location.assign(`/oauth2/start?rd=${encodeURIComponent(returnUrl)}`);
+    const url = `${environment.auth.loginPath}?rd=${encodeURIComponent(returnUrl)}`;
+    window.location.assign(url);
   }
 
   logout(): void {
-    // возвращаемся на dev-server напрямую, чтобы не триггерить новый логин сразу
-    window.location.assign(`/oauth2/sign_out?rd=${encodeURIComponent("http://localhost:4200/logged-out")}`);
+    const url =
+      `${environment.auth.logoutPath}?rd=${encodeURIComponent(environment.auth.logoutRedirectUrl)}`;
+    window.location.assign(url);
   }
 
   register(): void {
-    // Регистрация выполняется в Keycloak.
+    const keycloak = environment.auth.keycloak;
+
     const registrationUrl =
-      "http://localhost:8081/realms/datapulse/login-actions/registration" +
-      "?client_id=datapulse-bff" +
-      "&redirect_uri=http://localhost:4180/oauth2/callback";
+      `${keycloak.baseUrl}/realms/${encodeURIComponent(keycloak.realm)}/login-actions/registration` +
+      `?client_id=${encodeURIComponent(keycloak.registrationClientId)}` +
+      `&redirect_uri=${encodeURIComponent(keycloak.registrationRedirectUri)}`;
 
     window.location.assign(registrationUrl);
   }
