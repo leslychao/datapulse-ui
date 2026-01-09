@@ -6,13 +6,35 @@
     </div>
 
     <div style="display:flex; gap:10px; align-items:center;">
-      <button (click)="load()" [disabled]="loading">
+      <span *ngIf="auth.authenticated" class="mono">
+        {{ auth.userInfo?.email || auth.userInfo?.user || 'user' }}
+      </span>
+
+      <button *ngIf="!auth.authenticated" (click)="login()">Login</button>
+      <button *ngIf="!auth.authenticated" (click)="register()">Register</button>
+
+      <button *ngIf="auth.authenticated" (click)="logout()">Logout</button>
+
+      <button (click)="load()" [disabled]="loading || !auth.authenticated">
         {{ loading ? 'Loading…' : 'Reload' }}
       </button>
     </div>
   </div>
 
-  <div class="card">
+  <!-- ===== Not Authenticated ===== -->
+  <div class="card" *ngIf="!auth.authenticated">
+    <div class="error" style="margin:0;">
+      Not authenticated. Please Login or Register.
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:12px;">
+      <button (click)="login()">Login</button>
+      <button (click)="register()">Register</button>
+    </div>
+  </div>
+
+  <!-- ===== Authenticated Content ===== -->
+  <div class="card" *ngIf="auth.authenticated">
     <div class="filters">
       <label>Account
         <input type="number" [(ngModel)]="accountId">
@@ -46,7 +68,9 @@
         <input type="number" [(ngModel)]="limit">
       </label>
 
-      <button class="primary" (click)="load()">Apply</button>
+      <button class="primary" (click)="load()" [disabled]="loading">
+        {{ loading ? 'Loading…' : 'Apply' }}
+      </button>
     </div>
 
     <div class="error" *ngIf="error">{{ error }}</div>
@@ -70,6 +94,7 @@
           <th>price</th>
           <th>discount</th>
           <th>created</th>
+          <th>updated</th>
         </tr>
         </thead>
 
@@ -92,12 +117,13 @@
           <td class="mono">{{ r.price }}</td>
           <td class="mono">{{ r.discount }}</td>
           <td class="mono">{{ r.createdAt }}</td>
+          <td class="mono">{{ r.updatedAt }}</td>
         </tr>
         </tbody>
       </table>
     </div>
 
-    <div *ngIf="!loading && !rows.length">
+    <div *ngIf="!loading && !rows.length && !error">
       No inventory data
     </div>
   </div>

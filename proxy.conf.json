@@ -4,5 +4,11 @@
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
+  },
+  "/oauth2": {
+    "target": "http://localhost:4180",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
   }
 }
