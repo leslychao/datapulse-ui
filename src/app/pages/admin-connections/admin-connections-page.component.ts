@@ -72,7 +72,7 @@ export class AdminConnectionsPageComponent implements OnInit {
   }
 
   syncConnection(connection: AccountConnection): void {
-    this.connectionApi.sync(connection.accountId).subscribe({
+    this.connectionApi.sync(connection.id).subscribe({
       next: () => {
         this.toastService.success("Синхронизация запущена.");
         this.loadConnections();
