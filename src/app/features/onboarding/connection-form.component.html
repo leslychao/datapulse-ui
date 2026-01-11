@@ -1,0 +1,39 @@
+<form class="form" [formGroup]="form" (ngSubmit)="submit()">
+  <label>
+    Маркетплейс
+    <select formControlName="marketplace">
+      <option *ngFor="let marketplace of marketplaces" [value]="marketplace">
+        {{ marketplace }}
+      </option>
+    </select>
+  </label>
+
+  <label>
+    Название подключения
+    <input type="text" formControlName="name" />
+  </label>
+
+  <div class="credentials" *ngIf="form.value.marketplace === marketplaceWildberries">
+    <label>
+      Токен
+      <input type="password" formControlName="token" autocomplete="new-password" />
+    </label>
+  </div>
+
+  <div class="credentials" *ngIf="form.value.marketplace === marketplaceOzon">
+    <label>
+      Client ID
+      <input type="text" formControlName="clientId" />
+    </label>
+    <label>
+      API Key
+      <input type="password" formControlName="apiKey" autocomplete="new-password" />
+    </label>
+  </div>
+
+  <div class="hint">
+    Секреты не сохраняются в UI. Мы отправляем их на backend один раз.
+  </div>
+
+  <button type="submit" class="primary">Добавить подключение</button>
+</form>

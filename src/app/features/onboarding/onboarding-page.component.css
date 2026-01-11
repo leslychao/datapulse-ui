@@ -1,0 +1,51 @@
+.page {
+  padding: 32px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.steps {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.step {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.step.active {
+  background: #111827;
+  color: #fff;
+  border-color: #111827;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e1e5ea;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.primary {
+  margin-top: 16px;
+  background: #111827;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+}

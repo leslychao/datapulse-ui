@@ -4,10 +4,12 @@ import {catchError, throwError} from "rxjs";
 
 import {AuthRedirectService} from "./auth-redirect.service";
 import {AuthSessionService} from "./auth-session.service";
+import {AppStateService} from "../state/app-state.service";
 
 export const authHttpInterceptor: HttpInterceptorFn = (req, next) => {
   const authRedirectService = inject(AuthRedirectService);
   const authSessionService = inject(AuthSessionService);
+  const appStateService = inject(AppStateService);
 
   // Никогда не триггерим логин на запросах к oauth2 endpoints
   if (req.url.startsWith("/oauth2")) {
@@ -18,6 +20,7 @@ export const authHttpInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse && error.status === 401) {
         authSessionService.clear();
+        appStateService.clear();
         authRedirectService.login(window.location.pathname + window.location.search);
       }
       return throwError(() => error);

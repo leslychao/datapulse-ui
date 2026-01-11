@@ -1,0 +1,19 @@
+<form class="form" [formGroup]="form" (ngSubmit)="submit()">
+  <label>
+    Email
+    <input type="email" formControlName="email" placeholder="operator@company.com" />
+  </label>
+  <label>
+    Роль
+    <select formControlName="role">
+      <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+    </select>
+  </label>
+  <label>
+    Доступ
+    <select formControlName="accessScope">
+      <option *ngFor="let scope of scopes" [value]="scope">{{ scope }}</option>
+    </select>
+  </label>
+  <button type="submit" class="primary">Пригласить</button>
+</form>
