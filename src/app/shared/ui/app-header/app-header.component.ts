@@ -1,4 +1,4 @@
-import {Component} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 
 import {AuthRedirectService, AuthUserService} from "../../../core/auth";
@@ -12,12 +12,9 @@ import {ButtonComponent} from "../button/button.component";
   styleUrl: "./app-header.component.css"
 })
 export class AppHeaderComponent {
+  private readonly authUser = inject(AuthUserService);
+  private readonly authRedirect = inject(AuthRedirectService);
   readonly me$ = this.authUser.me$;
-
-  constructor(
-    private readonly authUser: AuthUserService,
-    private readonly authRedirect: AuthRedirectService
-  ) {}
 
   logout(): void {
     this.authRedirect.logout();
