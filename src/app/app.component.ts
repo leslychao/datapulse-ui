@@ -11,6 +11,9 @@ import { AuthRedirectService } from "./core/auth/auth-redirect.service";
 import { AuthSessionService } from "./core/auth/auth-session.service";
 import { AuthSessionState } from "./core/auth/auth-session.model";
 
+import { MeApi } from "./api/me/me.api";
+import { MeResponse, UserAccountAccess } from "./api/me/me.model";
+
 @Component({
   selector: "app-root",
   standalone: true,
@@ -20,13 +23,18 @@ import { AuthSessionState } from "./core/auth/auth-session.model";
 export class AppComponent implements OnInit {
 
   auth: AuthSessionState = { authenticated: false };
+  me: MeResponse | null = null;
 
+  // me/accounts
+  accounts: readonly UserAccountAccess[] = [];
+  accountId: number | null = null;
+
+  // inventory table
   rows: readonly InventoryFact[] = [];
   loading = false;
   error: string | null = null;
 
-  // фильтры
-  accountId = 1;
+  // filters
   marketplace = "OZON";
   fromDate: string | null = null;
   toDate: string | null = null;
@@ -35,23 +43,51 @@ export class AppComponent implements OnInit {
   limit = 200;
 
   constructor(
-    private readonly api: InventoryFactApi,
+    private readonly inventoryApi: InventoryFactApi,
+    private readonly meApi: MeApi,
     private readonly authRedirectService: AuthRedirectService,
     private readonly authSessionService: AuthSessionService
   ) {}
 
   ngOnInit(): void {
-    // 1) Сначала проверяем есть ли сессия
     this.authSessionService.refresh().subscribe((state) => {
       this.auth = state;
 
-      // 2) Только если авторизован — грузим данные
-      if (state.authenticated) {
-        this.load();
-      } else {
-        this.rows = [];
+      if (!state.authenticated) {
+        this.resetAuthenticatedState();
+        return;
+      }
+
+      this.loadMe();
+    });
+  }
+
+  private resetAuthenticatedState(): void {
+    this.me = null;
+    this.accounts = [];
+    this.accountId = null;
+    this.rows = [];
+    this.error = null;
+  }
+
+  private loadMe(): void {
+    this.meApi.me().subscribe({
+      next: (me: MeResponse) => {
+        this.me = me;
+      },
+      error: (err: unknown) => {
+        console.error(err);
+        this.me = null;
       }
     });
+  }
+
+  onAccountChanged(_: number | null): void {
+    if (this.auth.authenticated && this.accountId != null) {
+      this.load();
+      return;
+    }
+    this.rows = [];
   }
 
   login(): void {
@@ -64,6 +100,7 @@ export class AppComponent implements OnInit {
 
   logout(): void {
     this.authSessionService.clear();
+    this.resetAuthenticatedState();
     this.authRedirectService.logout();
   }
 
@@ -73,6 +110,12 @@ export class AppComponent implements OnInit {
     if (!this.auth.authenticated) {
       this.rows = [];
       this.error = "Not authenticated. Please login.";
+      return;
+    }
+
+    if (this.accountId == null) {
+      this.rows = [];
+      this.error = "Account is not selected.";
       return;
     }
 
@@ -89,19 +132,20 @@ export class AppComponent implements OnInit {
       page: 0
     };
 
-    this.api.list(query)
+    this.inventoryApi.list(query)
     .pipe(finalize(() => (this.loading = false)))
     .subscribe({
       next: (data: InventoryFact[]) => (this.rows = data),
-      error: (err) => {
+      error: (err: any) => {
         console.error(err);
         this.rows = [];
+
         if (err?.status === 403) {
           this.error = "Forbidden: no access to this account or operation.";
           return;
         }
-        // 401 будет перехвачен interceptor’ом и отправит на login
-        this.error = "Failed to load inventory facts from /api/inventory-snapshots.";
+
+        this.error = "Failed to load inventory facts.";
       }
     });
   }

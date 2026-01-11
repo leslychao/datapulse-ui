@@ -7,16 +7,17 @@
 
     <div style="display:flex; gap:10px; align-items:center;">
       <span *ngIf="auth.authenticated" class="mono">
-        {{ auth.userInfo?.email || auth.userInfo?.user || 'user' }}
+        {{ me?.fullName }}
       </span>
+
 
       <button *ngIf="!auth.authenticated" (click)="login()">Login</button>
       <button *ngIf="!auth.authenticated" (click)="register()">Register</button>
 
       <button *ngIf="auth.authenticated" (click)="logout()">Logout</button>
 
-      <button (click)="load()" [disabled]="loading || !auth.authenticated">
-        {{ loading ? 'Loading…' : 'Reload' }}
+      <button (click)="load()" [disabled]="loading || !auth.authenticated || accountId == null">
+        {{ loading ? "Loading…" : "Reload" }}
       </button>
     </div>
   </div>
@@ -37,7 +38,12 @@
   <div class="card" *ngIf="auth.authenticated">
     <div class="filters">
       <label>Account
-        <input type="number" [(ngModel)]="accountId">
+        <select [(ngModel)]="accountId" (ngModelChange)="onAccountChanged($event)">
+          <option [ngValue]="null" disabled>Select…</option>
+          <option *ngFor="let a of accounts" [ngValue]="a.id">
+            {{ a.id }} — {{ a.name }}
+          </option>
+        </select>
       </label>
 
       <label>Marketplace
@@ -68,8 +74,8 @@
         <input type="number" [(ngModel)]="limit">
       </label>
 
-      <button class="primary" (click)="load()" [disabled]="loading">
-        {{ loading ? 'Loading…' : 'Apply' }}
+      <button class="primary" (click)="load()" [disabled]="loading || accountId == null">
+        {{ loading ? "Loading…" : "Apply" }}
       </button>
     </div>
 
