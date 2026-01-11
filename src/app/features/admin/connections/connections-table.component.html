@@ -1,0 +1,30 @@
+<table class="table" *ngIf="connections.length > 0; else empty">
+  <thead>
+    <tr>
+      <th>Название</th>
+      <th>Маркетплейс</th>
+      <th>Статус</th>
+      <th>Последняя синхронизация</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let connection of connections">
+      <td>{{ connection.name }}</td>
+      <td>{{ connection.marketplace }}</td>
+      <td>{{ connection.status }}</td>
+      <td>{{ connection.lastSyncAt || "—" }}</td>
+      <td class="actions">
+        <button type="button" (click)="testConnection.emit(connection)">Test</button>
+        <button type="button" (click)="syncConnection.emit(connection)">Sync</button>
+        <button type="button" class="danger" (click)="disableConnection.emit(connection)">
+          Disable
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<ng-template #empty>
+  <div class="empty">Подключений пока нет.</div>
+</ng-template>

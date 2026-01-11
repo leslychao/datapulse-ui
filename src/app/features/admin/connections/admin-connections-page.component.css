@@ -1,0 +1,31 @@
+.page {
+  padding: 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e1e5ea;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.error {
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.info {
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
