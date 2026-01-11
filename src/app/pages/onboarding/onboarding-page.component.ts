@@ -86,12 +86,13 @@ export class OnboardingPageComponent implements OnDestroy {
   }
 
   startSync(): void {
-    if (!this.connectionId) {
+    if (!this.connectionId || !this.accountId) {
       return;
     }
     this.loading = true;
     this.error = null;
-    this.connectionApi.sync(this.connectionId).pipe(
+    this.connectionApi.sync(this.accountId).pipe(
+      switchMap(() => this.connectionApi.syncStatus(this.connectionId!)),
       tap((status) => {
         this.syncStatus = status;
         this.loading = false;
