@@ -4,6 +4,7 @@ import {BehaviorSubject, catchError, map, Observable, of, tap} from "rxjs";
 
 import {AuthSessionState, OAuth2ProxyUserInfo} from "./auth-session.model";
 import {OAUTH2_ENDPOINTS} from "./auth-endpoints";
+import {AUTH_SESSION_FLAG} from "./auth-storage";
 
 @Injectable({providedIn: "root"})
 export class AuthSessionService {
@@ -28,5 +29,6 @@ export class AuthSessionService {
 
   clear(): void {
     this.stateSubject.next({authenticated: false});
+    sessionStorage.removeItem(AUTH_SESSION_FLAG);
   }
 }

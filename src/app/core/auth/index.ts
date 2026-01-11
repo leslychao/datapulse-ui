@@ -4,3 +4,4 @@ export * from "./auth-session.service";
 export * from "./auth-session.model";
 export * from "./auth-user.service";
 export * from "./auth-endpoints";
+export * from "./auth-storage";

@@ -1,4 +1,5 @@
 export {ButtonComponent} from "./button/button.component";
+export {AppHeaderComponent} from "./app-header/app-header.component";
 export {InputComponent} from "./input/input.component";
 export {TableComponent} from "./table/table.component";
 export {ModalComponent} from "./modal/modal.component";
