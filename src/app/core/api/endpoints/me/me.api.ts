@@ -9,6 +9,6 @@ export class MeApi {
   constructor(private readonly api: ApiClient) {}
 
   me(): Observable<MeResponse> {
-    return this.api.get<MeResponse>("/api/user-profiles/me");
+    return this.api.get<MeResponse>("/api/me");
   }
 }
