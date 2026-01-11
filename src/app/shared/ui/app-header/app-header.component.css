@@ -1,0 +1,44 @@
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 32px;
+  background: #ffffff;
+  border-bottom: 1px solid #e1e5ea;
+}
+
+.app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-header__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.app-header__profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-header__user {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.app-header__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.app-header__email {
+  font-size: 12px;
+  color: #6b7280;
+}
