@@ -1,0 +1,15 @@
+<div class="page">
+  <header class="page-header">
+    <h1>Dashboard</h1>
+    <p class="muted">Обзор ключевых метрик появится здесь.</p>
+  </header>
+
+  <div class="card" *ngIf="accountId">
+    <h2>Администрирование</h2>
+    <p class="muted">Управляйте подключениями и операторами аккаунта.</p>
+    <div class="actions">
+      <a class="link" [routerLink]="adminConnectionsPath(accountId)">Подключения</a>
+      <a class="link" [routerLink]="adminTeamPath(accountId)">Операторы</a>
+    </div>
+  </div>
+</div>

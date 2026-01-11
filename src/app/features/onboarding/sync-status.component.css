@@ -1,0 +1,18 @@
+.status-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+}
+
+.status-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.status-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #6b7280;
+  font-size: 13px;
+}

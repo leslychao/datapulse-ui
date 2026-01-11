@@ -1,0 +1,15 @@
+<div class="account-grid">
+  <button
+    class="account-card"
+    type="button"
+    *ngFor="let account of accounts"
+    (click)="selectAccount.emit(account)"
+  >
+    <div class="account-name">{{ account.name }}</div>
+    <div class="account-meta">
+      <span>{{ account.timezone }}</span>
+      <span>·</span>
+      <span>{{ account.currency }}</span>
+    </div>
+  </button>
+</div>
