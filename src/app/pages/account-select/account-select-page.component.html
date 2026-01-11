@@ -1,0 +1,31 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Выбор аккаунта</h1>
+      <p class="muted">Продолжайте работу в выбранной рабочей области.</p>
+    </div>
+    <dp-button type="button" variant="primary" (click)="startOnboarding()">
+      Создать аккаунт
+    </dp-button>
+  </header>
+
+  <div class="card" *ngIf="loading">
+    <dp-loader label="Загружаем аккаунты..."></dp-loader>
+  </div>
+
+  <div class="card error" *ngIf="error">{{ error.message }}</div>
+
+  <div class="card empty" *ngIf="!loading && !error && accounts.length === 0">
+    <h2>У вас ещё нет аккаунтов</h2>
+    <p>Создайте рабочую область, чтобы подключить маркетплейсы.</p>
+    <dp-button type="button" variant="primary" (click)="startOnboarding()">
+      Создать аккаунт
+    </dp-button>
+  </div>
+
+  <dp-account-select-list
+    *ngIf="!loading && !error && accounts.length > 0"
+    [accounts]="accounts"
+    (selectAccount)="selectAccount($event)"
+  ></dp-account-select-list>
+</div>

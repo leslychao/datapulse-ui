@@ -1,0 +1,37 @@
+<dp-table *ngIf="operators.length > 0; else empty">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Статус</th>
+        <th>Роль</th>
+        <th>Доступ</th>
+        <th>Последний вход</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let operator of operators">
+        <td>{{ operator.email }}</td>
+        <td>{{ operator.status }}</td>
+        <td>
+          <select #roleSelect [value]="operator.role" (change)="onRoleSelect(operator, roleSelect.value)">
+            <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+          </select>
+        </td>
+        <td>{{ operator.accessScope }}</td>
+        <td>{{ operator.lastLoginAt || "—" }}</td>
+        <td class="actions">
+          <dp-button type="button" (click)="editAccess.emit(operator)">Доступы</dp-button>
+          <dp-button type="button" (click)="blockToggle.emit(operator)">
+            {{ isBlocked(operator) ? "Разблокировать" : "Заблокировать" }}
+          </dp-button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</dp-table>
+
+<ng-template #empty>
+  <div class="empty">Операторов пока нет.</div>
+</ng-template>

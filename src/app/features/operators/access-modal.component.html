@@ -1,0 +1,31 @@
+<dp-modal [visible]="visible" (close)="close.emit()">
+  <h3>Доступы оператора</h3>
+  <p class="muted" *ngIf="member">{{ member.email }}</p>
+
+  <form class="section" [formGroup]="form">
+    <label>Область доступа</label>
+    <select formControlName="accessScope">
+      <option *ngFor="let scope of accessScopes" [value]="scope">{{ scope }}</option>
+    </select>
+  </form>
+
+  <div class="section">
+    <label>Подключения</label>
+    <div class="connections">
+      <label class="checkbox" *ngFor="let connection of connections">
+        <input
+          type="checkbox"
+          [checked]="form.value.connectionIds?.includes(connection.id)"
+          #connectionToggle
+          (change)="toggleConnection(connection.id, connectionToggle.checked)"
+        />
+        {{ connection.name }} ({{ connection.marketplace }})
+      </label>
+    </div>
+  </div>
+
+  <div class="actions">
+    <dp-button type="button" (click)="close.emit()">Отмена</dp-button>
+    <dp-button type="button" variant="primary" (click)="submit()">Сохранить</dp-button>
+  </div>
+</dp-modal>

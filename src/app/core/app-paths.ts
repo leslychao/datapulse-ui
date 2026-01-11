@@ -5,7 +5,7 @@ export const APP_ROUTE_SEGMENTS = {
   dashboard: "dashboard",
   admin: "admin",
   connections: "connections",
-  team: "team"
+  operators: "operators"
 } as const;
 
 export const APP_PATHS = {
@@ -16,6 +16,6 @@ export const APP_PATHS = {
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.dashboard}`,
   adminConnections: (accountId: number) =>
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.admin}/${APP_ROUTE_SEGMENTS.connections}`,
-  adminTeam: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.admin}/${APP_ROUTE_SEGMENTS.team}`
+  adminOperators: (accountId: number) =>
+    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.admin}/${APP_ROUTE_SEGMENTS.operators}`
 } as const;
