@@ -1,0 +1,15 @@
+<form class="form" [formGroup]="form" (ngSubmit)="submit()">
+  <label>
+    Название аккаунта
+    <input type="text" formControlName="name" />
+  </label>
+  <label>
+    Часовой пояс
+    <input type="text" formControlName="timezone" />
+  </label>
+  <label>
+    Валюта
+    <input type="text" formControlName="currency" />
+  </label>
+  <button type="submit" class="primary">Создать аккаунт</button>
+</form>
