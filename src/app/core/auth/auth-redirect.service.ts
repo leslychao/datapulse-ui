@@ -3,6 +3,7 @@ import {environment} from "../../../environments/environment";
 import {APP_PATHS} from "../app-paths";
 import {AUTH_SESSION_FLAG} from "./auth-storage";
 
+
 @Injectable({providedIn: "root"})
 export class AuthRedirectService {
 
