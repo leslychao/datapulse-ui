@@ -3,6 +3,7 @@ import {HttpClient} from "@angular/common/http";
 import {BehaviorSubject, catchError, map, Observable, of, tap} from "rxjs";
 
 import {AuthSessionState, OAuth2ProxyUserInfo} from "./auth-session.model";
+import {OAUTH2_ENDPOINTS} from "./auth-endpoints";
 
 @Injectable({providedIn: "root"})
 export class AuthSessionService {
@@ -14,7 +15,7 @@ export class AuthSessionService {
   }
 
   refresh(): Observable<AuthSessionState> {
-    return this.http.get<OAuth2ProxyUserInfo>("/oauth2/userinfo").pipe(
+    return this.http.get<OAuth2ProxyUserInfo>(OAUTH2_ENDPOINTS.userInfo).pipe(
       map((userInfo) => ({authenticated: true, userInfo} as AuthSessionState)),
       catchError(() => of({authenticated: false} as AuthSessionState)),
       tap((state) => this.stateSubject.next(state))

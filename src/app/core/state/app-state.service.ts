@@ -1,5 +1,5 @@
 import {Injectable} from "@angular/core";
-import {AccountContextService} from "../account/account-context.service";
+import {AccountContextService} from "./account-context.service";
 
 @Injectable({providedIn: "root"})
 export class AppStateService {

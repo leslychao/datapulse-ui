@@ -1,0 +1,17 @@
+.dp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.dp-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  width: min(520px, 90vw);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+}

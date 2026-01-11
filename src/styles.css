@@ -110,6 +110,13 @@ button.primary{
 }
 button.primary:hover{background:rgba(42,139,242,.12)}
 
+button.danger{
+  color:var(--danger);
+  border-color:rgba(239,68,68,.30);
+  background:rgba(239,68,68,.08);
+}
+button.danger:hover{background:rgba(239,68,68,.12)}
+
 /* Table */
 .table-wrap{
   margin-top:12px;

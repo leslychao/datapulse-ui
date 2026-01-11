@@ -4,7 +4,7 @@ import {catchError, throwError} from "rxjs";
 
 import {AuthRedirectService} from "./auth-redirect.service";
 import {AuthSessionService} from "./auth-session.service";
-import {AppStateService} from "../state/app-state.service";
+import {AppStateService} from "../state";
 
 export const authHttpInterceptor: HttpInterceptorFn = (req, next) => {
   const authRedirectService = inject(AuthRedirectService);

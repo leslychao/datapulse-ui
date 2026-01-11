@@ -1,0 +1,20 @@
+<div class="page">
+  <header class="page-header">
+    <h1>Подключения</h1>
+    <p class="muted">Управляйте кабинетами маркетплейсов и синхронизацией.</p>
+  </header>
+
+  <div class="card" *ngIf="loading">
+    <dp-loader label="Загружаем подключения..."></dp-loader>
+  </div>
+  <div class="card error" *ngIf="error">{{ error.message }}</div>
+
+  <div class="card" *ngIf="!loading && !error">
+    <dp-connections-table
+      [connections]="connections"
+      (testConnection)="testConnection($event)"
+      (syncConnection)="syncConnection($event)"
+      (disableConnection)="disableConnection($event)"
+    ></dp-connections-table>
+  </div>
+</div>
