@@ -3,13 +3,19 @@
     <span class="app-header__title">Datapulse</span>
   </div>
 
-  <div class="app-header__profile" *ngIf="me$ | async as me">
+  <div class="app-header__profile" *ngIf="userProfile$ | async as profile">
     <div class="app-header__user">
       <span class="app-header__name">
-        {{ me.fullName || me.username || me.email || me.userId }}
+        {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
       </span>
-      <span class="app-header__email" *ngIf="me.email">{{ me.email }}</span>
+
+      <span class="app-header__email" *ngIf="profile.email">
+        {{ profile.email }}
+      </span>
     </div>
-    <dp-button type="button" variant="secondary" (click)="logout()">Выйти</dp-button>
+
+    <dp-button type="button" variant="secondary" (click)="logout()">
+      Выйти
+    </dp-button>
   </div>
 </header>

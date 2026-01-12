@@ -1,8 +1,8 @@
-import {Component, inject} from "@angular/core";
-import {CommonModule} from "@angular/common";
+import { Component, inject } from "@angular/core";
+import { CommonModule } from "@angular/common";
 
-import {AuthRedirectService, AuthUserService} from "../../../core/auth";
-import {ButtonComponent} from "../button/button.component";
+import { AuthRedirectService, AuthUserService } from "../../../core/auth";
+import { ButtonComponent } from "../button/button.component";
 
 @Component({
   selector: "dp-app-header",
@@ -14,7 +14,8 @@ import {ButtonComponent} from "../button/button.component";
 export class AppHeaderComponent {
   private readonly authUser = inject(AuthUserService);
   private readonly authRedirect = inject(AuthRedirectService);
-  readonly me$ = this.authUser.me$;
+
+  readonly userProfile$ = this.authUser.userProfile$;
 
   logout(): void {
     this.authRedirect.logout();
