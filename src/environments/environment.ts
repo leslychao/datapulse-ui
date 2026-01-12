@@ -6,7 +6,7 @@ export const environment = {
     logoutPath: "/oauth2/sign_out",
 
     // куда редиректим после logout (в dev — на angular dev server)
-    logoutRedirectUrl: "http://localhost:4200/logged-out",
+    logoutRedirectUrl: "http://localhost:4200/app",
 
     // страница регистрации в Keycloak + параметры
     keycloak: {

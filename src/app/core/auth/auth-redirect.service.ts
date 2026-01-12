@@ -1,11 +1,13 @@
 import {Injectable} from "@angular/core";
 import {environment} from "../../../environments/environment";
 import {APP_PATHS} from "../app-paths";
+import {AuthSessionService} from "./auth-session.service";
 import {AUTH_SESSION_FLAG} from "./auth-storage";
 
 
 @Injectable({providedIn: "root"})
 export class AuthRedirectService {
+  constructor(private readonly authSession: AuthSessionService) {}
 
   login(returnUrl: string = APP_PATHS.selectAccount): void {
     const normalizedReturnUrl = this.normalizeReturnUrl(returnUrl);
@@ -14,6 +16,7 @@ export class AuthRedirectService {
   }
 
   logout(): void {
+    this.authSession.clear();
     sessionStorage.removeItem(AUTH_SESSION_FLAG);
     const url =
       `${environment.auth.logoutPath}?rd=${encodeURIComponent(environment.auth.logoutRedirectUrl)}`;
