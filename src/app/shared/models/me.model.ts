@@ -4,13 +4,13 @@ export interface UserAccountAccess {
   name: string;
   role?: string;
 }
-export interface MeResponse {
-  userId: string;
-  username: string | null;
+
+export interface UserProfileResponse {
+  id: number;
+  keycloakSub: string;
   email: string | null;
   fullName: string | null;
-  givenName: string | null;
-  familyName: string | null;
-  locale: string | null;          // Locale в JSON обычно строка "ru-RU"
-  authenticatedAt: string | null; // Instant в JSON строка ISO-8601
+  username: string | null;
+  createdAt: string;
+  updatedAt: string;
 }

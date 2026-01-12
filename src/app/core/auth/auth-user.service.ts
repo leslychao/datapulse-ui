@@ -3,12 +3,12 @@ import {Observable, of} from "rxjs";
 import {catchError, distinctUntilChanged, map, shareReplay, switchMap} from "rxjs/operators";
 
 import {MeApi} from "../api";
-import {MeResponse} from "../../shared/models";
+import {UserProfileResponse} from "../../shared/models";
 import {AuthSessionService} from "./auth-session.service";
 
 @Injectable({providedIn: "root"})
 export class AuthUserService {
-  readonly me$: Observable<MeResponse | null>;
+  readonly me$: Observable<UserProfileResponse | null>;
 
   constructor(
     private readonly authSession: AuthSessionService,
