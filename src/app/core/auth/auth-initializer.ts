@@ -1,13 +1,11 @@
 import {inject} from "@angular/core";
 import {firstValueFrom, tap} from "rxjs";
 
-import {AuthRedirectService} from "./auth-redirect.service";
 import {AuthSessionService} from "./auth-session.service";
 import {AUTH_SESSION_FLAG} from "./auth-storage";
 
 export const authInitializer = () => {
   const authSession = inject(AuthSessionService);
-  const authRedirectService = inject(AuthRedirectService);
 
   return () =>
     firstValueFrom(
@@ -19,11 +17,6 @@ export const authInitializer = () => {
             sessionStorage.setItem(AUTH_SESSION_FLAG, "true");
           } else {
             sessionStorage.removeItem(AUTH_SESSION_FLAG);
-          }
-
-          if ((!state.authenticated || !hasSessionFlag) &&
-            !window.location.pathname.startsWith("/oauth2")) {
-            authRedirectService.login(window.location.pathname + window.location.search);
           }
         })
       )
