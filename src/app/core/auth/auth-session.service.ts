@@ -1,6 +1,6 @@
 import {Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
-import {BehaviorSubject, catchError, map, Observable, of, tap} from "rxjs";
+import {BehaviorSubject, catchError, finalize, map, Observable, of, shareReplay, tap} from "rxjs";
 
 import {AuthSessionState, OAuth2ProxyUserInfo} from "./auth-session.model";
 import {OAUTH2_ENDPOINTS} from "./auth-endpoints";
@@ -12,15 +12,29 @@ export class AuthSessionService {
   private readonly stateSubject = new BehaviorSubject<AuthSessionState>({authenticated: false});
   readonly state$ = this.stateSubject.asObservable();
 
+  private refreshInFlight: Observable<AuthSessionState> | null = null;
+
   constructor(private readonly http: HttpClient) {
   }
 
   refresh(): Observable<AuthSessionState> {
-    return this.http.get<OAuth2ProxyUserInfo>(OAUTH2_ENDPOINTS.userInfo).pipe(
+    if (this.refreshInFlight) {
+      return this.refreshInFlight;
+    }
+
+    this.refreshInFlight = this.http.get<OAuth2ProxyUserInfo>(OAUTH2_ENDPOINTS.userInfo, {
+      withCredentials: true
+    }).pipe(
       map((userInfo) => ({authenticated: true, userInfo} as AuthSessionState)),
       catchError(() => of({authenticated: false} as AuthSessionState)),
-      tap((state) => this.stateSubject.next(state))
+      tap((state) => this.stateSubject.next(state)),
+      finalize(() => {
+        this.refreshInFlight = null;
+      }),
+      shareReplay({bufferSize: 1, refCount: false})
     );
+
+    return this.refreshInFlight;
   }
 
   snapshot(): AuthSessionState {
