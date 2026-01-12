@@ -98,9 +98,6 @@ export class AdminOperatorsPageComponent implements OnInit {
       next: (member) => {
         this.operators = [member, ...this.operators];
         this.toastService.success("Приглашение отправлено.");
-      },
-      error: (error: ApiError) => {
-        this.toastService.error(error.message);
       }
     });
   }
@@ -148,9 +145,8 @@ export class AdminOperatorsPageComponent implements OnInit {
       next: (updated) => {
         this.operators = this.operators.map((item) => (item.id === updated.id ? updated : item));
       },
-      error: (error: ApiError) => {
+      error: () => {
         this.operators = this.operators.map((item) => (item.id === previous.id ? previous : item));
-        this.toastService.error(error.message);
       }
     });
   }

@@ -17,6 +17,10 @@ export class AppHeaderComponent {
 
   readonly userProfile$ = this.authUser.userProfile$;
 
+  login(): void {
+    this.authRedirect.login(window.location.pathname + window.location.search);
+  }
+
   logout(): void {
     this.authRedirect.logout();
   }
