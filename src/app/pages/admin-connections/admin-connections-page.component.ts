@@ -64,9 +64,6 @@ export class AdminConnectionsPageComponent implements OnInit {
     this.connectionApi.test(connection.id).subscribe({
       next: () => {
         this.toastService.success("Подключение успешно протестировано.");
-      },
-      error: (error: ApiError) => {
-        this.toastService.error(error.message);
       }
     });
   }
@@ -76,9 +73,6 @@ export class AdminConnectionsPageComponent implements OnInit {
       next: () => {
         this.toastService.success("Синхронизация запущена.");
         this.loadConnections();
-      },
-      error: (error: ApiError) => {
-        this.toastService.error(error.message);
       }
     });
   }
@@ -88,9 +82,6 @@ export class AdminConnectionsPageComponent implements OnInit {
       next: () => {
         this.toastService.success("Подключение отключено.");
         this.loadConnections();
-      },
-      error: (error: ApiError) => {
-        this.toastService.error(error.message);
       }
     });
   }

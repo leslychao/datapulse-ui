@@ -15,9 +15,7 @@ export class AuthRedirectService {
 
   logout(): void {
     sessionStorage.removeItem(AUTH_SESSION_FLAG);
-    const url =
-      `${environment.auth.logoutPath}?rd=${encodeURIComponent(environment.auth.logoutRedirectUrl)}`;
-    window.location.assign(url);
+    window.location.assign(APP_PATHS.root);
   }
 
   register(): void {
