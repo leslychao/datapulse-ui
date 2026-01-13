@@ -1,7 +1,7 @@
 import {Component, Input} from "@angular/core";
 import {CommonModule} from "@angular/common";
 
-export type ButtonVariant = "primary" | "danger" | "secondary";
+export type ButtonVariant = "primary" | "danger" | "secondary" | "link";
 
 @Component({
   selector: "dp-button",
@@ -26,7 +26,8 @@ export class ButtonComponent {
   get variantClass(): Record<string, boolean> {
     return {
       primary: this.variant === "primary",
-      danger: this.variant === "danger"
+      danger: this.variant === "danger",
+      link: this.variant === "link"
     };
   }
 }

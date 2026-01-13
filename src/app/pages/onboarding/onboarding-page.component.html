@@ -1,35 +1,37 @@
 <div class="page">
   <header class="page-header">
-    <h1>Онбординг</h1>
-    <p class="muted">Настройте рабочую область и подключите маркетплейсы.</p>
+    <h1>Подключение рабочего пространства</h1>
+    <p class="muted">Добавьте аккаунт и подключите маркетплейс, чтобы начать сбор данных.</p>
   </header>
 
-  <div class="steps">
-    <div class="step" [class.active]="step === 1">1. Аккаунт</div>
-    <div class="step" [class.active]="step === 2">2. Подключение</div>
-    <div class="step" [class.active]="step === 3">3. Синхронизация</div>
+  <div
+    class="status-line"
+    [class.is-active]="isStatusActive"
+    [class.is-error]="statusState === 'error'"
+  >
+    <span class="status-dot"></span>
+    <div>
+      <div>{{ statusText }}</div>
+      <div class="status-meta" *ngIf="statusHint">{{ statusHint }}</div>
+    </div>
   </div>
 
-  <div class="card" *ngIf="error">{{ error.message }}</div>
-  <div class="card" *ngIf="loading">
-    <dp-loader label="Выполняем действие..."></dp-loader>
-  </div>
-
-  <div class="card" *ngIf="step === 1">
-    <dp-account-form (submitForm)="createAccount($event)"></dp-account-form>
-  </div>
-
-  <div class="card" *ngIf="step === 2 && accountId">
+  <div class="card form-card">
+    <dp-account-form
+      [disabled]="formLocked"
+    ></dp-account-form>
     <dp-connection-form
-      [accountId]="accountId"
-      (submitForm)="createConnection($event)"
+      class="connection-block"
+      [accountId]="accountId ?? 0"
+      [connectionName]="accountName"
+      [disabled]="formLocked"
+      [errorMessage]="tokenErrorMessage"
     ></dp-connection-form>
-  </div>
 
-  <div class="card" *ngIf="step === 3">
-    <dp-sync-status [status]="syncStatus"></dp-sync-status>
-    <dp-button type="button" variant="primary" (click)="goToDashboard()">
-      Перейти в обзор
-    </dp-button>
+    <div class="form-actions">
+      <dp-button type="button" variant="primary" (click)="startOnboarding()" [disabled]="formLocked">
+        Начать
+      </dp-button>
+    </div>
   </div>
 </div>

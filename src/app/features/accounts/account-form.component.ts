@@ -1,8 +1,8 @@
-import {Component, EventEmitter, Output} from "@angular/core";
+import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {AccountCreateRequest} from "../../shared/models";
-import {ButtonComponent, InputComponent} from "../../shared/ui";
+import {InputComponent} from "../../shared/ui";
 
 type AccountFormGroup = FormGroup<{
   name: FormControl<string>;
@@ -13,11 +13,12 @@ type AccountFormGroup = FormGroup<{
 @Component({
   selector: "dp-account-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ButtonComponent, InputComponent],
+  imports: [CommonModule, ReactiveFormsModule, InputComponent],
   templateUrl: "./account-form.component.html",
   styleUrl: "./account-form.component.css"
 })
-export class AccountFormComponent {
+export class AccountFormComponent implements OnChanges {
+  @Input() disabled = false;
   @Output() submitForm = new EventEmitter<AccountCreateRequest>();
 
   readonly form: AccountFormGroup;
@@ -30,11 +31,29 @@ export class AccountFormComponent {
     });
   }
 
-  submit(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes["disabled"]) {
+      if (this.disabled) {
+        this.form.disable();
+      } else {
+        this.form.enable();
+      }
+    }
+  }
+
+  getRequest(): AccountCreateRequest | null {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return null;
+    }
+    return this.form.getRawValue();
+  }
+
+  submit(): void {
+    const request = this.getRequest();
+    if (!request) {
       return;
     }
-    this.submitForm.emit(this.form.getRawValue());
+    this.submitForm.emit(request);
   }
 }
