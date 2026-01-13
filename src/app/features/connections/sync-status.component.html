@@ -1,13 +1,13 @@
-<div class="status-card" *ngIf="status; else empty">
-  <div class="status-title">
-    {{ statusLabels[status.status] }}
-  </div>
-  <div class="status-meta">
-    <span>{{ status.message || "Данные скоро появятся в дашбордах." }}</span>
-    <span>{{ status.updatedAt | date: "medium" }}</span>
+<div
+  class="status-line"
+  [class.is-active]="status && status.status !== statusType.Failed"
+  [class.is-error]="status?.status === statusType.Failed"
+>
+  <span class="status-dot"></span>
+  <div>
+    <div>{{ status ? statusLabels[status.status] : "Онбординг · не завершён" }}</div>
+    <div class="status-meta" *ngIf="status?.message">
+      {{ status?.message }}
+    </div>
   </div>
 </div>
-
-<ng-template #empty>
-  <div class="status-card">Ожидаем запуск синхронизации...</div>
-</ng-template>

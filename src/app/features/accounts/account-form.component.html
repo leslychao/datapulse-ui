@@ -1,15 +1,6 @@
-<form class="form" [formGroup]="form" (ngSubmit)="submit()">
+<form class="form" [formGroup]="form">
   <label>
     Название аккаунта
     <dp-input type="text" formControlName="name"></dp-input>
   </label>
-  <label>
-    Часовой пояс
-    <dp-input type="text" formControlName="timezone"></dp-input>
-  </label>
-  <label>
-    Валюта
-    <dp-input type="text" formControlName="currency"></dp-input>
-  </label>
-  <dp-button type="submit" variant="primary">Создать аккаунт</dp-button>
 </form>

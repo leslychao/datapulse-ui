@@ -1,7 +1,8 @@
 <header class="app-header">
-  <div class="app-header__brand">
-    <span class="app-header__title">Datapulse</span>
-  </div>
+  <a class="brand-link" [routerLink]="['/']" aria-label="Datapulse — на главную">
+    <img class="brand-icon" src="assets/logo.svg" alt="" />
+    <span class="brand">Datapulse</span>
+  </a>
 
   <div class="app-header__profile" *ngIf="userProfile$ | async as profile; else loginTemplate">
     <div class="app-header__user">

@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from "@angular/core";
+import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {
@@ -7,17 +7,20 @@ import {
   OzonCredentials,
   WildberriesCredentials
 } from "../../shared/models";
-import {ButtonComponent, InputComponent} from "../../shared/ui";
+import {InputComponent} from "../../shared/ui";
 
 @Component({
   selector: "dp-connection-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ButtonComponent, InputComponent],
+  imports: [CommonModule, ReactiveFormsModule, InputComponent],
   templateUrl: "./connection-form.component.html",
   styleUrl: "./connection-form.component.css"
 })
-export class ConnectionFormComponent {
+export class ConnectionFormComponent implements OnChanges {
   @Input({required: true}) accountId!: number;
+  @Input() connectionName = "";
+  @Input() disabled = false;
+  @Input() errorMessage: string | null = null;
   @Output() submitForm = new EventEmitter<AccountConnectionCreateRequest>();
 
   readonly marketplaces = Object.values(Marketplace);
@@ -42,25 +45,47 @@ export class ConnectionFormComponent {
     });
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes["connectionName"]) {
+      this.form.patchValue({name: this.connectionName});
+    }
+    if (changes["disabled"]) {
+      if (this.disabled) {
+        this.form.disable();
+      } else {
+        this.form.enable();
+      }
+    }
+  }
+
   submit(): void {
+    const request = this.getRequest(this.accountId);
+    if (!request) {
+      return;
+    }
+    this.submitForm.emit(request);
+  }
+
+  getRequest(accountId: number): AccountConnectionCreateRequest | null {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      return;
+      return null;
     }
 
     const {marketplace, name, token, clientId, apiKey} = this.form.getRawValue();
     const credentials = this.buildCredentials(marketplace, token, clientId, apiKey);
 
     if (!credentials) {
-      return;
+      this.form.markAllAsTouched();
+      return null;
     }
 
-    this.submitForm.emit({
-      accountId: this.accountId,
+    return {
+      accountId,
       name,
       marketplace,
       credentials
-    });
+    };
   }
 
   private buildCredentials(

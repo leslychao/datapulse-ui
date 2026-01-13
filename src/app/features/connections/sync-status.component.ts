@@ -12,10 +12,11 @@ import {AccountConnectionSyncStatus, AccountConnectionSyncStatusType} from "../.
 export class SyncStatusComponent {
   @Input() status: AccountConnectionSyncStatus | null = null;
 
+  readonly statusType = AccountConnectionSyncStatusType;
   readonly statusLabels: Record<AccountConnectionSyncStatusType, string> = {
-    [AccountConnectionSyncStatusType.Queued]: "В очереди",
-    [AccountConnectionSyncStatusType.Running]: "Выполняется",
+    [AccountConnectionSyncStatusType.Queued]: "Синхронизация запущена",
+    [AccountConnectionSyncStatusType.Running]: "Данные загружаются",
     [AccountConnectionSyncStatusType.Completed]: "Готово",
-    [AccountConnectionSyncStatusType.Failed]: "Ошибка"
+    [AccountConnectionSyncStatusType.Failed]: "Ошибка подключения"
   };
 }
