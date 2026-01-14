@@ -1,7 +1,8 @@
 export interface ConnectionVm {
   id: number;
-  name: string;
-  status: string;
   marketplace: string;
+  active: boolean;
   lastSyncAt: string;
+  lastSyncStatus: string;
+  maskedCredentials: string;
 }

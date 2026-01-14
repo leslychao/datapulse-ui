@@ -23,10 +23,11 @@ export class SettingsConnectionsPageComponent implements OnInit {
   connections$?: Observable<{state: DataState; rows: DataTableRow[]}>;
 
   readonly columns: TableColumnVm[] = [
-    {key: "name", label: "Connection", sortable: true},
     {key: "marketplace", label: "Marketplace", sortable: true},
-    {key: "status", label: "Status", sortable: true},
-    {key: "lastSyncAt", label: "Last sync", sortable: true}
+    {key: "active", label: "Active", sortable: true},
+    {key: "lastSyncStatus", label: "Last sync status", sortable: true},
+    {key: "lastSyncAt", label: "Last sync", sortable: true},
+    {key: "maskedCredentials", label: "Credentials", sortable: false}
   ];
 
   constructor(
@@ -45,10 +46,11 @@ export class SettingsConnectionsPageComponent implements OnInit {
       map((result) => ({
         state: result.state,
         rows: result.data.map((connection) => ({
-          name: connection.name,
           marketplace: connection.marketplace,
-          status: connection.status,
-          lastSyncAt: connection.lastSyncAt
+          active: connection.active ? "Yes" : "No",
+          lastSyncStatus: connection.lastSyncStatus,
+          lastSyncAt: connection.lastSyncAt,
+          maskedCredentials: connection.maskedCredentials
         }))
       }))
     );

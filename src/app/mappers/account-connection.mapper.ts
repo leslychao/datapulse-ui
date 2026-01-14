@@ -4,9 +4,10 @@ import {ConnectionVm} from "../vm/connection.vm";
 export const mapAccountConnectionToVm = (connection: AccountConnection): ConnectionVm => {
   return {
     id: connection.id,
-    name: connection.name,
-    status: connection.status,
     marketplace: connection.marketplace,
-    lastSyncAt: connection.lastSyncAt ?? "—"
+    active: connection.active,
+    lastSyncAt: connection.lastSyncAt ?? "—",
+    lastSyncStatus: connection.lastSyncStatus ?? "—",
+    maskedCredentials: connection.maskedCredentials ?? "—"
   };
 };

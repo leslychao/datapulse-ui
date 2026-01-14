@@ -12,7 +12,7 @@ export class AccountConnectionApi {
   constructor(private readonly api: ApiClient) {}
 
   list(accountId: number): Observable<AccountConnection[]> {
-    return this.api.get<AccountConnection[]>("/api/account-connections", {accountId});
+    return this.api.get<AccountConnection[]>(`/api/account-connections/accounts/${accountId}`);
   }
 
   create(request: AccountConnectionCreateRequest): Observable<AccountConnection> {
