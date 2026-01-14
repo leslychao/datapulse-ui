@@ -1,0 +1,24 @@
+<dp-dashboard-shell
+  [accountId]="accountId"
+  title="P&L (Account-level)"
+  subtitle="Прибыль и убытки по аккаунту"
+>
+  <ng-container *ngIf="state$ | async as state">
+    <dp-filter-bar [fields]="filters"></dp-filter-bar>
+    <dp-metric-tile-group [tiles]="tiles" [state]="state.state"></dp-metric-tile-group>
+
+    <dp-chart-card
+      title="Динамика по периоду"
+      subtitle="P&L во времени"
+      [state]="state.state"
+      [accountId]="accountId"
+    ></dp-chart-card>
+
+    <dp-chart-card
+      title="Composition / Waterfall"
+      subtitle="Структура влияния на прибыль"
+      [state]="state.state"
+      [accountId]="accountId"
+    ></dp-chart-card>
+  </ng-container>
+</dp-dashboard-shell>

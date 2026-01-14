@@ -52,6 +52,6 @@ export class AccountSelectPageComponent implements OnInit {
 
   selectAccount(account: AccountSummary): void {
     this.accountContext.setAccountId(account.id);
-    this.router.navigateByUrl(APP_PATHS.dashboard(account.id));
+    this.router.navigateByUrl(APP_PATHS.overview(account.id));
   }
 }

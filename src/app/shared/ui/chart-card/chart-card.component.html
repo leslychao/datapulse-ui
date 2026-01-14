@@ -1,0 +1,15 @@
+<section class="chart-card" data-testid="chart-card">
+  <header class="chart-card__header">
+    <div>
+      <h3>{{ title }}</h3>
+      <p *ngIf="subtitle">{{ subtitle }}</p>
+    </div>
+  </header>
+  <div class="chart-card__body">
+    <div class="chart-card__placeholder">
+      <div class="chart-card__line"></div>
+      <div class="chart-card__line short"></div>
+    </div>
+  </div>
+  <dp-data-state-gate [state]="state" [accountId]="accountId"></dp-data-state-gate>
+</section>

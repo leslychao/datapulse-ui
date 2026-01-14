@@ -1,0 +1,36 @@
+<ng-container *ngIf="copy as content">
+  <div class="data-state" [attr.data-testid]="'data-state-' + state">
+    <div>
+      <h4>{{ content.title }}</h4>
+      <p>{{ content.description }}</p>
+    </div>
+    <div class="data-state__actions">
+      <dp-button
+        *ngIf="content.showRetry"
+        type="button"
+        variant="primary"
+        (click)="handleRetry()"
+      >
+        {{ content.primaryLabel }}
+      </dp-button>
+      <a
+        *ngIf="!content.showRetry"
+        class="data-state__link"
+        [routerLink]="content.primaryPath"
+      >
+        <dp-button type="button" variant="primary">
+          {{ content.primaryLabel }}
+        </dp-button>
+      </a>
+      <a
+        *ngIf="content.secondaryLabel"
+        class="data-state__link"
+        [routerLink]="content.secondaryPath"
+      >
+        <dp-button type="button" variant="secondary">
+          {{ content.secondaryLabel }}
+        </dp-button>
+      </a>
+    </div>
+  </div>
+</ng-container>

@@ -1,0 +1,40 @@
+.sales-refresh{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  font-size:12px;
+}
+
+.sales-refresh .label{
+  color:var(--muted);
+}
+
+.sales-refresh .value.muted{
+  color:var(--muted);
+}
+
+.quick-filters{
+  display:flex;
+  gap:8px;
+}
+
+.quick-filters button,
+.tabs button{
+  padding:6px 10px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--panel);
+  font-size:12px;
+}
+
+.quick-filters button.is-active,
+.tabs button.is-active{
+  background:rgba(42,139,242,.12);
+  color:var(--accent);
+  border-color:rgba(42,139,242,.2);
+}
+
+.tabs{
+  display:flex;
+  gap:8px;
+}

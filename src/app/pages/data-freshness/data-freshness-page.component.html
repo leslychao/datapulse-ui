@@ -1,0 +1,26 @@
+<dp-dashboard-shell
+  [accountId]="accountId"
+  title="Data Freshness / SLA"
+  subtitle="Статус обновления данных и SLA"
+>
+  <ng-container *ngIf="state$ | async as state">
+    <dp-metric-tile-group [tiles]="tiles" [state]="state.state"></dp-metric-tile-group>
+
+    <dp-data-table-card
+      title="Entity freshness"
+      subtitle="Обновления по сущностям"
+      [columns]="columns"
+      [rows]="[]"
+      [state]="state.state"
+      [accountId]="accountId"
+      testId="data-freshness-table"
+    ></dp-data-table-card>
+
+    <section class="alerts" data-testid="data-freshness-alerts">
+      <h3>Alerts</h3>
+      <ul>
+        <li *ngFor="let alert of alerts">{{ alert }}</li>
+      </ul>
+    </section>
+  </ng-container>
+</dp-dashboard-shell>

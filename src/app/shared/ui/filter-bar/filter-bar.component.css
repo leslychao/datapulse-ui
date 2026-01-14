@@ -1,0 +1,25 @@
+.filter-bar{
+  position:sticky;
+  top:88px;
+  z-index:2;
+  background:var(--bg);
+  padding:8px 0 12px;
+}
+
+.filter-bar{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:12px;
+}
+
+.filter-field label{
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+.filter-field input,
+.filter-field select{
+  width:100%;
+}
