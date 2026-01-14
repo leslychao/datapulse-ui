@@ -1,0 +1,84 @@
+.data-table-card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:16px;
+  position:relative;
+}
+
+.data-table-card__header h3{
+  margin:0;
+  font-size:15px;
+}
+
+.data-table-card__header p{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.data-table-card__table{
+  margin-top:12px;
+  overflow:auto;
+  border-radius:12px;
+  border:1px solid var(--line);
+}
+
+.data-table-card__table table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:640px;
+}
+
+.data-table-card__table th,
+.data-table-card__table td{
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  font-size:12px;
+}
+
+.data-table-card__table th{
+  position:sticky;
+  top:0;
+  background:var(--panel);
+  text-align:left;
+  color:var(--muted);
+  font-weight:600;
+  cursor:default;
+}
+
+.data-table-card__table th.is-sortable{
+  cursor:pointer;
+}
+
+.data-table-card__table th.is-active{
+  color:var(--text);
+}
+
+.data-table-card__table td.empty{
+  text-align:center;
+  color:var(--muted);
+}
+
+.data-table-card__table td.align-right,
+.data-table-card__table th.align-right{
+  text-align:right;
+}
+
+.data-table-card__table td.align-center,
+.data-table-card__table th.align-center{
+  text-align:center;
+}
+
+.data-table-card__table td.is-profit{
+  color:#0f766e;
+}
+
+.data-table-card__table td.is-loss{
+  color:#b91c1c;
+}
+
+.data-table-card__table.is-compact th,
+.data-table-card__table.is-compact td{
+  padding:8px 10px;
+}

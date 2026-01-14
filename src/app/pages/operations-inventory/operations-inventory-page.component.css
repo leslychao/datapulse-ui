@@ -1,0 +1,18 @@
+.tabs{
+  display:flex;
+  gap:8px;
+}
+
+.tabs button{
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--panel);
+  font-size:12px;
+}
+
+.tabs button.is-active{
+  background:rgba(42,139,242,.12);
+  color:var(--accent);
+  border-color:rgba(42,139,242,.2);
+}

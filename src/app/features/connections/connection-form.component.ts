@@ -18,7 +18,6 @@ import {InputComponent} from "../../shared/ui";
 })
 export class ConnectionFormComponent implements OnChanges {
   @Input({required: true}) accountId!: number;
-  @Input() connectionName = "";
   @Input() disabled = false;
   @Input() errorMessage: string | null = null;
   @Output() submitForm = new EventEmitter<AccountConnectionCreateRequest>();
@@ -29,7 +28,6 @@ export class ConnectionFormComponent implements OnChanges {
 
   readonly form: FormGroup<{
     marketplace: FormControl<Marketplace>;
-    name: FormControl<string>;
     token: FormControl<string>;
     clientId: FormControl<string>;
     apiKey: FormControl<string>;
@@ -38,7 +36,6 @@ export class ConnectionFormComponent implements OnChanges {
   constructor(private readonly fb: FormBuilder) {
     this.form = this.fb.nonNullable.group({
       marketplace: [Marketplace.Wildberries, Validators.required],
-      name: ["", Validators.required],
       token: [""],
       clientId: [""],
       apiKey: [""]
@@ -46,9 +43,6 @@ export class ConnectionFormComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes["connectionName"]) {
-      this.form.patchValue({name: this.connectionName});
-    }
     if (changes["disabled"]) {
       if (this.disabled) {
         this.form.disable();
@@ -72,7 +66,7 @@ export class ConnectionFormComponent implements OnChanges {
       return null;
     }
 
-    const {marketplace, name, token, clientId, apiKey} = this.form.getRawValue();
+    const {marketplace, token, clientId, apiKey} = this.form.getRawValue();
     const credentials = this.buildCredentials(marketplace, token, clientId, apiKey);
 
     if (!credentials) {
@@ -82,9 +76,9 @@ export class ConnectionFormComponent implements OnChanges {
 
     return {
       accountId,
-      name,
       marketplace,
-      credentials
+      credentials,
+      active: true
     };
   }
 

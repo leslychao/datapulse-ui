@@ -1,0 +1,17 @@
+<dp-dashboard-shell
+  [accountId]="accountId"
+  title="Users / Access"
+  subtitle="Команда и уровни доступа"
+>
+  <ng-container *ngIf="members$ | async as members">
+    <dp-data-table-card
+      title="Workspace users"
+      subtitle="Список участников"
+      [columns]="columns"
+      [rows]="members.rows"
+      [state]="members.state"
+      [accountId]="accountId"
+      testId="settings-users-table"
+    ></dp-data-table-card>
+  </ng-container>
+</dp-dashboard-shell>

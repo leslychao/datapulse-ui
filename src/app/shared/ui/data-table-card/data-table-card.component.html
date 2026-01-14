@@ -1,0 +1,38 @@
+<section class="data-table-card" data-testid="data-table-card">
+  <header class="data-table-card__header">
+    <div>
+      <h3>{{ title }}</h3>
+      <p *ngIf="subtitle">{{ subtitle }}</p>
+    </div>
+  </header>
+
+  <div class="data-table-card__table" [class.is-compact]="compact" [attr.data-testid]="testId">
+    <table>
+      <thead>
+        <tr>
+          <th
+            *ngFor="let column of columns"
+            (click)="setSort(column)"
+            [ngClass]="getHeaderClass(column)"
+          >
+            {{ column.label }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="rows.length === 0">
+          <td [attr.colspan]="columns.length" class="empty">—</td>
+        </tr>
+        <tr *ngFor="let row of sortedRows">
+          <td
+            *ngFor="let column of columns"
+            [ngClass]="getCellClass(column, row[column.key])"
+          >
+            {{ row[column.key] ?? "—" }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <dp-data-state-gate [state]="state" [accountId]="accountId"></dp-data-state-gate>
+</section>

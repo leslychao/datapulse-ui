@@ -19,7 +19,7 @@
           #connectionToggle
           (change)="toggleConnection(connection.id, connectionToggle.checked)"
         />
-        {{ connection.name }} ({{ connection.marketplace }})
+        {{ connection.marketplace }} · {{ connection.maskedCredentials || "—" }}
       </label>
     </div>
   </div>

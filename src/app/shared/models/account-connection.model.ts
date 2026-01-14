@@ -3,20 +3,16 @@ export enum Marketplace {
   Ozon = "OZON"
 }
 
-export enum AccountConnectionStatus {
-  Active = "ACTIVE",
-  Disabled = "DISABLED",
-  Error = "ERROR",
-  Pending = "PENDING"
-}
-
 export interface AccountConnection {
   id: number;
   accountId: number;
-  name: string;
   marketplace: Marketplace;
-  status: AccountConnectionStatus;
+  active: boolean;
   lastSyncAt: string | null;
+  lastSyncStatus: string | null;
+  createdAt: string;
+  updatedAt: string;
+  maskedCredentials: string | null;
 }
 
 export interface WildberriesCredentials {
@@ -32,9 +28,9 @@ export type AccountConnectionCredentials = WildberriesCredentials | OzonCredenti
 
 export interface AccountConnectionCreateRequest {
   accountId: number;
-  name: string;
   marketplace: Marketplace;
   credentials: AccountConnectionCredentials;
+  active?: boolean;
 }
 
 export interface AccountConnectionSyncStatus {

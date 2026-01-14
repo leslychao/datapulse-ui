@@ -1,0 +1,40 @@
+.data-state{
+  margin-top:12px;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px dashed var(--line);
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  background:rgba(17,24,39,.02);
+}
+
+.data-state h4{
+  margin:0 0 4px;
+  font-size:13px;
+}
+
+.data-state p{
+  margin:0;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.data-state__actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.data-state__link{
+  text-decoration:none;
+}
+
+@media (max-width: 720px){
+  .data-state{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+}

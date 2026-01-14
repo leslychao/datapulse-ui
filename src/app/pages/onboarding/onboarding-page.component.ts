@@ -1,16 +1,14 @@
 import {Component, OnDestroy, ViewChild} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {Router} from "@angular/router";
-import {catchError, interval, of, Subject, switchMap, takeUntil, tap} from "rxjs";
+import {catchError, finalize, of, Subject, takeUntil} from "rxjs";
 
 import {AccountFormComponent} from "../../features/accounts";
 import {ConnectionFormComponent} from "../../features/connections";
-import {AccountApi, AccountConnectionApi, ApiError} from "../../core/api";
-import {AccountCreateRequest} from "../../shared/models";
+import {AccountApi, AccountConnectionApi, ApiError, EtlScenarioApi} from "../../core/api";
+import {AccountCreateRequest, EtlScenarioRequest} from "../../shared/models";
 import {
-  AccountConnectionCreateRequest,
-  AccountConnectionSyncStatus,
-  AccountConnectionSyncStatusType
+  AccountConnectionCreateRequest
 } from "../../shared/models";
 import {AccountContextService} from "../../core/state";
 import {APP_PATHS} from "../../core/app-paths";
@@ -34,19 +32,19 @@ export class OnboardingPageComponent implements OnDestroy {
 
   accountId: number | null = null;
   connectionId: number | null = null;
-  syncStatus: AccountConnectionSyncStatus | null = null;
   error: ApiError | null = null;
   tokenErrorMessage: string | null = null;
-  accountName = "";
   statusState: "idle" | "sync" | "loading" | "ready" | "error" = "idle";
   loading = false;
   formLocked = false;
+  syncMessage: string | null = null;
 
   private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly accountApi: AccountApi,
     private readonly connectionApi: AccountConnectionApi,
+    private readonly etlScenarioApi: EtlScenarioApi,
     private readonly accountContext: AccountContextService,
     private readonly router: Router
   ) {}
@@ -76,8 +74,8 @@ export class OnboardingPageComponent implements OnDestroy {
     if (this.statusState === "error" && this.error) {
       return this.mapErrorMessage(this.error);
     }
-    if (this.syncStatus?.message) {
-      return this.syncStatus.message;
+    if (this.syncMessage) {
+      return this.syncMessage;
     }
     return null;
   }
@@ -98,7 +96,6 @@ export class OnboardingPageComponent implements OnDestroy {
       if (!accountRequest) {
         return;
       }
-      this.accountName = accountRequest.name;
       this.formLocked = true;
       this.statusState = "sync";
       this.createAccount(accountRequest);
@@ -163,43 +160,43 @@ export class OnboardingPageComponent implements OnDestroy {
   }
 
   startSync(): void {
-    if (!this.connectionId) {
+    if (!this.accountId) {
       return;
     }
     this.loading = true;
-    this.connectionApi.sync(this.connectionId).pipe(
-      tap((status) => {
-        this.syncStatus = status;
-        this.loading = false;
-        this.statusState = "loading";
-      }),
-      switchMap(() => interval(5000)),
-      switchMap(() => this.connectionApi.syncStatus(this.connectionId!)),
+    this.statusState = "loading";
+    this.etlScenarioApi.run(this.buildEtlScenarioRequest(this.accountId)).pipe(
       takeUntil(this.destroy$),
       catchError((error: ApiError) => {
+        this.loading = false;
         this.error = error;
         this.statusState = "error";
         this.formLocked = false;
         return of(null);
-      })
-    ).subscribe((status) => {
-      if (status) {
-        this.syncStatus = status;
-        if (status.status === AccountConnectionSyncStatusType.Queued) {
+      }),
+      finalize(() => {
+        if (this.statusState !== "error") {
+          this.loading = false;
           this.statusState = "sync";
+          this.syncMessage = "ETL сценарий запущен. Обновление может занять несколько минут.";
         }
-        if (status.status === AccountConnectionSyncStatusType.Running) {
-          this.statusState = "loading";
-        }
-        if (status.status === AccountConnectionSyncStatusType.Completed) {
-          this.statusState = "ready";
-          this.goToDashboard();
-        }
-        if (status.status === AccountConnectionSyncStatusType.Failed) {
-          this.statusState = "error";
-        }
-      }
-    });
+      })
+    ).subscribe();
+  }
+
+  private buildEtlScenarioRequest(accountId: number): EtlScenarioRequest {
+    return {
+      accountId,
+      events: [
+        {event: "WAREHOUSE_DICT", dateMode: "LAST_DAYS", lastDays: 30},
+        {event: "CATEGORY_DICT", dateMode: "LAST_DAYS", lastDays: 30},
+        {event: "TARIFF_DICT", dateMode: "LAST_DAYS", lastDays: 30},
+        {event: "PRODUCT_DICT", dateMode: "LAST_DAYS", lastDays: 7},
+        {event: "SALES_FACT", dateMode: "LAST_DAYS", lastDays: 7},
+        {event: "INVENTORY_FACT", dateMode: "LAST_DAYS", lastDays: 7},
+        {event: "FACT_FINANCE", dateMode: "LAST_DAYS", lastDays: 7}
+      ]
+    };
   }
 
   private mapErrorMessage(error: ApiError): string {
@@ -211,7 +208,7 @@ export class OnboardingPageComponent implements OnDestroy {
 
   goToDashboard(): void {
     if (this.accountId != null) {
-      this.router.navigateByUrl(APP_PATHS.dashboard(this.accountId));
+      this.router.navigateByUrl(APP_PATHS.overview(this.accountId));
     }
   }
 }

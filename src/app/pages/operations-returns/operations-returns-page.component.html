@@ -1,0 +1,27 @@
+<dp-dashboard-shell
+  [accountId]="accountId"
+  title="Returns & Buyout"
+  subtitle="Возвраты, выкупы и влияние на P&L"
+>
+  <ng-container *ngIf="state$ | async as state">
+    <dp-filter-bar [fields]="filters"></dp-filter-bar>
+    <dp-metric-tile-group [tiles]="tiles" [state]="state.state"></dp-metric-tile-group>
+
+    <dp-chart-card
+      title="Trend"
+      subtitle="Динамика возвратов"
+      [state]="state.state"
+      [accountId]="accountId"
+    ></dp-chart-card>
+
+    <dp-data-table-card
+      title="Problem areas"
+      subtitle="Причины и влияние"
+      [columns]="problemColumns"
+      [rows]="[]"
+      [state]="state.state"
+      [accountId]="accountId"
+      testId="returns-problems-table"
+    ></dp-data-table-card>
+  </ng-container>
+</dp-dashboard-shell>
