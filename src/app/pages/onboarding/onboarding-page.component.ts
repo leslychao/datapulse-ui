@@ -1,4 +1,4 @@
-import {Component, OnDestroy, ViewChild} from "@angular/core";
+import {Component, OnDestroy, OnInit, ViewChild} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {Router} from "@angular/router";
 import {catchError, finalize, of, Subject, takeUntil} from "rxjs";
@@ -26,7 +26,7 @@ import {ButtonComponent} from "../../shared/ui";
   templateUrl: "./onboarding-page.component.html",
   styleUrl: "./onboarding-page.component.css"
 })
-export class OnboardingPageComponent implements OnDestroy {
+export class OnboardingPageComponent implements OnInit, OnDestroy {
   @ViewChild(AccountFormComponent) accountForm?: AccountFormComponent;
   @ViewChild(ConnectionFormComponent) connectionForm?: ConnectionFormComponent;
 
@@ -48,6 +48,10 @@ export class OnboardingPageComponent implements OnDestroy {
     private readonly accountContext: AccountContextService,
     private readonly router: Router
   ) {}
+
+  ngOnInit(): void {
+    this.accountId = this.accountContext.snapshot;
+  }
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -179,6 +183,7 @@ export class OnboardingPageComponent implements OnDestroy {
           this.loading = false;
           this.statusState = "sync";
           this.syncMessage = "ETL сценарий запущен. Обновление может занять несколько минут.";
+          this.formLocked = false;
         }
       })
     ).subscribe();
