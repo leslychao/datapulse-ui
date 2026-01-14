@@ -1,0 +1,17 @@
+<dp-dashboard-shell
+  [accountId]="accountId"
+  title="Accounts & Connections"
+  subtitle="Управление подключениями marketplace"
+>
+  <ng-container *ngIf="connections$ | async as connections">
+    <dp-data-table-card
+      title="Connections"
+      subtitle="Активные источники"
+      [columns]="columns"
+      [rows]="connections.rows"
+      [state]="connections.state"
+      [accountId]="accountId"
+      testId="settings-connections-table"
+    ></dp-data-table-card>
+  </ng-container>
+</dp-dashboard-shell>

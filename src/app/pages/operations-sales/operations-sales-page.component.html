@@ -1,0 +1,50 @@
+<dp-dashboard-shell
+  [accountId]="accountId"
+  title="Sales / Orders Monitoring"
+  subtitle="Near-real-time мониторинг операций"
+>
+  <ng-container *ngIf="state$ | async as state">
+    <div class="sales-refresh">
+      <span class="label">Last refresh</span>
+      <span class="value" *ngIf="state.state === 'READY'">—</span>
+      <span class="value muted" *ngIf="state.state !== 'READY'">Refresh unavailable</span>
+    </div>
+
+    <div class="quick-filters">
+      <button type="button" [class.is-active]="quickFilter === 'today'" (click)="setQuickFilter('today')">
+        Today
+      </button>
+      <button type="button" [class.is-active]="quickFilter === '60m'" (click)="setQuickFilter('60m')">
+        Last 60 min
+      </button>
+      <button type="button" [class.is-active]="quickFilter === '24h'" (click)="setQuickFilter('24h')">
+        Last 24h
+      </button>
+    </div>
+
+    <dp-filter-bar [fields]="filters"></dp-filter-bar>
+
+    <div class="tabs">
+      <button type="button" [class.is-active]="activeTab === 'sales'" (click)="setTab('sales')">
+        Sales
+      </button>
+      <button type="button" [class.is-active]="activeTab === 'orders'" (click)="setTab('orders')">
+        Orders
+      </button>
+      <button type="button" [class.is-active]="activeTab === 'returns'" (click)="setTab('returns')">
+        Returns
+      </button>
+    </div>
+
+    <dp-data-table-card
+      title="Live feed"
+      subtitle="Последние операции"
+      [columns]="columns"
+      [rows]="[]"
+      [state]="state.state"
+      [accountId]="accountId"
+      [compact]="true"
+      testId="sales-monitoring-table"
+    ></dp-data-table-card>
+  </ng-container>
+</dp-dashboard-shell>

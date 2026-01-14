@@ -36,6 +36,101 @@ export const appRoutes: Routes = [
               )
           },
           {
+            path: APP_ROUTE_SEGMENTS.overview,
+            loadComponent: () =>
+              import("./pages/overview/overview-page.component").then(
+                (m) => m.OverviewPageComponent
+              )
+          },
+          {
+            path: APP_ROUTE_SEGMENTS.finance,
+            children: [
+              {
+                path: APP_ROUTE_SEGMENTS.pnl,
+                loadComponent: () =>
+                  import("./pages/finance-pnl/finance-pnl-page.component").then(
+                    (m) => m.FinancePnlPageComponent
+                  )
+              },
+              {
+                path: APP_ROUTE_SEGMENTS.unitEconomics,
+                loadComponent: () =>
+                  import(
+                    "./pages/finance-unit-economics/finance-unit-economics-page.component"
+                  ).then((m) => m.FinanceUnitEconomicsPageComponent)
+              }
+            ]
+          },
+          {
+            path: APP_ROUTE_SEGMENTS.operations,
+            children: [
+              {
+                path: APP_ROUTE_SEGMENTS.inventoryDoc,
+                loadComponent: () =>
+                  import(
+                    "./pages/operations-inventory/operations-inventory-page.component"
+                  ).then((m) => m.OperationsInventoryPageComponent)
+              },
+              {
+                path: APP_ROUTE_SEGMENTS.returnsBuyout,
+                loadComponent: () =>
+                  import(
+                    "./pages/operations-returns/operations-returns-page.component"
+                  ).then((m) => m.OperationsReturnsPageComponent)
+              },
+              {
+                path: APP_ROUTE_SEGMENTS.salesMonitoring,
+                loadComponent: () =>
+                  import(
+                    "./pages/operations-sales/operations-sales-page.component"
+                  ).then((m) => m.OperationsSalesPageComponent)
+              }
+            ]
+          },
+          {
+            path: APP_ROUTE_SEGMENTS.marketing,
+            children: [
+              {
+                path: APP_ROUTE_SEGMENTS.ads,
+                loadComponent: () =>
+                  import("./pages/marketing-ads/marketing-ads-page.component").then(
+                    (m) => m.MarketingAdsPageComponent
+                  )
+              }
+            ]
+          },
+          {
+            path: APP_ROUTE_SEGMENTS.dataHealth,
+            children: [
+              {
+                path: APP_ROUTE_SEGMENTS.freshness,
+                loadComponent: () =>
+                  import("./pages/data-freshness/data-freshness-page.component").then(
+                    (m) => m.DataFreshnessPageComponent
+                  )
+              }
+            ]
+          },
+          {
+            path: APP_ROUTE_SEGMENTS.settings,
+            children: [
+              {
+                path: APP_ROUTE_SEGMENTS.connections,
+                loadComponent: () =>
+                  import(
+                    "./pages/settings-connections/settings-connections-page.component"
+                  ).then((m) => m.SettingsConnectionsPageComponent)
+              },
+              {
+                path: APP_ROUTE_SEGMENTS.users,
+                loadComponent: () =>
+                  import("./pages/settings-users/settings-users-page.component").then(
+                    (m) => m.SettingsUsersPageComponent
+                  )
+              }
+            ]
+          },
+          {
             path: APP_ROUTE_SEGMENTS.admin,
             children: [
               {

@@ -1,0 +1,16 @@
+<div class="metric-tile-group" data-testid="metric-tile-group">
+  <div
+    *ngFor="let tile of tiles"
+    [ngClass]="getTileClass(tile)"
+    [attr.data-testid]="tile.testId || 'metric-' + tile.id"
+  >
+    <div class="metric-tile__label">{{ tile.label }}</div>
+    <div class="metric-tile__value" *ngIf="isReady; else skeleton">
+      {{ tile.value }}
+    </div>
+    <ng-template #skeleton>
+      <div class="metric-tile__skeleton"></div>
+    </ng-template>
+    <div class="metric-tile__hint" *ngIf="tile.hint">{{ tile.hint }}</div>
+  </div>
+</div>

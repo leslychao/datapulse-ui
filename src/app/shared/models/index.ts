@@ -4,3 +4,4 @@ export * from "./account-member.model";
 export * from "./me.model";
 export * from "./page.model";
 export * from "./order-pnl.model";
+export * from "./data-state.model";

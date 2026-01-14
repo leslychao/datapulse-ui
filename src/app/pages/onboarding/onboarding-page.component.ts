@@ -211,7 +211,7 @@ export class OnboardingPageComponent implements OnDestroy {
 
   goToDashboard(): void {
     if (this.accountId != null) {
-      this.router.navigateByUrl(APP_PATHS.dashboard(this.accountId));
+      this.router.navigateByUrl(APP_PATHS.overview(this.accountId));
     }
   }
 }

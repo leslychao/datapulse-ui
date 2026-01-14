@@ -1,0 +1,15 @@
+<div class="filter-bar" data-testid="filter-bar">
+  <div class="filter-field" *ngFor="let field of fields" [attr.data-testid]="'filter-' + field.id">
+    <label>{{ field.label }}</label>
+    <ng-container [ngSwitch]="field.type">
+      <select *ngSwitchCase="'select'">
+        <option *ngFor="let option of field.options" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+      <input *ngSwitchCase="'date'" type="date" />
+      <input *ngSwitchCase="'search'" type="search" [placeholder]="field.placeholder" />
+      <input *ngSwitchDefault type="text" [placeholder]="field.placeholder" />
+    </ng-container>
+  </div>
+</div>
