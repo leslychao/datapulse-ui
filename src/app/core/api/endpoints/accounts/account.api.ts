@@ -8,7 +8,7 @@ export class AccountApi {
   constructor(private readonly api: ApiClient) {}
 
   list(): Observable<AccountSummary[]> {
-    return this.api.get<AccountSummary[]>("/api/accounts");
+    return this.api.get<AccountSummary[]>("/api/iam/accounts");
   }
 
   create(request: AccountCreateRequest): Observable<AccountSummary> {
