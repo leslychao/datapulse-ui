@@ -15,8 +15,9 @@
 
 .stepper {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
   margin-bottom: 20px;
 }
 
@@ -24,7 +25,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  width: 100%;
+  flex: 1 1 220px;
   text-align: left;
   border: 1px solid #e1e5ea;
   background: #fff;
@@ -123,6 +124,14 @@
 
 /* mobile: в колонку, ровно как в codex */
 @media (max-width: 640px) {
+  .stepper {
+    flex-direction: column;
+  }
+
+  .stepper__item {
+    width: 100%;
+  }
+
   .form-actions {
     flex-direction: column;
     align-items: flex-start;
