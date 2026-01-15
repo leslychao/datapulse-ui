@@ -1,7 +1,7 @@
 import {Component, DestroyRef, OnInit, ViewChild, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {Router} from "@angular/router";
-import {catchError, filter, finalize, of, switchMap, take, tap, timer} from "rxjs";
+import {catchError, filter, finalize, map, of, switchMap, take, tap, timer} from "rxjs";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountFormComponent} from "../../features/accounts";
@@ -116,7 +116,7 @@ export class OnboardingPageComponent implements OnInit {
 
           this.accountId = lastSelectedAccountId;
           this.loadAccountName(lastSelectedAccountId);
-          this.loadConnections(lastSelectedAccountId);
+          this.loadConnections(lastSelectedAccountId, true);
         }),
         catchError((error: ApiError) => {
           this.handleApiError(error, "Не удалось загрузить аккаунты.");
@@ -168,6 +168,9 @@ export class OnboardingPageComponent implements OnInit {
     }
     this.currentStep = index;
     this.resetErrors();
+    if (index > 0) {
+      this.ensureConnectionState();
+    }
     if (index === 0 && this.accountId != null && this.accountName == null) {
       this.loadAccountName(this.accountId);
     }
@@ -262,22 +265,28 @@ export class OnboardingPageComponent implements OnInit {
       this.setStatusState("error", "Создайте аккаунт, чтобы запустить синхронизацию.");
       return;
     }
-    if (this.connectionId == null) {
-      this.setStatusState("error", "Сначала создайте подключение.");
-      return;
-    }
     this.resetErrors();
     this.setStatusState(
       "processing",
       "Синхронизация запущена",
       "Идёт первичная синхронизация. Это может занять несколько минут."
     );
-    this.connectionApi
-      .sync(this.connectionId)
+    this.ensureConnectionId()
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        switchMap(() => this.pollSyncStatus(this.connectionId!)),
+        switchMap((connectionId) => {
+          if (connectionId == null) {
+            this.setStatusState("error", "Сначала создайте подключение.");
+            return of(null);
+          }
+          return this.connectionApi
+            .sync(connectionId)
+            .pipe(switchMap(() => this.pollSyncStatus(connectionId)));
+        }),
         tap((status) => {
+          if (!status) {
+            return;
+          }
           if (status.status === AccountConnectionSyncStatusType.Failed) {
             const message = status.message || "Синхронизация завершилась ошибкой.";
             this.setStatusState("error", message);
@@ -345,7 +354,7 @@ export class OnboardingPageComponent implements OnInit {
       .subscribe();
   }
 
-  private loadConnections(accountId: number): void {
+  private loadConnections(accountId: number, allowAutoAdvance: boolean): void {
     this.connectionApi
       .list(accountId)
       .pipe(
@@ -354,10 +363,40 @@ export class OnboardingPageComponent implements OnInit {
         tap((connections) => {
           const selectedConnection = this.pickConnection(connections);
           this.connectionId = selectedConnection?.id ?? null;
-          this.currentStep = this.maxAvailableStep();
+          if (allowAutoAdvance) {
+            const nextStep = this.maxAvailableStep();
+            if (nextStep > this.currentStep) {
+              this.currentStep = nextStep;
+            }
+          }
         })
       )
       .subscribe();
+  }
+
+  private ensureConnectionState(): void {
+    if (this.accountId == null) {
+      return;
+    }
+    this.loadConnections(this.accountId, false);
+  }
+
+  private ensureConnectionId() {
+    if (this.connectionId != null) {
+      return of(this.connectionId);
+    }
+    if (this.accountId == null) {
+      return of(null);
+    }
+    return this.connectionApi.list(this.accountId).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError(() => of([])),
+      tap((connections) => {
+        const selectedConnection = this.pickConnection(connections);
+        this.connectionId = selectedConnection?.id ?? null;
+      }),
+      map(() => this.connectionId)
+    );
   }
 
   private pickConnection(connections: AccountConnection[]): AccountConnection | null {
