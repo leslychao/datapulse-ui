@@ -240,7 +240,7 @@ export class OnboardingPageComponent implements OnInit {
 
   private handleApiError(error: ApiError, fallbackMessage: string): void {
     this.error = error;
-    this.setStatusState("error", fallbackMessage);
+    this.setStatusState("error", error.message || fallbackMessage);
   }
 
   private resetErrors(): void {
@@ -252,9 +252,6 @@ export class OnboardingPageComponent implements OnInit {
   }
 
   private mapErrorMessage(error: ApiError): string {
-    if (error.status >= 500 || error.status === 0) {
-      return "Сервис временно недоступен. Попробуйте позже.";
-    }
-    return "Не удалось подключиться. Проверьте токен и попробуйте снова.";
+    return error.message;
   }
 }
