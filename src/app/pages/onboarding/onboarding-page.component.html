@@ -4,6 +4,25 @@
     <p class="muted">Добавьте аккаунт и подключите маркетплейс, чтобы начать сбор данных.</p>
   </header>
 
+  <div class="stepper" role="list">
+    <button
+      type="button"
+      class="stepper__item"
+      role="listitem"
+      *ngFor="let step of steps; let i = index"
+      [class.is-complete]="i < currentStep"
+      [class.is-current]="i === currentStep"
+      [disabled]="!canNavigateToStep(i)"
+      (click)="goToStep(i)"
+    >
+      <span class="stepper__index">{{ i + 1 }}</span>
+      <span class="stepper__content">
+        <span class="stepper__label">{{ step.label }}</span>
+        <span class="stepper__description">{{ step.description }}</span>
+      </span>
+    </button>
+  </div>
+
   <div
     class="status-line"
     [class.is-active]="isStatusActive"
@@ -17,26 +36,71 @@
   </div>
 
   <div class="card form-card">
-    <dp-account-form [disabled]="formLocked"></dp-account-form>
+    <ng-container [ngSwitch]="currentStep">
+      <ng-container *ngSwitchCase="0">
+        <dp-account-form [disabled]="formLocked || accountId != null"></dp-account-form>
+        <div class="form-actions">
+          <div class="form-actions__group">
+            <dp-button
+              type="button"
+              variant="primary"
+              (click)="createAccount()"
+              [disabled]="!canCreateAccount"
+            >
+              {{ accountId != null ? "Аккаунт создан" : isProcessing ? "Создаем..." : "Создать аккаунт" }}
+            </dp-button>
+          </div>
+        </div>
+      </ng-container>
 
-    <dp-connection-form
-      class="connection-block"
-      [accountId]="accountId ?? 0"
-      [disabled]="formLocked"
-      [errorMessage]="tokenErrorMessage"
-    ></dp-connection-form>
+      <ng-container *ngSwitchCase="1">
+        <dp-connection-form
+          *ngIf="accountId != null"
+          class="connection-block"
+          [accountId]="accountId"
+          [disabled]="formLocked"
+          [errorMessage]="tokenErrorMessage"
+        ></dp-connection-form>
+        <div class="form-actions">
+          <div class="form-actions__group">
+            <dp-button type="button" variant="secondary" (click)="goToStep(0)" [disabled]="isProcessing">
+              Назад
+            </dp-button>
+            <dp-button
+              type="button"
+              variant="primary"
+              (click)="createConnection()"
+              [disabled]="!canCreateConnection"
+            >
+              {{ connectionId != null ? "Подключение создано" : isProcessing ? "Создаем..." : "Создать подключение" }}
+            </dp-button>
+          </div>
+        </div>
+      </ng-container>
 
-    <div class="form-actions">
-      <div class="form-actions__group">
-        <dp-button
-          type="button"
-          variant="primary"
-          (click)="startOnboarding()"
-          [disabled]="isProcessing"
-        >
-          {{ isProcessing ? "Подключаем..." : "Начать" }}
-        </dp-button>
-      </div>
-    </div>
+      <ng-container *ngSwitchCase="2">
+        <div class="sync-card">
+          <h2>Запуск синхронизации</h2>
+          <p class="muted">
+            Запустите первую синхронизацию, чтобы данные начали поступать в отчёты.
+          </p>
+        </div>
+        <div class="form-actions">
+          <div class="form-actions__group">
+            <dp-button type="button" variant="secondary" (click)="goToStep(1)" [disabled]="isProcessing">
+              Назад
+            </dp-button>
+            <dp-button
+              type="button"
+              variant="primary"
+              (click)="startSync()"
+              [disabled]="!canStartSync"
+            >
+              {{ isProcessing ? "Запускаем..." : "Начать" }}
+            </dp-button>
+          </div>
+        </div>
+      </ng-container>
+    </ng-container>
   </div>
 </div>

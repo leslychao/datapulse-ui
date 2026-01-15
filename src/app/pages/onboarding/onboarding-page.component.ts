@@ -1,15 +1,24 @@
-import {Component, OnDestroy, OnInit, ViewChild} from "@angular/core";
+import {Component, DestroyRef, OnInit, ViewChild, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {Router} from "@angular/router";
-import {catchError, EMPTY, exhaustMap, finalize, map, of, Subject, switchMap, takeUntil, tap, throwError} from "rxjs";
+import {catchError, finalize, of, tap} from "rxjs";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountFormComponent} from "../../features/accounts";
 import {ConnectionFormComponent} from "../../features/connections";
 import {AccountApi, AccountConnectionApi, ApiError, EtlScenarioApi} from "../../core/api";
-import {AccountCreateRequest, EtlScenarioRequest} from "../../shared/models";
+import {EtlScenarioRequest} from "../../shared/models";
 import {AccountContextService} from "../../core/state";
 import {APP_PATHS} from "../../core/app-paths";
 import {ButtonComponent} from "../../shared/ui";
+
+interface OnboardingStep {
+  id: "account" | "connection" | "sync";
+  label: string;
+  description: string;
+}
+
+type StatusState = "idle" | "processing" | "success" | "error";
 
 @Component({
   selector: "dp-onboarding-page",
@@ -23,23 +32,42 @@ import {ButtonComponent} from "../../shared/ui";
   templateUrl: "./onboarding-page.component.html",
   styleUrl: "./onboarding-page.component.css"
 })
-export class OnboardingPageComponent implements OnInit, OnDestroy {
+export class OnboardingPageComponent implements OnInit {
   @ViewChild(AccountFormComponent) accountForm?: AccountFormComponent;
   @ViewChild(ConnectionFormComponent) connectionForm?: ConnectionFormComponent;
 
+  readonly steps: OnboardingStep[] = [
+    {
+      id: "account",
+      label: "Аккаунт",
+      description: "Создайте рабочую область для подключения данных."
+    },
+    {
+      id: "connection",
+      label: "Подключение",
+      description: "Подключите маркетплейс к созданному аккаунту."
+    },
+    {
+      id: "sync",
+      label: "Синхронизация",
+      description: "Запустите первую синхронизацию данных."
+    }
+  ];
+
+  currentStep = 0;
   accountId: number | null = null;
   connectionId: number | null = null;
   error: ApiError | null = null;
   tokenErrorMessage: string | null = null;
-  statusState: "idle" | "submitting" | "syncing" | "success" | "error" = "idle";
+
+  statusState: StatusState = "idle";
   statusText = "Онбординг · не завершён";
   statusHint: string | null = null;
   isStatusActive = false;
   isProcessing = false;
   formLocked = false;
 
-  private readonly start$ = new Subject<void>();
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor(
     private readonly accountApi: AccountApi,
@@ -51,18 +79,135 @@ export class OnboardingPageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.accountId = this.accountContext.snapshot;
-    this.start$
-      .pipe(exhaustMap(() => this.runOnboarding()), takeUntil(this.destroy$))
+    if (this.accountId != null) {
+      this.currentStep = 1;
+    }
+  }
+
+  get canCreateAccount(): boolean {
+    return this.accountId == null && !this.isProcessing;
+  }
+
+  get canCreateConnection(): boolean {
+    return this.accountId != null && this.connectionId == null && !this.isProcessing;
+  }
+
+  get canStartSync(): boolean {
+    return this.accountId != null && this.connectionId != null && !this.isProcessing;
+  }
+
+  maxAvailableStep(): number {
+    if (this.connectionId != null) {
+      return 2;
+    }
+    if (this.accountId != null) {
+      return 1;
+    }
+    return 0;
+  }
+
+  canNavigateToStep(index: number): boolean {
+    return index <= this.maxAvailableStep() && !this.isProcessing;
+  }
+
+  goToStep(index: number): void {
+    if (!this.canNavigateToStep(index)) {
+      return;
+    }
+    this.currentStep = index;
+    this.resetErrors();
+  }
+
+  createAccount(): void {
+    if (!this.canCreateAccount) {
+      return;
+    }
+    this.resetErrors();
+    const accountRequest = this.accountForm?.getRequest();
+    if (!accountRequest) {
+      this.setStatusState("error", "Заполните название аккаунта.");
+      return;
+    }
+    this.setStatusState("processing", "Создаем аккаунт...");
+    this.accountApi
+      .create(accountRequest)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        tap((account) => {
+          this.accountId = account.id;
+          this.accountContext.setAccountId(account.id);
+          this.currentStep = 1;
+          this.setStatusState("success", "Аккаунт создан.");
+        }),
+        catchError((error: ApiError) => {
+          this.handleApiError(error, "Не удалось создать аккаунт.");
+          return of(null);
+        }),
+        finalize(() => this.setProcessing(false))
+      )
       .subscribe();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+  createConnection(): void {
+    if (!this.canCreateConnection) {
+      return;
+    }
+    this.resetErrors();
+    if (this.accountId == null) {
+      this.setStatusState("error", "Сначала создайте аккаунт.");
+      return;
+    }
+    const request = this.connectionForm?.getRequest(this.accountId);
+    if (!request) {
+      this.setStatusState("error", "Заполните данные подключения.");
+      return;
+    }
+    this.setStatusState("processing", "Создаем подключение...");
+    this.connectionApi
+      .create(request)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        tap((connection) => {
+          this.connectionId = connection.id;
+          this.currentStep = 2;
+          this.setStatusState("success", "Подключение создано.");
+        }),
+        catchError((error: ApiError) => {
+          this.tokenErrorMessage = this.mapErrorMessage(error);
+          this.handleApiError(error, "Не удалось создать подключение.");
+          return of(null);
+        }),
+        finalize(() => this.setProcessing(false))
+      )
+      .subscribe();
   }
 
-  startOnboarding(): void {
-    this.start$.next();
+  startSync(): void {
+    if (!this.canStartSync || this.accountId == null) {
+      return;
+    }
+    this.resetErrors();
+    this.setStatusState(
+      "processing",
+      "Синхронизация запущена",
+      "ETL сценарий запущен. Обновление может занять несколько минут."
+    );
+    this.etlScenarioApi
+      .run(this.buildEtlScenarioRequest(this.accountId))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        tap(() => {
+          this.setStatusState("success", "Данные отправлены в обработку.");
+          this.accountContext.setAccountId(this.accountId!);
+          this.router.navigateByUrl(APP_PATHS.overview(this.accountId!), {replaceUrl: true});
+        }),
+        catchError((error: ApiError) => {
+          this.handleApiError(error, "Не удалось запустить синхронизацию.");
+          return of(null);
+        }),
+        finalize(() => this.setProcessing(false))
+      )
+      .subscribe();
   }
 
   private buildEtlScenarioRequest(accountId: number): EtlScenarioRequest {
@@ -80,131 +225,29 @@ export class OnboardingPageComponent implements OnInit, OnDestroy {
     };
   }
 
-  private runOnboarding() {
-    this.resetErrors();
-    const validationResult = this.validateForms();
-    if (!validationResult) {
-      return EMPTY;
-    }
-
-    this.setStatusState("submitting");
-
-    const accountId$ = this.accountId
-      ? of(this.accountId)
-      : this.accountApi.create(validationResult.accountRequest!).pipe(
-        tap((account) => {
-          this.accountId = account.id;
-          this.accountContext.setAccountId(account.id);
-        }),
-        map((account) => account.id)
-      );
-
-    return accountId$.pipe(
-      switchMap((accountId) => this.createConnection(accountId)),
-      switchMap((accountId) => this.startSync(accountId)),
-      tap((accountId) => {
-        this.setStatusState("success");
-        this.router.navigateByUrl(APP_PATHS.overview(accountId));
-      }),
-      catchError((error: ApiError) => {
-        this.handleApiError(error);
-        return EMPTY;
-      }),
-      finalize(() => {
-        this.isProcessing = false;
-        this.formLocked = false;
-      })
-    );
-  }
-
-  private createConnection(accountId: number) {
-    const request = this.connectionForm?.getRequest(accountId);
-    if (!request) {
-      return this.validationError("Заполните данные подключения.");
-    }
-
-    return this.connectionApi.create(request).pipe(
-      tap((connection) => {
-        this.connectionId = connection.id;
-      }),
-      map(() => accountId),
-      catchError((error: ApiError) => {
-        this.tokenErrorMessage = this.mapErrorMessage(error);
-        return throwError(() => error);
-      })
-    );
-  }
-
-  private startSync(accountId: number) {
-    this.setStatusState("syncing", "ETL сценарий запущен. Обновление может занять несколько минут.");
-    return this.etlScenarioApi.run(this.buildEtlScenarioRequest(accountId)).pipe(map(() => accountId));
-  }
-
-  private setStatusState(state: "idle" | "submitting" | "syncing" | "success" | "error", hint: string | null = null) {
+  private setStatusState(state: StatusState, text: string, hint: string | null = null): void {
     this.statusState = state;
-    this.statusText = this.resolveStatusText(state);
+    this.statusText = text;
     this.statusHint = hint;
     this.isStatusActive = state !== "idle";
-    this.isProcessing = state === "submitting" || state === "syncing";
-    this.formLocked = this.isProcessing;
+    this.setProcessing(state === "processing");
   }
 
-  private resolveStatusText(state: "idle" | "submitting" | "syncing" | "success" | "error") {
-    switch (state) {
-      case "submitting":
-        return "Подключаем...";
-      case "syncing":
-        return "Синхронизация запущена";
-      case "success":
-        return "Готово";
-      case "error":
-        return "Ошибка подключения";
-      default:
-        return "Онбординг · не завершён";
-    }
+  private setProcessing(isProcessing: boolean): void {
+    this.isProcessing = isProcessing;
+    this.formLocked = isProcessing;
   }
 
-  private validateForms(): {accountRequest?: AccountCreateRequest} | null {
-    if (!this.accountId) {
-      const accountRequest = this.accountForm?.getRequest();
-      if (!accountRequest) {
-        this.validationError("Заполните название аккаунта.");
-        return null;
-      }
-      const connectionRequest = this.connectionForm?.getRequest(0);
-      if (!connectionRequest) {
-        this.validationError("Заполните данные подключения.");
-        return null;
-      }
-      return {accountRequest};
-    }
-
-    const connectionRequest = this.connectionForm?.getRequest(this.accountId);
-    if (!connectionRequest) {
-      this.validationError("Заполните данные подключения.");
-      return null;
-    }
-
-    return {};
-  }
-
-  private validationError(message: string) {
-    this.setStatusState("error", message);
-    this.isProcessing = false;
-    this.formLocked = false;
-    return EMPTY;
-  }
-
-  private handleApiError(error: ApiError) {
+  private handleApiError(error: ApiError, fallbackMessage: string): void {
     this.error = error;
-    this.setStatusState("error", this.mapErrorMessage(error));
+    this.setStatusState("error", fallbackMessage);
   }
 
-  private resetErrors() {
+  private resetErrors(): void {
     this.error = null;
     this.tokenErrorMessage = null;
     if (this.statusState === "error") {
-      this.setStatusState("idle");
+      this.setStatusState("idle", "Онбординг · не завершён");
     }
   }
 
