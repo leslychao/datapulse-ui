@@ -28,16 +28,28 @@
     ></dp-connection-form>
 
     <div class="form-actions">
-      <dp-button type="button" variant="primary" (click)="startOnboarding()" [disabled]="formLocked">
-        Начать
-      </dp-button>
+      <div class="form-actions__group">
+        <dp-button type="button" variant="primary" (click)="startOnboarding()" [disabled]="formLocked">
+          Начать
+        </dp-button>
+        <dp-button
+          *ngIf="accountId && connectionId"
+          type="button"
+          (click)="startSync()"
+          [disabled]="loading"
+        >
+          Синхронизировать
+        </dp-button>
+      </div>
       <dp-button
         *ngIf="accountId && connectionId"
+        class="form-actions__link"
         type="button"
-        (click)="startSync()"
+        variant="link"
+        (click)="goToDashboard()"
         [disabled]="loading"
       >
-        Синхронизировать
+        Перейти в кабинет
       </dp-button>
       <dp-button
         *ngIf="accountId && connectionId"
