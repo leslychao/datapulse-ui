@@ -1,15 +1,12 @@
 import {Component, OnDestroy, OnInit, ViewChild} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {Router} from "@angular/router";
-import {catchError, finalize, of, Subject, takeUntil} from "rxjs";
+import {catchError, EMPTY, exhaustMap, finalize, map, of, Subject, switchMap, takeUntil, tap, throwError} from "rxjs";
 
 import {AccountFormComponent} from "../../features/accounts";
 import {ConnectionFormComponent} from "../../features/connections";
 import {AccountApi, AccountConnectionApi, ApiError, EtlScenarioApi} from "../../core/api";
 import {AccountCreateRequest, EtlScenarioRequest} from "../../shared/models";
-import {
-  AccountConnectionCreateRequest
-} from "../../shared/models";
 import {AccountContextService} from "../../core/state";
 import {APP_PATHS} from "../../core/app-paths";
 import {ButtonComponent} from "../../shared/ui";
@@ -34,11 +31,14 @@ export class OnboardingPageComponent implements OnInit, OnDestroy {
   connectionId: number | null = null;
   error: ApiError | null = null;
   tokenErrorMessage: string | null = null;
-  statusState: "idle" | "sync" | "loading" | "ready" | "error" = "idle";
-  loading = false;
+  statusState: "idle" | "submitting" | "syncing" | "success" | "error" = "idle";
+  statusText = "Онбординг · не завершён";
+  statusHint: string | null = null;
+  isStatusActive = false;
+  isProcessing = false;
   formLocked = false;
-  syncMessage: string | null = null;
 
+  private readonly start$ = new Subject<void>();
   private readonly destroy$ = new Subject<void>();
 
   constructor(
@@ -51,6 +51,9 @@ export class OnboardingPageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.accountId = this.accountContext.snapshot;
+    this.start$
+      .pipe(exhaustMap(() => this.runOnboarding()), takeUntil(this.destroy$))
+      .subscribe();
   }
 
   ngOnDestroy(): void {
@@ -58,135 +61,8 @@ export class OnboardingPageComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  get statusText(): string {
-    if (this.statusState === "error") {
-      return "Ошибка подключения";
-    }
-    if (this.statusState === "ready") {
-      return "Готово";
-    }
-    if (this.statusState === "loading") {
-      return "Данные загружаются";
-    }
-    if (this.statusState === "sync") {
-      return "Синхронизация запущена";
-    }
-    return "Онбординг · не завершён";
-  }
-
-  get statusHint(): string | null {
-    if (this.statusState === "error" && this.error) {
-      return this.mapErrorMessage(this.error);
-    }
-    if (this.syncMessage) {
-      return this.syncMessage;
-    }
-    return null;
-  }
-
-  get isStatusActive(): boolean {
-    return this.statusState !== "idle";
-  }
-
   startOnboarding(): void {
-    if (this.loading) {
-      return;
-    }
-    this.error = null;
-    this.tokenErrorMessage = null;
-
-    if (!this.accountId) {
-      const accountRequest = this.accountForm?.getRequest();
-      if (!accountRequest) {
-        return;
-      }
-      this.formLocked = true;
-      this.statusState = "sync";
-      this.createAccount(accountRequest);
-      return;
-    }
-
-    if (!this.connectionId) {
-      this.formLocked = true;
-      this.statusState = "sync";
-      this.submitConnection();
-    }
-  }
-
-  createAccount(request: AccountCreateRequest): void {
-    this.loading = true;
-    this.accountApi.create(request).subscribe({
-      next: (account) => {
-        this.loading = false;
-        this.accountId = account.id;
-        this.accountContext.setAccountId(account.id);
-        this.submitConnection();
-      },
-      error: (error: ApiError) => {
-        this.loading = false;
-        this.error = error;
-        this.statusState = "error";
-        this.formLocked = false;
-      }
-    });
-  }
-
-  submitConnection(): void {
-    if (!this.accountId) {
-      return;
-    }
-    const request = this.connectionForm?.getRequest(this.accountId);
-    if (!request) {
-      this.formLocked = false;
-      this.statusState = "idle";
-      return;
-    }
-    this.createConnection(request);
-  }
-
-  createConnection(request: AccountConnectionCreateRequest): void {
-    this.loading = true;
-    this.connectionApi.create(request).subscribe({
-      next: (connection) => {
-        this.loading = false;
-        this.connectionId = connection.id;
-        this.statusState = "sync";
-        this.startSync();
-      },
-      error: (error: ApiError) => {
-        this.loading = false;
-        this.error = error;
-        this.statusState = "error";
-        this.formLocked = false;
-        this.tokenErrorMessage = this.mapErrorMessage(error);
-      }
-    });
-  }
-
-  startSync(): void {
-    if (!this.accountId) {
-      return;
-    }
-    this.loading = true;
-    this.statusState = "loading";
-    this.etlScenarioApi.run(this.buildEtlScenarioRequest(this.accountId)).pipe(
-      takeUntil(this.destroy$),
-      catchError((error: ApiError) => {
-        this.loading = false;
-        this.error = error;
-        this.statusState = "error";
-        this.formLocked = false;
-        return of(null);
-      }),
-      finalize(() => {
-        if (this.statusState !== "error") {
-          this.loading = false;
-          this.statusState = "sync";
-          this.syncMessage = "ETL сценарий запущен. Обновление может занять несколько минут.";
-          this.formLocked = false;
-        }
-      })
-    ).subscribe();
+    this.start$.next();
   }
 
   private buildEtlScenarioRequest(accountId: number): EtlScenarioRequest {
@@ -204,16 +80,138 @@ export class OnboardingPageComponent implements OnInit, OnDestroy {
     };
   }
 
+  private runOnboarding() {
+    this.resetErrors();
+    const validationResult = this.validateForms();
+    if (!validationResult) {
+      return EMPTY;
+    }
+
+    this.setStatusState("submitting");
+
+    const accountId$ = this.accountId
+      ? of(this.accountId)
+      : this.accountApi.create(validationResult.accountRequest!).pipe(
+        tap((account) => {
+          this.accountId = account.id;
+          this.accountContext.setAccountId(account.id);
+        }),
+        map((account) => account.id)
+      );
+
+    return accountId$.pipe(
+      switchMap((accountId) => this.createConnection(accountId)),
+      switchMap((accountId) => this.startSync(accountId)),
+      tap((accountId) => {
+        this.setStatusState("success");
+        this.router.navigateByUrl(APP_PATHS.overview(accountId));
+      }),
+      catchError((error: ApiError) => {
+        this.handleApiError(error);
+        return EMPTY;
+      }),
+      finalize(() => {
+        this.isProcessing = false;
+        this.formLocked = false;
+      })
+    );
+  }
+
+  private createConnection(accountId: number) {
+    const request = this.connectionForm?.getRequest(accountId);
+    if (!request) {
+      return this.validationError("Заполните данные подключения.");
+    }
+
+    return this.connectionApi.create(request).pipe(
+      tap((connection) => {
+        this.connectionId = connection.id;
+      }),
+      map(() => accountId),
+      catchError((error: ApiError) => {
+        this.tokenErrorMessage = this.mapErrorMessage(error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  private startSync(accountId: number) {
+    this.setStatusState("syncing", "ETL сценарий запущен. Обновление может занять несколько минут.");
+    return this.etlScenarioApi.run(this.buildEtlScenarioRequest(accountId)).pipe(map(() => accountId));
+  }
+
+  private setStatusState(state: "idle" | "submitting" | "syncing" | "success" | "error", hint: string | null = null) {
+    this.statusState = state;
+    this.statusText = this.resolveStatusText(state);
+    this.statusHint = hint;
+    this.isStatusActive = state !== "idle";
+    this.isProcessing = state === "submitting" || state === "syncing";
+    this.formLocked = this.isProcessing;
+  }
+
+  private resolveStatusText(state: "idle" | "submitting" | "syncing" | "success" | "error") {
+    switch (state) {
+      case "submitting":
+        return "Подключаем...";
+      case "syncing":
+        return "Синхронизация запущена";
+      case "success":
+        return "Готово";
+      case "error":
+        return "Ошибка подключения";
+      default:
+        return "Онбординг · не завершён";
+    }
+  }
+
+  private validateForms(): {accountRequest?: AccountCreateRequest} | null {
+    if (!this.accountId) {
+      const accountRequest = this.accountForm?.getRequest();
+      if (!accountRequest) {
+        this.validationError("Заполните название аккаунта.");
+        return null;
+      }
+      const connectionRequest = this.connectionForm?.getRequest(0);
+      if (!connectionRequest) {
+        this.validationError("Заполните данные подключения.");
+        return null;
+      }
+      return {accountRequest};
+    }
+
+    const connectionRequest = this.connectionForm?.getRequest(this.accountId);
+    if (!connectionRequest) {
+      this.validationError("Заполните данные подключения.");
+      return null;
+    }
+
+    return {};
+  }
+
+  private validationError(message: string) {
+    this.setStatusState("error", message);
+    this.isProcessing = false;
+    this.formLocked = false;
+    return EMPTY;
+  }
+
+  private handleApiError(error: ApiError) {
+    this.error = error;
+    this.setStatusState("error", this.mapErrorMessage(error));
+  }
+
+  private resetErrors() {
+    this.error = null;
+    this.tokenErrorMessage = null;
+    if (this.statusState === "error") {
+      this.setStatusState("idle");
+    }
+  }
+
   private mapErrorMessage(error: ApiError): string {
     if (error.status >= 500 || error.status === 0) {
       return "Сервис временно недоступен. Попробуйте позже.";
     }
     return "Не удалось подключиться. Проверьте токен и попробуйте снова.";
-  }
-
-  goToDashboard(): void {
-    if (this.accountId != null) {
-      this.router.navigateByUrl(APP_PATHS.overview(this.accountId));
-    }
   }
 }

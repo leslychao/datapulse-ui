@@ -12,4 +12,8 @@ import {AccountSummary} from "../../shared/models";
 export class AccountSelectListComponent {
   @Input() accounts: readonly AccountSummary[] = [];
   @Output() selectAccount = new EventEmitter<AccountSummary>();
+
+  trackByAccountId(index: number, account: AccountSummary): number {
+    return account.id;
+  }
 }
