@@ -10,7 +10,7 @@
       class="stepper__item"
       role="listitem"
       *ngFor="let step of steps; let i = index"
-      [class.is-complete]="i < currentStep"
+      [class.is-complete]="isStepComplete(i)"
       [class.is-current]="i === currentStep"
       [disabled]="!canNavigateToStep(i)"
       (click)="goToStep(i)"
