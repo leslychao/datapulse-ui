@@ -38,16 +38,24 @@
   <div class="card form-card">
     <ng-container [ngSwitch]="currentStep">
       <ng-container *ngSwitchCase="0">
-        <dp-account-form [disabled]="formLocked || accountId != null"></dp-account-form>
+        <dp-account-form [disabled]="formLocked" [accountName]="accountName"></dp-account-form>
         <div class="form-actions">
           <div class="form-actions__group">
             <dp-button
               type="button"
               variant="primary"
-              (click)="createAccount()"
-              [disabled]="!canCreateAccount"
+              (click)="saveAccount()"
+              [disabled]="!canSaveAccount"
             >
-              {{ accountId != null ? "Аккаунт создан" : isProcessing ? "Создаем..." : "Создать аккаунт" }}
+              {{
+                accountId != null
+                  ? isProcessing
+                    ? "Сохраняем..."
+                    : "Сохранить аккаунт"
+                  : isProcessing
+                    ? "Создаем..."
+                    : "Создать аккаунт"
+              }}
             </dp-button>
           </div>
         </div>

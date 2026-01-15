@@ -17,6 +17,7 @@ type AccountFormGroup = FormGroup<{
 })
 export class AccountFormComponent implements OnChanges {
   @Input() disabled = false;
+  @Input() accountName: string | null = null;
   @Output() submitForm = new EventEmitter<AccountCreateRequest>();
 
   readonly form: AccountFormGroup;
@@ -34,6 +35,9 @@ export class AccountFormComponent implements OnChanges {
       } else {
         this.form.enable();
       }
+    }
+    if (changes["accountName"] && this.accountName != null) {
+      this.form.patchValue({name: this.accountName}, {emitEvent: false});
     }
   }
 

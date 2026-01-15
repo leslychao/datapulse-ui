@@ -56,6 +56,7 @@ export class OnboardingPageComponent implements OnInit {
 
   currentStep = 0;
   accountId: number | null = null;
+  accountName: string | null = null;
   connectionId: number | null = null;
   error: ApiError | null = null;
   tokenErrorMessage: string | null = null;
@@ -81,11 +82,12 @@ export class OnboardingPageComponent implements OnInit {
     this.accountId = this.accountContext.snapshot;
     if (this.accountId != null) {
       this.currentStep = 1;
+      this.loadAccountName(this.accountId);
     }
   }
 
-  get canCreateAccount(): boolean {
-    return this.accountId == null && !this.isProcessing;
+  get canSaveAccount(): boolean {
+    return !this.isProcessing;
   }
 
   get canCreateConnection(): boolean {
@@ -116,10 +118,13 @@ export class OnboardingPageComponent implements OnInit {
     }
     this.currentStep = index;
     this.resetErrors();
+    if (index === 0 && this.accountId != null && this.accountName == null) {
+      this.loadAccountName(this.accountId);
+    }
   }
 
-  createAccount(): void {
-    if (!this.canCreateAccount) {
+  saveAccount(): void {
+    if (!this.canSaveAccount) {
       return;
     }
     this.resetErrors();
@@ -128,19 +133,39 @@ export class OnboardingPageComponent implements OnInit {
       this.setStatusState("error", "Заполните название аккаунта.");
       return;
     }
-    this.setStatusState("processing", "Создаем аккаунт...");
+    if (this.accountId == null) {
+      this.setStatusState("processing", "Создаем аккаунт...");
+      this.accountApi
+        .create(accountRequest)
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          tap((account) => {
+            this.accountId = account.id;
+            this.accountName = account.name;
+            this.accountContext.setAccountId(account.id);
+            this.currentStep = 1;
+            this.setStatusState("success", "Аккаунт создан.");
+          }),
+          catchError((error: ApiError) => {
+            this.handleApiError(error, "Не удалось создать аккаунт.");
+            return of(null);
+          }),
+          finalize(() => this.setProcessing(false))
+        )
+        .subscribe();
+      return;
+    }
+    this.setStatusState("processing", "Обновляем аккаунт...");
     this.accountApi
-      .create(accountRequest)
+      .update(this.accountId, accountRequest)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         tap((account) => {
-          this.accountId = account.id;
-          this.accountContext.setAccountId(account.id);
-          this.currentStep = 1;
-          this.setStatusState("success", "Аккаунт создан.");
+          this.accountName = account.name;
+          this.setStatusState("success", "Аккаунт обновлен.");
         }),
         catchError((error: ApiError) => {
-          this.handleApiError(error, "Не удалось создать аккаунт.");
+          this.handleApiError(error, "Не удалось обновить аккаунт.");
           return of(null);
         }),
         finalize(() => this.setProcessing(false))
@@ -253,5 +278,23 @@ export class OnboardingPageComponent implements OnInit {
 
   private mapErrorMessage(error: ApiError): string {
     return error.message;
+  }
+
+  private loadAccountName(accountId: number): void {
+    this.accountApi
+      .list()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        tap((accounts) => {
+          const account = accounts.find((item) => item.id === accountId);
+          if (account) {
+            this.accountName = account.name;
+          }
+        }),
+        catchError(() => {
+          return of([]);
+        })
+      )
+      .subscribe();
   }
 }

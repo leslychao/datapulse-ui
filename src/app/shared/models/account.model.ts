@@ -10,3 +10,8 @@ export interface AccountCreateRequest {
   name: string;
   active: boolean;
 }
+
+export interface AccountUpdateRequest {
+  name: string;
+  active: boolean;
+}
