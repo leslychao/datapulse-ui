@@ -1,7 +1,6 @@
 import {Component, Input} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {RouterModule} from "@angular/router";
-
 import {APP_PATHS} from "../../../core/app-paths";
 
 interface SidebarItem {
@@ -23,12 +22,36 @@ interface SidebarSection {
   styleUrl: "./dashboard-shell.component.css"
 })
 export class DashboardShellComponent {
-  @Input() accountId: number | null = null;
+  private cachedAccountId: number | null = null;
+  private cachedSections: SidebarSection[] = this.buildSections(null);
+
   @Input() title = "";
   @Input() subtitle = "";
 
+  private _accountId: number | null = null;
+
+  @Input()
+  set accountId(value: number | null) {
+    this._accountId = value;
+    if (this.cachedAccountId !== value) {
+      this.cachedAccountId = value;
+      this.cachedSections = this.buildSections(value);
+    }
+  }
+
+  get accountId(): number | null {
+    return this._accountId;
+  }
+
   get sections(): SidebarSection[] {
-    const accountId = this.accountId;
+    return this.cachedSections;
+  }
+
+  trackBySection = (_: number, section: SidebarSection): string => section.label;
+
+  trackByItem = (_: number, item: SidebarItem): string => item.testId;
+
+  private buildSections(accountId: number | null): SidebarSection[] {
     if (accountId == null) {
       const fallback = APP_PATHS.selectAccount;
       return [
@@ -38,22 +61,17 @@ export class DashboardShellComponent {
         }
       ];
     }
+
     return [
       {
         label: "Overview",
-        items: [
-          {label: "Home / Summary", path: APP_PATHS.overview(accountId), testId: "sidebar-overview"}
-        ]
+        items: [{label: "Home / Summary", path: APP_PATHS.overview(accountId), testId: "sidebar-overview"}]
       },
       {
         label: "Finance",
         items: [
           {label: "P&L (Account)", path: APP_PATHS.financePnl(accountId), testId: "sidebar-finance-pnl"},
-          {
-            label: "Unit Economics (SKU)",
-            path: APP_PATHS.financeUnitEconomics(accountId),
-            testId: "sidebar-finance-unit"
-          }
+          {label: "Unit Economics (SKU)", path: APP_PATHS.financeUnitEconomics(accountId), testId: "sidebar-finance-unit"}
         ]
       },
       {
@@ -78,13 +96,7 @@ export class DashboardShellComponent {
       },
       {
         label: "Marketing",
-        items: [
-          {
-            label: "Ads / Marketing",
-            path: APP_PATHS.marketingAds(accountId),
-            testId: "sidebar-marketing-ads"
-          }
-        ]
+        items: [{label: "Ads / Marketing", path: APP_PATHS.marketingAds(accountId), testId: "sidebar-marketing-ads"}]
       },
       {
         label: "Data Health",
