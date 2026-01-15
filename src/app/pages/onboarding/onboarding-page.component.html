@@ -17,9 +17,8 @@
   </div>
 
   <div class="card form-card">
-    <dp-account-form
-      [disabled]="formLocked"
-    ></dp-account-form>
+    <dp-account-form [disabled]="formLocked"></dp-account-form>
+
     <dp-connection-form
       class="connection-block"
       [accountId]="accountId ?? 0"
@@ -29,32 +28,31 @@
 
     <div class="form-actions">
       <div class="form-actions__group">
-        <dp-button type="button" variant="primary" (click)="startOnboarding()" [disabled]="formLocked">
+        <dp-button
+          type="button"
+          variant="primary"
+          (click)="startOnboarding()"
+          [disabled]="formLocked"
+        >
           Начать
         </dp-button>
+
         <dp-button
           *ngIf="accountId && connectionId"
           type="button"
+          variant="secondary"
           (click)="startSync()"
           [disabled]="loading"
         >
           Синхронизировать
         </dp-button>
       </div>
+
       <dp-button
         *ngIf="accountId && connectionId"
         class="form-actions__link"
         type="button"
         variant="link"
-        (click)="goToDashboard()"
-        [disabled]="loading"
-      >
-        Перейти в кабинет
-      </dp-button>
-      <dp-button
-        *ngIf="accountId && connectionId"
-        type="button"
-        variant="secondary"
         (click)="goToDashboard()"
         [disabled]="loading"
       >

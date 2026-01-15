@@ -6,11 +6,28 @@
     (click)="selectAccount.emit(account)"
   >
     <div class="account-name">{{ account.name }}</div>
+
     <div class="account-meta">
+      <span
+        class="status-pill"
+        [class.status-pill--active]="account.active"
+        [class.status-pill--inactive]="!account.active"
+      >
+        {{ account.active ? "Активен" : "Неактивен" }}
+      </span>
+
+      <span class="meta-pill">
+        <span class="meta-label">Создан</span>
+        <span class="meta-value">
+          {{ account.createdAt ? (account.createdAt | date : "dd.MM.yyyy") : "—" }}
+        </span>
+      </span>
+
       <span class="meta-pill">
         <span class="meta-label">Часовой пояс</span>
         <span class="meta-value">{{ account.timezone || "Не указан" }}</span>
       </span>
+
       <span class="meta-pill">
         <span class="meta-label">Валюта</span>
         <span class="meta-value">{{ account.currency || "Не указана" }}</span>

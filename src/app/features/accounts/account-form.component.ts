@@ -6,8 +6,6 @@ import {InputComponent} from "../../shared/ui";
 
 type AccountFormGroup = FormGroup<{
   name: FormControl<string>;
-  timezone: FormControl<string>;
-  currency: FormControl<string>;
 }>;
 
 @Component({
@@ -25,9 +23,7 @@ export class AccountFormComponent implements OnChanges {
 
   constructor(private readonly fb: FormBuilder) {
     this.form = this.fb.nonNullable.group({
-      name: ["", Validators.required],
-      timezone: ["Europe/Moscow", Validators.required],
-      currency: ["RUB", Validators.required]
+      name: ["", Validators.required]
     });
   }
 
@@ -46,7 +42,8 @@ export class AccountFormComponent implements OnChanges {
       this.form.markAllAsTouched();
       return null;
     }
-    return this.form.getRawValue();
+    const {name} = this.form.getRawValue();
+    return {name, active: true};
   }
 
   submit(): void {

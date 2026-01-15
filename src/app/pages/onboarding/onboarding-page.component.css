@@ -22,6 +22,7 @@
   margin-top: 16px;
 }
 
+/* desktop/tablet: group слева, link справа */
 .form-actions {
   margin-top: 20px;
   display: flex;
@@ -40,4 +41,13 @@
 .form-actions__link {
   font-size: 13px;
   color: var(--accent);
+}
+
+/* mobile: в колонку, ровно как в codex */
+@media (max-width: 640px) {
+  .form-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 }
