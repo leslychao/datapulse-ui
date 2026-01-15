@@ -28,7 +28,31 @@
 .account-meta {
   margin-top: 6px;
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
   color: #6b7280;
   font-size: 13px;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f5f7fa;
+  border: 1px solid #e3e8ef;
+  line-height: 1.2;
+}
+
+.meta-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+.meta-value {
+  font-weight: 500;
+  color: #475569;
 }
