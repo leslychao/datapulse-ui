@@ -1,7 +1,8 @@
-import {Component, OnInit} from "@angular/core";
+import {Component, DestroyRef, OnInit, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {Router} from "@angular/router";
-import {catchError, of, shareReplay} from "rxjs";
+import {catchError, of} from "rxjs";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountApi, ApiError} from "../../core/api";
 import {AccountSummary} from "../../shared/models";
@@ -18,6 +19,8 @@ import {ButtonComponent, LoaderComponent} from "../../shared/ui";
   styleUrl: "./account-select-page.component.css"
 })
 export class AccountSelectPageComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   loading = true;
   error: ApiError | null = null;
 
@@ -33,7 +36,7 @@ export class AccountSelectPageComponent implements OnInit {
     this.accountApi
       .list()
       .pipe(
-        shareReplay({bufferSize: 1, refCount: true}),
+        takeUntilDestroyed(this.destroyRef),
         catchError((error: ApiError) => {
           this.error = error;
           return of([]);
@@ -42,6 +45,10 @@ export class AccountSelectPageComponent implements OnInit {
       .subscribe((accounts) => {
         this.accounts = accounts;
         this.loading = false;
+        if (accounts.length === 0 && !this.error) {
+          this.accountContext.clear();
+          this.router.navigateByUrl(APP_PATHS.onboarding, {replaceUrl: true});
+        }
       });
   }
 

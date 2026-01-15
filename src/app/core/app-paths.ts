@@ -1,5 +1,6 @@
 export const APP_ROUTE_SEGMENTS = {
   app: "app",
+  home: "home",
   selectAccount: "select-account",
   onboarding: "onboarding",
   dashboard: "dashboard",
@@ -24,6 +25,7 @@ export const APP_ROUTE_SEGMENTS = {
 
 export const APP_PATHS = {
   root: `/${APP_ROUTE_SEGMENTS.app}`,
+  home: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.home}`,
   selectAccount: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.selectAccount}`,
   onboarding: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.onboarding}`,
   dashboard: (accountId: number) =>

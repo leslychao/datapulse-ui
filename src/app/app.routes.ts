@@ -6,11 +6,23 @@ export const appRoutes: Routes = [
   {
     path: "",
     pathMatch: "full",
-    redirectTo: `${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.selectAccount}`
+    redirectTo: `${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.home}`
   },
   {
     path: APP_ROUTE_SEGMENTS.app,
     children: [
+      {
+        path: "",
+        pathMatch: "full",
+        redirectTo: APP_ROUTE_SEGMENTS.home
+      },
+      {
+        path: APP_ROUTE_SEGMENTS.home,
+        loadComponent: () =>
+          import("./pages/home/home-redirect-page.component").then(
+            (m) => m.HomeRedirectPageComponent
+          )
+      },
       {
         path: APP_ROUTE_SEGMENTS.selectAccount,
         loadComponent: () =>
@@ -155,6 +167,6 @@ export const appRoutes: Routes = [
   },
   {
     path: "**",
-    redirectTo: `${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.selectAccount}`
+    redirectTo: `${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.home}`
   }
 ];

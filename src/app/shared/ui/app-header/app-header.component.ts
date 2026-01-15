@@ -3,6 +3,7 @@ import {CommonModule} from "@angular/common";
 import {RouterModule} from "@angular/router";
 
 import {AuthRedirectService, AuthUserService} from "../../../core/auth";
+import {APP_PATHS} from "../../../core/app-paths";
 import {ButtonComponent} from "../button/button.component";
 
 @Component({
@@ -17,6 +18,7 @@ export class AppHeaderComponent {
   private readonly authRedirect = inject(AuthRedirectService);
 
   readonly userProfile$ = this.authUser.userProfile$;
+  readonly homePath = APP_PATHS.home;
 
   login(): void {
     this.authRedirect.login(window.location.pathname + window.location.search);
