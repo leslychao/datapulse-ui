@@ -20,5 +20,46 @@
       [state]="state.state"
       [accountId]="accountId"
     ></dp-chart-card>
+
+    <section class="orders-card">
+      <div class="table-header">
+        <div>
+          <h3>Order P&L</h3>
+          <p class="muted">Детализация по заказам за выбранный период.</p>
+        </div>
+      </div>
+      <p class="muted" *ngIf="isLoading">Загрузка данных...</p>
+      <p class="muted" *ngIf="loadError">{{ loadError }}</p>
+      <p class="muted" *ngIf="!isLoading && !loadError && orderPnl.length === 0">
+        Данные по заказам пока не получены.
+      </p>
+
+      <div class="table-wrapper" *ngIf="!isLoading && !loadError && orderPnl.length">
+        <table>
+          <thead>
+            <tr>
+              <th>Marketplace</th>
+              <th>Order ID</th>
+              <th>P&L</th>
+              <th>Net payout</th>
+              <th>Revenue</th>
+              <th>Items</th>
+              <th>Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of orderPnl">
+              <td>{{ item.sourcePlatform }}</td>
+              <td>{{ item.orderId }}</td>
+              <td>{{ item.pnlAmount || "—" }} {{ item.currency }}</td>
+              <td>{{ item.netPayout || "—" }} {{ item.currency }}</td>
+              <td>{{ item.revenueGross || "—" }} {{ item.currency }}</td>
+              <td>{{ item.itemsSoldCount }}</td>
+              <td>{{ item.updatedAt | date: "short" }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </ng-container>
 </dp-dashboard-shell>

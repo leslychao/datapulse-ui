@@ -11,9 +11,10 @@ import {
   MetricTileGroupComponent
 } from "../../shared/ui";
 import {DashboardStateQuery, DashboardStateResult} from "../../queries/dashboard-state.query";
-import {DATA_STATE} from "../../shared/models";
+import {DATA_STATE, OrderPnlResponse, PageResponse} from "../../shared/models";
 import {FilterFieldVm} from "../../vm/filter-field.vm";
 import {MetricTileVm} from "../../vm/metric-tile.vm";
+import {OrderPnlApi} from "../../core/api";
 
 @Component({
   selector: "dp-finance-pnl-page",
@@ -31,6 +32,9 @@ import {MetricTileVm} from "../../vm/metric-tile.vm";
 export class FinancePnlPageComponent implements OnInit {
   accountId: number | null = null;
   state$?: Observable<DashboardStateResult>;
+  orderPnl: OrderPnlResponse[] = [];
+  isLoading = false;
+  loadError: string | null = null;
 
   readonly filters: FilterFieldVm[] = [
     {id: "account", label: "Account", type: "select", options: [{label: "Все аккаунты", value: "all"}]},
@@ -63,7 +67,8 @@ export class FinancePnlPageComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly accountContext: AccountContextService,
-    private readonly dashboardState: DashboardStateQuery
+    private readonly dashboardState: DashboardStateQuery,
+    private readonly orderPnlApi: OrderPnlApi
   ) {}
 
   ngOnInit(): void {
@@ -71,7 +76,26 @@ export class FinancePnlPageComponent implements OnInit {
     this.accountId = Number.isFinite(accountId) ? accountId : null;
     if (this.accountId != null) {
       this.accountContext.setAccountId(this.accountId);
+      this.fetchOrderPnl();
     }
     this.state$ = this.dashboardState.getState(this.accountId, DATA_STATE.unavailable);
+  }
+
+  private fetchOrderPnl(): void {
+    if (this.accountId == null) {
+      return;
+    }
+    this.isLoading = true;
+    this.loadError = null;
+    this.orderPnlApi.list(this.accountId, {page: 0, size: 20}).subscribe({
+      next: (response: PageResponse<OrderPnlResponse>) => {
+        this.orderPnl = response.content ?? [];
+        this.isLoading = false;
+      },
+      error: () => {
+        this.loadError = "Не удалось загрузить данные по заказам.";
+        this.isLoading = false;
+      }
+    });
   }
 }
