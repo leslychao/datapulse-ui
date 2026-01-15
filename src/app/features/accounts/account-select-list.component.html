@@ -7,9 +7,13 @@
   >
     <div class="account-name">{{ account.name }}</div>
     <div class="account-meta">
-      <span>{{ account.timezone }}</span>
-      <span>·</span>
-      <span>{{ account.currency }}</span>
+      <span class="status-pill" [class.status-pill--inactive]="!account.active">
+        {{ account.active ? "Активен" : "Неактивен" }}
+      </span>
+      <span class="meta-pill">
+        <span class="meta-label">Создан</span>
+        <span class="meta-value">{{ account.createdAt ? (account.createdAt | date : "dd.MM.yyyy") : "—" }}</span>
+      </span>
     </div>
   </button>
 </div>

@@ -1,12 +1,12 @@
 export interface AccountSummary {
   id: number;
   name: string;
-  timezone: string;
-  currency: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AccountCreateRequest {
   name: string;
-  timezone: string;
-  currency: string;
+  active: boolean;
 }
