@@ -11,7 +11,9 @@ export type ButtonVariant = "primary" | "danger" | "secondary" | "link";
     <button
       [attr.type]="type"
       [disabled]="disabled"
-      [ngClass]="variantClass"
+      [class.primary]="variant === 'primary'"
+      [class.danger]="variant === 'danger'"
+      [class.link]="variant === 'link'"
     >
       <ng-content></ng-content>
     </button>
@@ -22,12 +24,4 @@ export class ButtonComponent {
   @Input() type: "button" | "submit" | "reset" = "button";
   @Input() variant: ButtonVariant = "secondary";
   @Input() disabled = false;
-
-  get variantClass(): Record<string, boolean> {
-    return {
-      primary: this.variant === "primary",
-      danger: this.variant === "danger",
-      link: this.variant === "link"
-    };
-  }
 }

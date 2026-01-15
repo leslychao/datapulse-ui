@@ -32,32 +32,11 @@
           type="button"
           variant="primary"
           (click)="startOnboarding()"
-          [disabled]="formLocked"
+          [disabled]="isProcessing"
         >
-          Начать
-        </dp-button>
-
-        <dp-button
-          *ngIf="accountId && connectionId"
-          type="button"
-          variant="secondary"
-          (click)="startSync()"
-          [disabled]="loading"
-        >
-          Синхронизировать
+          {{ isProcessing ? "Подключаем..." : "Начать" }}
         </dp-button>
       </div>
-
-      <dp-button
-        *ngIf="accountId && connectionId"
-        class="form-actions__link"
-        type="button"
-        variant="link"
-        (click)="goToDashboard()"
-        [disabled]="loading"
-      >
-        Перейти в кабинет
-      </dp-button>
     </div>
   </div>
 </div>

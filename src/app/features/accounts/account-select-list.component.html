@@ -2,7 +2,7 @@
   <button
     class="account-card"
     type="button"
-    *ngFor="let account of accounts"
+    *ngFor="let account of accounts; trackBy: trackByAccountId"
     (click)="selectAccount.emit(account)"
   >
     <div class="account-name">{{ account.name }}</div>
@@ -23,15 +23,6 @@
         </span>
       </span>
 
-      <span class="meta-pill">
-        <span class="meta-label">Часовой пояс</span>
-        <span class="meta-value">{{ account.timezone || "Не указан" }}</span>
-      </span>
-
-      <span class="meta-pill">
-        <span class="meta-label">Валюта</span>
-        <span class="meta-value">{{ account.currency || "Не указана" }}</span>
-      </span>
     </div>
   </button>
 </div>
