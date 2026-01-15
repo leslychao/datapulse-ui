@@ -1,13 +1,13 @@
 import {Component, DestroyRef, OnInit, ViewChild, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {Router} from "@angular/router";
-import {catchError, finalize, of, tap} from "rxjs";
+import {catchError, filter, finalize, of, switchMap, take, tap, timer} from "rxjs";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountFormComponent} from "../../features/accounts";
 import {ConnectionFormComponent} from "../../features/connections";
-import {AccountApi, AccountConnectionApi, ApiError, EtlScenarioApi} from "../../core/api";
-import {EtlScenarioRequest} from "../../shared/models";
+import {AccountApi, AccountConnectionApi, ApiError} from "../../core/api";
+import {AccountConnection, AccountConnectionSyncStatusType} from "../../shared/models";
 import {AccountContextService} from "../../core/state";
 import {APP_PATHS} from "../../core/app-paths";
 import {ButtonComponent} from "../../shared/ui";
@@ -19,6 +19,8 @@ interface OnboardingStep {
 }
 
 type StatusState = "idle" | "processing" | "success" | "error";
+
+const ONBOARDING_ACTIVE_KEY = "datapulse.onboarding.active";
 
 @Component({
   selector: "dp-onboarding-page",
@@ -73,17 +75,55 @@ export class OnboardingPageComponent implements OnInit {
   constructor(
     private readonly accountApi: AccountApi,
     private readonly connectionApi: AccountConnectionApi,
-    private readonly etlScenarioApi: EtlScenarioApi,
     private readonly accountContext: AccountContextService,
     private readonly router: Router
   ) {}
 
   ngOnInit(): void {
-    this.accountId = this.accountContext.snapshot;
-    if (this.accountId != null) {
-      this.currentStep = 1;
-      this.loadAccountName(this.accountId);
-    }
+    const lastSelectedAccountId = this.accountContext.snapshot;
+    this.accountApi
+      .list()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        tap((accounts) => {
+          if (accounts.length === 0) {
+            this.setOnboardingActive(true);
+            this.accountContext.clear();
+            this.accountId = null;
+            this.accountName = null;
+            this.connectionId = null;
+            this.currentStep = 0;
+            return;
+          }
+
+          if (!this.isOnboardingActive()) {
+            this.router.navigateByUrl(APP_PATHS.selectAccount, {replaceUrl: true});
+            return;
+          }
+
+          if (lastSelectedAccountId == null) {
+            this.clearOnboardingState();
+            this.router.navigateByUrl(APP_PATHS.selectAccount, {replaceUrl: true});
+            return;
+          }
+
+          const accountExists = accounts.some((account) => account.id === lastSelectedAccountId);
+          if (!accountExists) {
+            this.clearOnboardingState();
+            this.router.navigateByUrl(APP_PATHS.selectAccount, {replaceUrl: true});
+            return;
+          }
+
+          this.accountId = lastSelectedAccountId;
+          this.loadAccountName(lastSelectedAccountId);
+          this.loadConnections(lastSelectedAccountId);
+        }),
+        catchError((error: ApiError) => {
+          this.handleApiError(error, "Не удалось загрузить аккаунты.");
+          return of([]);
+        })
+      )
+      .subscribe();
   }
 
   get canSaveAccount(): boolean {
@@ -96,6 +136,16 @@ export class OnboardingPageComponent implements OnInit {
 
   get canStartSync(): boolean {
     return this.accountId != null && this.connectionId != null && !this.isProcessing;
+  }
+
+  isStepComplete(index: number): boolean {
+    if (index === 0) {
+      return this.accountId != null;
+    }
+    if (index === 1) {
+      return this.connectionId != null;
+    }
+    return false;
   }
 
   maxAvailableStep(): number {
@@ -208,22 +258,34 @@ export class OnboardingPageComponent implements OnInit {
   }
 
   startSync(): void {
-    if (!this.canStartSync || this.accountId == null) {
+    if (this.accountId == null) {
+      this.setStatusState("error", "Создайте аккаунт, чтобы запустить синхронизацию.");
+      return;
+    }
+    if (this.connectionId == null) {
+      this.setStatusState("error", "Сначала создайте подключение.");
       return;
     }
     this.resetErrors();
     this.setStatusState(
       "processing",
       "Синхронизация запущена",
-      "ETL сценарий запущен. Обновление может занять несколько минут."
+      "Идёт первичная синхронизация. Это может занять несколько минут."
     );
-    this.etlScenarioApi
-      .run(this.buildEtlScenarioRequest(this.accountId))
+    this.connectionApi
+      .sync(this.connectionId)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.setStatusState("success", "Данные отправлены в обработку.");
+        switchMap(() => this.pollSyncStatus(this.connectionId!)),
+        tap((status) => {
+          if (status.status === AccountConnectionSyncStatusType.Failed) {
+            const message = status.message || "Синхронизация завершилась ошибкой.";
+            this.setStatusState("error", message);
+            return;
+          }
+          this.setStatusState("success", "Синхронизация завершена.");
           this.accountContext.setAccountId(this.accountId!);
+          this.clearOnboardingState();
           this.router.navigateByUrl(APP_PATHS.overview(this.accountId!), {replaceUrl: true});
         }),
         catchError((error: ApiError) => {
@@ -233,21 +295,6 @@ export class OnboardingPageComponent implements OnInit {
         finalize(() => this.setProcessing(false))
       )
       .subscribe();
-  }
-
-  private buildEtlScenarioRequest(accountId: number): EtlScenarioRequest {
-    return {
-      accountId,
-      events: [
-        {event: "WAREHOUSE_DICT", dateMode: "LAST_DAYS", lastDays: 30},
-        {event: "CATEGORY_DICT", dateMode: "LAST_DAYS", lastDays: 30},
-        {event: "TARIFF_DICT", dateMode: "LAST_DAYS", lastDays: 30},
-        {event: "PRODUCT_DICT", dateMode: "LAST_DAYS", lastDays: 7},
-        {event: "SALES_FACT", dateMode: "LAST_DAYS", lastDays: 7},
-        {event: "INVENTORY_FACT", dateMode: "LAST_DAYS", lastDays: 7},
-        {event: "FACT_FINANCE", dateMode: "LAST_DAYS", lastDays: 7}
-      ]
-    };
   }
 
   private setStatusState(state: StatusState, text: string, hint: string | null = null): void {
@@ -296,5 +343,51 @@ export class OnboardingPageComponent implements OnInit {
         })
       )
       .subscribe();
+  }
+
+  private loadConnections(accountId: number): void {
+    this.connectionApi
+      .list(accountId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        catchError(() => of([])),
+        tap((connections) => {
+          const selectedConnection = this.pickConnection(connections);
+          this.connectionId = selectedConnection?.id ?? null;
+          this.currentStep = this.maxAvailableStep();
+        })
+      )
+      .subscribe();
+  }
+
+  private pickConnection(connections: AccountConnection[]): AccountConnection | null {
+    if (!connections.length) {
+      return null;
+    }
+    return connections.find((connection) => connection.active) ?? connections[0];
+  }
+
+  private pollSyncStatus(connectionId: number) {
+    return timer(0, 4000).pipe(
+      switchMap(() => this.connectionApi.syncStatus(connectionId)),
+      filter(
+        (status) =>
+          status.status === AccountConnectionSyncStatusType.Completed ||
+          status.status === AccountConnectionSyncStatusType.Failed
+      ),
+      take(1)
+    );
+  }
+
+  private isOnboardingActive(): boolean {
+    return localStorage.getItem(ONBOARDING_ACTIVE_KEY) === "true";
+  }
+
+  private setOnboardingActive(isActive: boolean): void {
+    localStorage.setItem(ONBOARDING_ACTIVE_KEY, isActive ? "true" : "false");
+  }
+
+  private clearOnboardingState(): void {
+    localStorage.removeItem(ONBOARDING_ACTIVE_KEY);
   }
 }
