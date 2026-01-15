@@ -35,6 +35,7 @@
         <dp-button
           *ngIf="accountId && connectionId"
           type="button"
+          variant="secondary"
           (click)="startSync()"
           [disabled]="loading"
         >
