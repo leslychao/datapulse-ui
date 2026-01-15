@@ -7,9 +7,14 @@
   >
     <div class="account-name">{{ account.name }}</div>
     <div class="account-meta">
-      <span>{{ account.timezone }}</span>
-      <span>·</span>
-      <span>{{ account.currency }}</span>
+      <span class="meta-pill">
+        <span class="meta-label">Часовой пояс</span>
+        <span class="meta-value">{{ account.timezone || "Не указан" }}</span>
+      </span>
+      <span class="meta-pill">
+        <span class="meta-label">Валюта</span>
+        <span class="meta-value">{{ account.currency || "Не указана" }}</span>
+      </span>
     </div>
   </button>
 </div>

@@ -39,6 +39,15 @@
       >
         Синхронизировать
       </dp-button>
+      <dp-button
+        *ngIf="accountId && connectionId"
+        type="button"
+        variant="secondary"
+        (click)="goToDashboard()"
+        [disabled]="loading"
+      >
+        Перейти в кабинет
+      </dp-button>
     </div>
   </div>
 </div>
