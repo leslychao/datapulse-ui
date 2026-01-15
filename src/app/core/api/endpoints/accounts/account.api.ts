@@ -1,7 +1,7 @@
 import {Injectable} from "@angular/core";
 import {Observable} from "rxjs";
 import {ApiClient} from "../../api-client.service";
-import {AccountCreateRequest, AccountSummary} from "../../../../shared/models";
+import {AccountCreateRequest, AccountSummary, AccountUpdateRequest} from "../../../../shared/models";
 
 @Injectable({providedIn: "root"})
 export class AccountApi {
@@ -13,5 +13,9 @@ export class AccountApi {
 
   create(request: AccountCreateRequest): Observable<AccountSummary> {
     return this.api.post<AccountSummary, AccountCreateRequest>("/api/accounts", request);
+  }
+
+  update(accountId: number, request: AccountUpdateRequest): Observable<AccountSummary> {
+    return this.api.put<AccountSummary, AccountUpdateRequest>(`/api/accounts/${accountId}`, request);
   }
 }
