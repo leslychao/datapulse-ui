@@ -27,11 +27,6 @@ export class HomeRedirectPageComponent implements OnInit {
 
   ngOnInit(): void {
     const lastSelectedAccountId = this.accountContext.snapshot;
-    if (lastSelectedAccountId != null) {
-      this.router.navigateByUrl(APP_PATHS.overview(lastSelectedAccountId), {replaceUrl: true});
-      return;
-    }
-
     this.accountApi
       .list()
       .pipe(
@@ -39,11 +34,22 @@ export class HomeRedirectPageComponent implements OnInit {
         catchError(() => of([]))
       )
       .subscribe((accounts) => {
-        if (accounts.length > 0) {
-          this.router.navigateByUrl(APP_PATHS.selectAccount, {replaceUrl: true});
+        if (accounts.length === 0) {
+          this.accountContext.clear();
+          this.router.navigateByUrl(APP_PATHS.onboarding, {replaceUrl: true});
           return;
         }
-        this.router.navigateByUrl(APP_PATHS.onboarding, {replaceUrl: true});
+
+        if (lastSelectedAccountId != null) {
+          const hasSelectedAccount = accounts.some((account) => account.id === lastSelectedAccountId);
+          if (hasSelectedAccount) {
+            this.router.navigateByUrl(APP_PATHS.overview(lastSelectedAccountId), {replaceUrl: true});
+            return;
+          }
+          this.accountContext.clear();
+        }
+
+        this.router.navigateByUrl(APP_PATHS.selectAccount, {replaceUrl: true});
       });
   }
 }

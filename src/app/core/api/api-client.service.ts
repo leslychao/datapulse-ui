@@ -1,4 +1,4 @@
-import {HttpClient, HttpParams} from "@angular/common/http";
+import {HttpClient, HttpHeaders, HttpParams} from "@angular/common/http";
 import {Injectable} from "@angular/core";
 import {catchError, Observable, throwError} from "rxjs";
 import {ApiError} from "./api-error.model";
@@ -11,7 +11,11 @@ export class ApiClient {
   constructor(private readonly http: HttpClient) {}
 
   get<T>(url: string, params?: QueryParams): Observable<T> {
-    return this.http.get<T>(url, {params: this.toParams(params)}).pipe(
+    const headers = new HttpHeaders({
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache"
+    });
+    return this.http.get<T>(url, {params: this.toParams(params), headers}).pipe(
       catchError((error) => this.handleError(error))
     );
   }
