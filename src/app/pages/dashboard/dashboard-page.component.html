@@ -1,48 +1,52 @@
-<div class="page">
-  <header class="page-header">
-    <h1>Order PnL</h1>
-    <p class="muted">Сводка по прибыли и убыткам по заказам.</p>
-  </header>
+<dp-dashboard-shell
+  [accountId]="accountId"
+  title="Home / Summary"
+  subtitle="Сводка по прибыли и убыткам по заказам."
+>
+  <ng-container topbar-actions>
+    <div class="actions" *ngIf="accountId">
+      <a class="link" [routerLink]="adminConnectionsPath(accountId)">Подключения</a>
+      <a class="link" [routerLink]="adminOperatorsPath(accountId)">Операторы</a>
+    </div>
+  </ng-container>
 
-  <div class="card" *ngIf="accountId">
-    <div class="table-header">
-      <h2>Последние заказы</h2>
-      <div class="actions">
-        <a class="link" [routerLink]="adminConnectionsPath(accountId)">Подключения</a>
-        <a class="link" [routerLink]="adminOperatorsPath(accountId)">Операторы</a>
+  <div class="page">
+    <div class="card" *ngIf="accountId">
+      <div class="table-header">
+        <h2>Последние заказы</h2>
+      </div>
+      <p class="muted" *ngIf="isLoading">Загрузка данных...</p>
+      <p class="muted" *ngIf="loadError">{{ loadError }}</p>
+      <p class="muted" *ngIf="!isLoading && !loadError && orderPnl.length === 0">
+        Данные по заказам пока не получены.
+      </p>
+
+      <div class="table-wrapper" *ngIf="!isLoading && !loadError && orderPnl.length">
+        <table>
+          <thead>
+            <tr>
+              <th>Marketplace</th>
+              <th>Order ID</th>
+              <th>PnL</th>
+              <th>Net payout</th>
+              <th>Revenue</th>
+              <th>Items</th>
+              <th>Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of orderPnl">
+              <td>{{ item.sourcePlatform }}</td>
+              <td>{{ item.orderId }}</td>
+              <td>{{ item.pnlAmount || "—" }} {{ item.currency }}</td>
+              <td>{{ item.netPayout || "—" }} {{ item.currency }}</td>
+              <td>{{ item.revenueGross || "—" }} {{ item.currency }}</td>
+              <td>{{ item.itemsSoldCount }}</td>
+              <td>{{ item.updatedAt | date: "short" }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
-    <p class="muted" *ngIf="isLoading">Загрузка данных...</p>
-    <p class="muted" *ngIf="loadError">{{ loadError }}</p>
-    <p class="muted" *ngIf="!isLoading && !loadError && orderPnl.length === 0">
-      Данные по заказам пока не получены.
-    </p>
-
-    <div class="table-wrapper" *ngIf="!isLoading && !loadError && orderPnl.length">
-      <table>
-        <thead>
-          <tr>
-            <th>Marketplace</th>
-            <th>Order ID</th>
-            <th>PnL</th>
-            <th>Net payout</th>
-            <th>Revenue</th>
-            <th>Items</th>
-            <th>Updated</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of orderPnl">
-            <td>{{ item.sourcePlatform }}</td>
-            <td>{{ item.orderId }}</td>
-            <td>{{ item.pnlAmount || "—" }} {{ item.currency }}</td>
-            <td>{{ item.netPayout || "—" }} {{ item.currency }}</td>
-            <td>{{ item.revenueGross || "—" }} {{ item.currency }}</td>
-            <td>{{ item.itemsSoldCount }}</td>
-            <td>{{ item.updatedAt | date: "short" }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </div>
-</div>
+</dp-dashboard-shell>

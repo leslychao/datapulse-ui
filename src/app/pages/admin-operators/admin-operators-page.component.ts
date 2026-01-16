@@ -1,8 +1,8 @@
 import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
-import {ActivatedRoute} from "@angular/router";
+import {Router} from "@angular/router";
 import {forkJoin, of} from "rxjs";
-import {catchError} from "rxjs/operators";
+import {catchError, finalize} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountConnectionApi, AccountMemberApi, ApiError} from "../../core/api";
@@ -21,6 +21,7 @@ import {
   OperatorsTableComponent
 } from "../../features/operators";
 import {LoaderComponent, ToastService} from "../../shared/ui";
+import {APP_PATHS} from "../../core/app-paths";
 
 @Component({
   selector: "dp-admin-operators-page",
@@ -49,20 +50,20 @@ export class AdminOperatorsPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   constructor(
-    private readonly route: ActivatedRoute,
     private readonly memberApi: AccountMemberApi,
     private readonly connectionApi: AccountConnectionApi,
-    private readonly toastService: ToastService
+    private readonly toastService: ToastService,
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {
-    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
-    this.accountId = Number.isFinite(accountId) ? accountId : null;
-    if (this.accountId != null) {
-      this.loadData();
+    this.accountId = this.readAccountId();
+    if (this.accountId == null) {
+      this.loading = false;
+      this.router.navigateByUrl(APP_PATHS.selectAccount, {replaceUrl: true});
       return;
     }
-    this.loading = false;
+    this.loadData();
   }
 
   loadData(): void {
@@ -80,12 +81,14 @@ export class AdminOperatorsPageComponent implements OnInit {
         catchError((error: ApiError) => {
           this.error = error;
           return of({members: [], connections: []});
+        }),
+        finalize(() => {
+          this.loading = false;
         })
       )
       .subscribe(({members, connections}) => {
         this.operators = members;
         this.connections = connections;
-        this.loading = false;
       });
   }
 
@@ -157,5 +160,14 @@ export class AdminOperatorsPageComponent implements OnInit {
           this.operators = this.operators.map((item) => (item.id === previous.id ? previous : item));
         }
       });
+  }
+
+  private readAccountId(): number | null {
+    const raw = localStorage.getItem("datapulse.accountId");
+    if (!raw) {
+      return null;
+    }
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 }
