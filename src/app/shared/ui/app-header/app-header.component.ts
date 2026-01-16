@@ -2,8 +2,9 @@ import {Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {RouterModule} from "@angular/router";
 
-import {AuthRedirectService, AuthUserService} from "../../../core/auth";
+import {AuthRedirectService, AuthSessionService, AuthUserService} from "../../../core/auth";
 import {APP_PATHS} from "../../../core/app-paths";
+import {AccountContextService} from "../../../core/state";
 import {ButtonComponent} from "../button/button.component";
 
 @Component({
@@ -15,10 +16,19 @@ import {ButtonComponent} from "../button/button.component";
 })
 export class AppHeaderComponent {
   private readonly authUser = inject(AuthUserService);
+  private readonly authSession = inject(AuthSessionService);
   private readonly authRedirect = inject(AuthRedirectService);
+  private readonly accountContext = inject(AccountContextService);
 
   readonly userProfile$ = this.authUser.userProfile$;
-  readonly homePath = APP_PATHS.home;
+  get homePath(): string {
+    if (!this.authSession.snapshot().authenticated) {
+      return APP_PATHS.login;
+    }
+
+    const accountId = this.accountContext.snapshot;
+    return accountId != null ? APP_PATHS.overview(accountId) : APP_PATHS.selectAccount;
+  }
 
   login(): void {
     this.authRedirect.login(window.location.pathname + window.location.search);

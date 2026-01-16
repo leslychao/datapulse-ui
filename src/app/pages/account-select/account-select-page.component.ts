@@ -8,6 +8,7 @@ import {AccountApi, ApiError} from "../../core/api";
 import {AccountSummary} from "../../shared/models";
 import {APP_PATHS} from "../../core/app-paths";
 import {AccountContextService} from "../../core/state";
+import {AuthSessionService} from "../../core/auth";
 import {AccountSelectListComponent} from "../../features/accounts";
 import {ButtonComponent, LoaderComponent} from "../../shared/ui";
 
@@ -31,10 +32,16 @@ export class AccountSelectPageComponent implements OnInit {
   constructor(
     private readonly accountApi: AccountApi,
     private readonly accountContext: AccountContextService,
+    private readonly authSession: AuthSessionService,
     private readonly router: Router
   ) {}
 
   ngOnInit(): void {
+    if (!this.authSession.snapshot().authenticated) {
+      this.router.navigateByUrl(APP_PATHS.login, {replaceUrl: true});
+      return;
+    }
+
     this.accountApi
       .list()
       .pipe(

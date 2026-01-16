@@ -5,6 +5,7 @@ import {catchError, of} from "rxjs";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountApi} from "../../core/api";
+import {AuthSessionService} from "../../core/auth";
 import {AccountContextService} from "../../core/state";
 import {APP_PATHS} from "../../core/app-paths";
 import {LoaderComponent} from "../../shared/ui";
@@ -22,10 +23,16 @@ export class HomeRedirectPageComponent implements OnInit {
   constructor(
     private readonly accountApi: AccountApi,
     private readonly accountContext: AccountContextService,
+    private readonly authSession: AuthSessionService,
     private readonly router: Router
   ) {}
 
   ngOnInit(): void {
+    if (!this.authSession.snapshot().authenticated) {
+      this.router.navigateByUrl(APP_PATHS.login, {replaceUrl: true});
+      return;
+    }
+
     const lastSelectedAccountId = this.accountContext.snapshot;
     this.accountApi
       .list()

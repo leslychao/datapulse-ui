@@ -1,4 +1,5 @@
 export const APP_ROUTE_SEGMENTS = {
+  login: "login",
   app: "app",
   home: "home",
   selectAccount: "select-account",
@@ -24,6 +25,7 @@ export const APP_ROUTE_SEGMENTS = {
 } as const;
 
 export const APP_PATHS = {
+  login: `/${APP_ROUTE_SEGMENTS.login}`,
   root: `/${APP_ROUTE_SEGMENTS.app}`,
   home: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.home}`,
   selectAccount: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.selectAccount}`,
