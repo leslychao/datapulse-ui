@@ -1,4 +1,4 @@
-import {Component, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {RouterModule} from "@angular/router";
 
@@ -12,7 +12,8 @@ import {ButtonComponent} from "../button/button.component";
   standalone: true,
   imports: [CommonModule, RouterModule, ButtonComponent],
   templateUrl: "./app-header.component.html",
-  styleUrl: "./app-header.component.css"
+  styleUrl: "./app-header.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppHeaderComponent {
   private readonly authUser = inject(AuthUserService);
@@ -27,7 +28,7 @@ export class AppHeaderComponent {
     }
 
     const accountId = this.accountContext.snapshot;
-    return accountId != null ? APP_PATHS.overview(accountId) : APP_PATHS.selectAccount;
+    return accountId != null ? APP_PATHS.homeSummary(accountId) : APP_PATHS.selectAccount;
   }
 
   login(): void {

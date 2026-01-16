@@ -1,4 +1,4 @@
-import {Component, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute, Router} from "@angular/router";
 
@@ -11,7 +11,8 @@ import {LoaderComponent} from "../../shared/ui";
   standalone: true,
   imports: [CommonModule, LoaderComponent],
   templateUrl: "./accountless-redirect-page.component.html",
-  styleUrl: "./accountless-redirect-page.component.css"
+  styleUrl: "./accountless-redirect-page.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountlessRedirectPageComponent implements OnInit {
   constructor(

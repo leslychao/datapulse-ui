@@ -4,6 +4,7 @@ import {APP_ROUTE_SEGMENTS} from "./core/app-paths";
 import {authGuard} from "./core/guards/auth.guard";
 import {publicGuard} from "./core/guards/public.guard";
 import {accountGuard} from "./core/guards/account.guard";
+import {accountIdGuard} from "./core/guards/account-id.guard";
 import {accountlessRouteMatcher} from "./core/routing/accountless-route.matcher";
 
 export const appRoutes: Routes = [
@@ -60,13 +61,29 @@ export const appRoutes: Routes = [
       },
       {
         path: ":accountId",
+        canActivateChild: [accountIdGuard],
         children: [
           {
+            path: APP_ROUTE_SEGMENTS.home,
+            children: [
+              {
+                path: "",
+                pathMatch: "full",
+                redirectTo: APP_ROUTE_SEGMENTS.summary
+              },
+              {
+                path: APP_ROUTE_SEGMENTS.summary,
+                loadComponent: () =>
+                  import("./pages/dashboard/dashboard-page.component").then(
+                    (m) => m.DashboardPageComponent
+                  )
+              }
+            ]
+          },
+          {
             path: APP_ROUTE_SEGMENTS.dashboard,
-            loadComponent: () =>
-              import("./pages/dashboard/dashboard-page.component").then(
-                (m) => m.DashboardPageComponent
-              )
+            redirectTo: `${APP_ROUTE_SEGMENTS.home}/${APP_ROUTE_SEGMENTS.summary}`,
+            pathMatch: "full"
           },
           {
             path: APP_ROUTE_SEGMENTS.overview,

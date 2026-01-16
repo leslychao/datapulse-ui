@@ -1,8 +1,9 @@
-import {Component, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {forkJoin, of} from "rxjs";
 import {catchError} from "rxjs/operators";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountConnectionApi, AccountMemberApi, ApiError} from "../../core/api";
 import {
@@ -13,7 +14,6 @@ import {
   AccountMemberUpdateRequest
 } from "../../shared/models";
 import {AccountConnection} from "../../shared/models";
-import {AccountContextService} from "../../core/state";
 import {
   AccessModalComponent,
   AccessModalSubmit,
@@ -33,7 +33,8 @@ import {LoaderComponent, ToastService} from "../../shared/ui";
     LoaderComponent
   ],
   templateUrl: "./admin-operators-page.component.html",
-  styleUrl: "./admin-operators-page.component.css"
+  styleUrl: "./admin-operators-page.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdminOperatorsPageComponent implements OnInit {
   accountId: number | null = null;
@@ -45,9 +46,10 @@ export class AdminOperatorsPageComponent implements OnInit {
   accessModalVisible = false;
   selectedMember: AccountMember | null = null;
 
+  private readonly destroyRef = inject(DestroyRef);
+
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly accountContext: AccountContextService,
     private readonly memberApi: AccountMemberApi,
     private readonly connectionApi: AccountConnectionApi,
     private readonly toastService: ToastService
@@ -57,7 +59,6 @@ export class AdminOperatorsPageComponent implements OnInit {
     const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
     this.accountId = Number.isFinite(accountId) ? accountId : null;
     if (this.accountId != null) {
-      this.accountContext.setAccountId(this.accountId);
       this.loadData();
       return;
     }
@@ -75,6 +76,7 @@ export class AdminOperatorsPageComponent implements OnInit {
       connections: this.connectionApi.list(this.accountId)
     })
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         catchError((error: ApiError) => {
           this.error = error;
           return of({members: [], connections: []});
@@ -94,12 +96,15 @@ export class AdminOperatorsPageComponent implements OnInit {
     accessScope: AccountMemberAccessScope;
     connectionIds: number[];
   }): void {
-    this.memberApi.create(request).subscribe({
-      next: (member) => {
-        this.operators = [member, ...this.operators];
-        this.toastService.success("Приглашение отправлено.");
-      }
-    });
+    this.memberApi
+      .create(request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (member) => {
+          this.operators = [member, ...this.operators];
+          this.toastService.success("Приглашение отправлено.");
+        }
+      });
   }
 
   toggleBlock(member: AccountMember): void {
@@ -141,13 +146,16 @@ export class AdminOperatorsPageComponent implements OnInit {
     this.operators = this.operators.map((item) =>
       item.id === member.id ? {...item, ...update} : item
     );
-    this.memberApi.update(member.id, update).subscribe({
-      next: (updated) => {
-        this.operators = this.operators.map((item) => (item.id === updated.id ? updated : item));
-      },
-      error: () => {
-        this.operators = this.operators.map((item) => (item.id === previous.id ? previous : item));
-      }
-    });
+    this.memberApi
+      .update(member.id, update)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.operators = this.operators.map((item) => (item.id === updated.id ? updated : item));
+        },
+        error: () => {
+          this.operators = this.operators.map((item) => (item.id === previous.id ? previous : item));
+        }
+      });
   }
 }

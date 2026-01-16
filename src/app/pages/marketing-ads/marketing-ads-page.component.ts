@@ -1,9 +1,8 @@
-import {Component, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {Observable} from "rxjs";
 
-import {AccountContextService} from "../../core/state";
 import {
   DashboardShellComponent,
   FilterBarComponent,
@@ -29,7 +28,8 @@ import {TableColumnVm} from "../../vm/table-column.vm";
     DataTableCardComponent
   ],
   templateUrl: "./marketing-ads-page.component.html",
-  styleUrl: "./marketing-ads-page.component.css"
+  styleUrl: "./marketing-ads-page.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MarketingAdsPageComponent implements OnInit {
   accountId: number | null = null;
@@ -60,16 +60,12 @@ export class MarketingAdsPageComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly accountContext: AccountContextService,
     private readonly dashboardState: DashboardStateQuery
   ) {}
 
   ngOnInit(): void {
     const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
     this.accountId = Number.isFinite(accountId) ? accountId : null;
-    if (this.accountId != null) {
-      this.accountContext.setAccountId(this.accountId);
-    }
     this.state$ = this.dashboardState.getState(this.accountId, DATA_STATE.unavailable);
   }
 }

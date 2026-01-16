@@ -1,11 +1,11 @@
-import {Component, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {catchError, of} from "rxjs";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountConnectionApi, ApiError} from "../../core/api";
 import {AccountConnection} from "../../shared/models";
-import {AccountContextService} from "../../core/state";
 import {ConnectionsTableComponent} from "../../features/connections";
 import {LoaderComponent, ToastService} from "../../shared/ui";
 
@@ -14,7 +14,8 @@ import {LoaderComponent, ToastService} from "../../shared/ui";
   standalone: true,
   imports: [CommonModule, ConnectionsTableComponent, LoaderComponent],
   templateUrl: "./admin-connections-page.component.html",
-  styleUrl: "./admin-connections-page.component.css"
+  styleUrl: "./admin-connections-page.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdminConnectionsPageComponent implements OnInit {
   accountId: number | null = null;
@@ -22,9 +23,10 @@ export class AdminConnectionsPageComponent implements OnInit {
   loading = true;
   error: ApiError | null = null;
 
+  private readonly destroyRef = inject(DestroyRef);
+
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly accountContext: AccountContextService,
     private readonly connectionApi: AccountConnectionApi,
     private readonly toastService: ToastService
   ) {}
@@ -33,7 +35,6 @@ export class AdminConnectionsPageComponent implements OnInit {
     const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
     this.accountId = Number.isFinite(accountId) ? accountId : null;
     if (this.accountId != null) {
-      this.accountContext.setAccountId(this.accountId);
       this.loadConnections();
     } else {
       this.loading = false;
@@ -49,6 +50,7 @@ export class AdminConnectionsPageComponent implements OnInit {
     this.connectionApi
       .list(this.accountId)
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         catchError((error: ApiError) => {
           this.error = error;
           return of([]);
@@ -61,7 +63,10 @@ export class AdminConnectionsPageComponent implements OnInit {
   }
 
   testConnection(connection: AccountConnection): void {
-    this.connectionApi.test(connection.id).subscribe({
+    this.connectionApi
+      .test(connection.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         this.toastService.success("Подключение успешно протестировано.");
       }
@@ -69,7 +74,10 @@ export class AdminConnectionsPageComponent implements OnInit {
   }
 
   syncConnection(connection: AccountConnection): void {
-    this.connectionApi.sync(connection.id).subscribe({
+    this.connectionApi
+      .sync(connection.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         this.toastService.success("Синхронизация запущена.");
         this.loadConnections();
@@ -78,7 +86,10 @@ export class AdminConnectionsPageComponent implements OnInit {
   }
 
   disableConnection(connection: AccountConnection): void {
-    this.connectionApi.disable(connection.id).subscribe({
+    this.connectionApi
+      .disable(connection.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         this.toastService.success("Подключение отключено.");
         this.loadConnections();

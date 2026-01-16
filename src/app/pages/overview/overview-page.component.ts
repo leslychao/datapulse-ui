@@ -1,9 +1,8 @@
-import {Component, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {Observable} from "rxjs";
 
-import {AccountContextService} from "../../core/state";
 import {DashboardShellComponent, FilterBarComponent, MetricTileGroupComponent, ChartCardComponent} from "../../shared/ui";
 import {DashboardStateQuery, DashboardStateResult} from "../../queries/dashboard-state.query";
 import {DATA_STATE} from "../../shared/models";
@@ -21,7 +20,8 @@ import {MetricTileVm} from "../../vm/metric-tile.vm";
     ChartCardComponent
   ],
   templateUrl: "./overview-page.component.html",
-  styleUrl: "./overview-page.component.css"
+  styleUrl: "./overview-page.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OverviewPageComponent implements OnInit {
   accountId: number | null = null;
@@ -53,16 +53,12 @@ export class OverviewPageComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly accountContext: AccountContextService,
     private readonly dashboardState: DashboardStateQuery
   ) {}
 
   ngOnInit(): void {
     const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
     this.accountId = Number.isFinite(accountId) ? accountId : null;
-    if (this.accountId != null) {
-      this.accountContext.setAccountId(this.accountId);
-    }
     this.state$ = this.dashboardState.getState(this.accountId, DATA_STATE.noData);
   }
 }
