@@ -109,4 +109,30 @@ describe("OnboardingPageComponent", () => {
 
     expect(router.navigateByUrl).toHaveBeenCalledWith(APP_PATHS.homeSummary(12), {replaceUrl: true});
   });
+
+  it("redirects to summary after sync start returns 202", () => {
+    etlScenarioApi.run.and.returnValue(of(new HttpResponse({status: 202})));
+
+    const fixture = TestBed.createComponent(OnboardingPageComponent);
+    const component = fixture.componentInstance;
+
+    const connection: AccountConnection = {
+      id: 4,
+      accountId: 13,
+      marketplace: Marketplace.Wildberries,
+      active: true,
+      lastSyncAt: null,
+      lastSyncStatus: null,
+      createdAt: "",
+      updatedAt: "",
+      maskedCredentials: null
+    };
+
+    component.accountId = 13;
+    component.connections = [connection];
+
+    component.startSync();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith(APP_PATHS.homeSummary(13), {replaceUrl: true});
+  });
 });
