@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from "@angular/core";
+import {Component, EventEmitter, Output} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {
@@ -16,7 +16,6 @@ import {ButtonComponent, InputComponent} from "../../shared/ui";
   styleUrl: "./invite-operator-form.component.css"
 })
 export class InviteOperatorFormComponent {
-  @Input({required: true}) accountId!: number;
   @Output() invite = new EventEmitter<AccountMemberCreateRequest>();
 
   readonly roles = Object.values(AccountMemberRole);
@@ -44,7 +43,6 @@ export class InviteOperatorFormComponent {
 
     const {email, role, accessScope} = this.form.getRawValue();
     this.invite.emit({
-      accountId: this.accountId,
       email,
       role,
       accessScope,

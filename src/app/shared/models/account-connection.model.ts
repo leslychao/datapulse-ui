@@ -3,7 +3,7 @@ export enum Marketplace {
   Ozon = "OZON"
 }
 
-export interface AccountConnection {
+export interface AccountConnectionResponse {
   id: number;
   accountId: number;
   marketplace: Marketplace;
@@ -14,6 +14,8 @@ export interface AccountConnection {
   updatedAt: string;
   maskedCredentials: string | null;
 }
+
+export type AccountConnection = AccountConnectionResponse;
 
 export interface WildberriesCredentials {
   token: string;
@@ -27,10 +29,15 @@ export interface OzonCredentials {
 export type AccountConnectionCredentials = WildberriesCredentials | OzonCredentials;
 
 export interface AccountConnectionCreateRequest {
-  accountId: number;
   marketplace: Marketplace;
   credentials: AccountConnectionCredentials;
   active?: boolean;
+}
+
+export interface AccountConnectionUpdateRequest {
+  marketplace: Marketplace;
+  credentials?: AccountConnectionCredentials;
+  active?: boolean | null;
 }
 
 export interface AccountConnectionSyncStatus {

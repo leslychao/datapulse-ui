@@ -2,7 +2,7 @@ import {Injectable} from "@angular/core";
 import {Observable, of} from "rxjs";
 import {catchError, distinctUntilChanged, map, shareReplay, switchMap} from "rxjs/operators";
 
-import {MeApi} from "../api";
+import {IamApiClient} from "../api";
 import {UserProfileResponse} from "../../shared/models";
 import {AuthSessionService} from "./auth-session.service";
 import {AUTH_SESSION_FLAG} from "./auth-storage";
@@ -14,7 +14,7 @@ export class AuthUserService {
 
   constructor(
     private readonly authSession: AuthSessionService,
-    private readonly meApi: MeApi
+    private readonly iamApi: IamApiClient
   ) {
     const profile$ = this.authSession.state$.pipe(
       map((state) => state.authenticated === true),
@@ -26,7 +26,7 @@ export class AuthUserService {
           return of<UserProfileResponse | null>(null);
         }
 
-        return this.meApi.me().pipe(
+        return this.iamApi.getProfile().pipe(
           catchError(() => of<UserProfileResponse | null>(null))
         );
       }),

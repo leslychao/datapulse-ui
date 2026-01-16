@@ -5,7 +5,7 @@
   </header>
 
   <div class="card" *ngIf="accountId">
-    <dp-invite-operator-form [accountId]="accountId" (invite)="inviteOperator($event)">
+    <dp-invite-operator-form (invite)="inviteOperator($event)">
     </dp-invite-operator-form>
   </div>
 

@@ -17,7 +17,6 @@ import {InputComponent} from "../../shared/ui";
   styleUrl: "./connection-form.component.css"
 })
 export class ConnectionFormComponent implements OnChanges {
-  @Input({required: true}) accountId!: number;
   @Input() disabled = false;
   @Input() errorMessage: string | null = null;
   @Output() submitForm = new EventEmitter<AccountConnectionCreateRequest>();
@@ -53,14 +52,14 @@ export class ConnectionFormComponent implements OnChanges {
   }
 
   submit(): void {
-    const request = this.getRequest(this.accountId);
+    const request = this.getRequest();
     if (!request) {
       return;
     }
     this.submitForm.emit(request);
   }
 
-  getRequest(accountId: number): AccountConnectionCreateRequest | null {
+  getRequest(): AccountConnectionCreateRequest | null {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return null;
@@ -75,7 +74,6 @@ export class ConnectionFormComponent implements OnChanges {
     }
 
     return {
-      accountId,
       marketplace,
       credentials,
       active: true

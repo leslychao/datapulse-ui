@@ -2,7 +2,7 @@ import {Injectable} from "@angular/core";
 import {Observable, of} from "rxjs";
 import {catchError, map} from "rxjs/operators";
 
-import {AccountConnectionApi} from "../core/api";
+import {AccountConnectionsApiClient} from "../core/api";
 import {DataState, DATA_STATE} from "../shared/models";
 import {mapAccountConnectionToVm} from "../mappers/account-connection.mapper";
 import {ConnectionVm} from "../vm/connection.vm";
@@ -14,7 +14,7 @@ export interface ConnectionsQueryResult {
 
 @Injectable({providedIn: "root"})
 export class ConnectionsQuery {
-  constructor(private readonly connectionApi: AccountConnectionApi) {}
+  constructor(private readonly connectionApi: AccountConnectionsApiClient) {}
 
   load(accountId: number | null): Observable<ConnectionsQueryResult> {
     if (accountId == null) {

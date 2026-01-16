@@ -15,7 +15,7 @@ import {DashboardStateQuery, DashboardStateResult} from "../../queries/dashboard
 import {DATA_STATE, OrderPnlResponse, PageResponse} from "../../shared/models";
 import {FilterFieldVm} from "../../vm/filter-field.vm";
 import {MetricTileVm} from "../../vm/metric-tile.vm";
-import {OrderPnlApi} from "../../core/api";
+import {OrderPnlApiClient} from "../../core/api";
 
 @Component({
   selector: "dp-finance-pnl-page",
@@ -71,7 +71,7 @@ export class FinancePnlPageComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly dashboardState: DashboardStateQuery,
-    private readonly orderPnlApi: OrderPnlApi
+    private readonly orderPnlApi: OrderPnlApiClient
   ) {}
 
   ngOnInit(): void {
@@ -90,12 +90,10 @@ export class FinancePnlPageComponent implements OnInit {
     this.isLoading = true;
     this.loadError = null;
     this.orderPnlApi
-      .list(this.accountId, {page: 0, size: 20})
+      .list(this.accountId, {}, {page: 0, size: 20})
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        map((response: PageResponse<OrderPnlResponse> | OrderPnlResponse[]) =>
-          Array.isArray(response) ? response : response.content ?? []
-        ),
+        map((response: PageResponse<OrderPnlResponse>) => response.content ?? []),
         catchError(() => {
           this.loadError = "Не удалось загрузить данные по заказам.";
           return of([] as OrderPnlResponse[]);

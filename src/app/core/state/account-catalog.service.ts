@@ -2,7 +2,7 @@ import {Injectable} from "@angular/core";
 import {BehaviorSubject, Observable, of, throwError} from "rxjs";
 import {catchError, finalize, map, shareReplay, tap} from "rxjs/operators";
 
-import {AccountApi, ApiError} from "../api";
+import {ApiError, IamApiClient} from "../api";
 import {AccountSummary} from "../../shared/models";
 
 type AccountCatalogState = {
@@ -22,7 +22,7 @@ export class AccountCatalogService {
 
   private loadInFlight: Observable<AccountSummary[]> | null = null;
 
-  constructor(private readonly accountApi: AccountApi) {}
+  constructor(private readonly iamApi: IamApiClient) {}
 
   load(force = false): Observable<AccountSummary[]> {
     const snapshot = this.stateSubject.value;
@@ -34,7 +34,7 @@ export class AccountCatalogService {
       return this.loadInFlight;
     }
 
-    this.loadInFlight = this.accountApi.list().pipe(
+    this.loadInFlight = this.iamApi.listAccounts().pipe(
       tap((accounts) => {
         this.stateSubject.next({accounts, error: null});
       }),

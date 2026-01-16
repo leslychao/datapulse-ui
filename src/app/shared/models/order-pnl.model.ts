@@ -18,3 +18,11 @@ export interface OrderPnlResponse {
   hasPenalties: boolean;
   updatedAt: string;
 }
+
+export interface OrderPnlQueryRequest {
+  sourcePlatform?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  isReturned?: boolean;
+  hasPenalties?: boolean;
+}

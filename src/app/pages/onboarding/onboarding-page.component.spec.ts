@@ -5,7 +5,7 @@ import {Router} from "@angular/router";
 import {of} from "rxjs";
 
 import {APP_PATHS} from "../../core/app-paths";
-import {AccountApi, AccountConnectionApi, EtlScenarioApi} from "../../core/api";
+import {AccountsApiClient, AccountConnectionsApiClient, EtlScenarioApi} from "../../core/api";
 import {AccountContextService} from "../../core/state";
 import {Marketplace, AccountConnection} from "../../shared/models";
 import {OnboardingPageComponent} from "./onboarding-page.component";
@@ -23,8 +23,8 @@ describe("OnboardingPageComponent", () => {
       providers: [
         {provide: Router, useValue: router},
         {provide: EtlScenarioApi, useValue: etlScenarioApi},
-        {provide: AccountApi, useValue: jasmine.createSpyObj("AccountApi", ["create", "update"])},
-        {provide: AccountConnectionApi, useValue: jasmine.createSpyObj("AccountConnectionApi", ["list", "create"])},
+        {provide: AccountsApiClient, useValue: jasmine.createSpyObj("AccountsApiClient", ["create", "update"])},
+        {provide: AccountConnectionsApiClient, useValue: jasmine.createSpyObj("AccountConnectionsApiClient", ["list", "create"])},
         {provide: AccountContextService, useValue: jasmine.createSpyObj("AccountContextService", ["setAccountId", "clear"])}
       ],
       schemas: [NO_ERRORS_SCHEMA]

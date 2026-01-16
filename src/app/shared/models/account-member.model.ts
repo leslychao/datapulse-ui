@@ -16,7 +16,7 @@ export enum AccountMemberAccessScope {
   Selected = "SELECTED"
 }
 
-export interface AccountMember {
+export interface AccountMemberResponse {
   id: number;
   accountId: number;
   email: string;
@@ -27,8 +27,9 @@ export interface AccountMember {
   lastLoginAt: string | null;
 }
 
+export type AccountMember = AccountMemberResponse;
+
 export interface AccountMemberCreateRequest {
-  accountId: number;
   email: string;
   role: AccountMemberRole;
   accessScope: AccountMemberAccessScope;
