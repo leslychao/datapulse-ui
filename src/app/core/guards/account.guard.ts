@@ -1,22 +1,23 @@
 import {inject} from "@angular/core";
-import {CanActivateFn, Router} from "@angular/router";
+import {CanActivateChildFn, Router} from "@angular/router";
 import {catchError, map, of, take} from "rxjs";
 
 import {AccountApi} from "../api";
 import {APP_PATHS} from "../app-paths";
 
-export const onboardingGuard: CanActivateFn = () => {
+export const accountGuard: CanActivateChildFn = (_route, state) => {
   const accountApi = inject(AccountApi);
   const router = inject(Router);
+  const isOnboardingRoute = state.url.startsWith(APP_PATHS.onboarding);
 
   return accountApi.list().pipe(
     take(1),
     map((accounts) => {
-      if (accounts.length === 0) {
+      if (accounts.length === 0 && !isOnboardingRoute) {
         return router.parseUrl(APP_PATHS.onboarding);
       }
-      return router.parseUrl(APP_PATHS.selectAccount);
+      return true;
     }),
-    catchError(() => of(router.parseUrl(APP_PATHS.selectAccount)))
+    catchError(() => of(true))
   );
 };

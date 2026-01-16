@@ -1,7 +1,7 @@
 import {Component, DestroyRef, OnInit, ViewChild, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {Router} from "@angular/router";
-import {catchError, filter, finalize, of, switchMap, take, tap, timer} from "rxjs";
+import {catchError, finalize, of, tap} from "rxjs";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountFormComponent} from "../../features/accounts";
@@ -27,7 +27,6 @@ interface OnboardingStep {
 type StatusState = "idle" | "processing" | "success" | "error";
 
 const SYNC_SUCCESS = "SUCCESS";
-const SYNC_FAILED = "FAILED";
 const SYNC_RUNNING = "RUNNING";
 const SYNC_QUEUED = "QUEUED";
 
@@ -129,8 +128,27 @@ export class OnboardingPageComponent implements OnInit {
       .subscribe();
   }
 
-  get canSaveAccount(): boolean {
-    return this.accountId == null && !this.isProcessing;
+  get canSubmitAccount(): boolean {
+    if (this.isProcessing) {
+      return false;
+    }
+    if (this.accountId == null) {
+      return this.accountForm?.isValid() ?? false;
+    }
+    if (this.isAccountNameChanged()) {
+      return this.accountForm?.isValid() ?? false;
+    }
+    return true;
+  }
+
+  get accountActionLabel(): string {
+    if (this.accountId == null) {
+      return this.isProcessing ? "Создаем..." : "Создать аккаунт";
+    }
+    if (this.isAccountNameChanged()) {
+      return this.isProcessing ? "Сохраняем..." : "Сохранить изменения";
+    }
+    return "Далее";
   }
 
   get canCreateConnection(): boolean {
@@ -168,20 +186,14 @@ export class OnboardingPageComponent implements OnInit {
   }
 
   canNavigateToStep(index: number): boolean {
-    if (index === 1 && this.connections.length > 0) {
-      return false;
+    if (this.isSyncStarted()) {
+      return index === this.currentStep;
     }
     return index <= this.maxAvailableStep() && !this.isProcessing;
   }
 
   goToStep(index: number): void {
     if (!this.canNavigateToStep(index)) {
-      return;
-    }
-    if (index === 1 && this.connections.length > 0) {
-      this.currentStep = 2;
-      this.resetErrors();
-      this.ensureConnectionState();
       return;
     }
     this.currentStep = index;
@@ -191,10 +203,22 @@ export class OnboardingPageComponent implements OnInit {
     }
   }
 
-  saveAccount(): void {
-    if (!this.canSaveAccount) {
+  submitAccount(): void {
+    if (!this.canSubmitAccount) {
       return;
     }
+    if (this.accountId == null) {
+      this.createAccount();
+      return;
+    }
+    if (!this.isAccountNameChanged()) {
+      this.goToStep(1);
+      return;
+    }
+    this.updateAccount();
+  }
+
+  private createAccount(): void {
     this.resetErrors();
     const accountRequest = this.accountForm?.getRequest();
     if (!accountRequest) {
@@ -215,6 +239,35 @@ export class OnboardingPageComponent implements OnInit {
         }),
         catchError((error: ApiError) => {
           this.handleApiError(error, "Не удалось создать аккаунт.");
+          return of(null);
+        }),
+        finalize(() => this.setProcessing(false))
+      )
+      .subscribe();
+  }
+
+  private updateAccount(): void {
+    if (this.accountId == null) {
+      return;
+    }
+    this.resetErrors();
+    const accountRequest = this.accountForm?.getRequest();
+    if (!accountRequest) {
+      this.setStatusState("error", "Заполните название аккаунта.");
+      return;
+    }
+    this.setStatusState("processing", "Сохраняем изменения...");
+    this.accountApi
+      .update(this.accountId, accountRequest)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        tap((account) => {
+          this.accountName = account.name;
+          this.currentStep = 1;
+          this.setStatusState("success", "Изменения сохранены.");
+        }),
+        catchError((error: ApiError) => {
+          this.handleApiError(error, "Не удалось сохранить изменения.");
           return of(null);
         }),
         finalize(() => this.setProcessing(false))
@@ -265,48 +318,19 @@ export class OnboardingPageComponent implements OnInit {
       return;
     }
     this.resetErrors();
-    this.setStatusState(
-      "processing",
-      "Синхронизация запущена",
-      "Идёт первичная синхронизация. Это может занять несколько минут."
-    );
-
+    this.setProcessing(true);
     const request = this.buildScenarioRequest(this.accountId);
 
     this.etlScenarioApi
       .run(request)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        switchMap((response) => {
-          if (response.status === 202) {
-            this.setStatusState(
-              "processing",
-              "Синхронизация запущена",
-              "Идёт первичная синхронизация. Это может занять несколько минут."
-            );
-            return this.pollSyncStatus(this.accountId!);
-          }
-          return this.refreshConnections(this.accountId!).pipe(
-            switchMap((connections) => {
-              if (this.hasSuccessfulSync(connections)) {
-                return of(connections);
-              }
-              return this.pollSyncStatus(this.accountId!);
-            })
-          );
-        }),
-        tap((connections) => {
-          if (!connections) {
-            return;
-          }
-          if (this.hasSuccessfulSync(connections)) {
-            this.setStatusState("success", "Синхронизация завершена.");
+        tap((response) => {
+          if (response.status === 200 || response.status === 202) {
             this.router.navigateByUrl(APP_PATHS.overview(this.accountId!), {replaceUrl: true});
             return;
           }
-          if (this.hasFailedSync(connections)) {
-            this.setStatusState("error", "Синхронизация завершилась ошибкой.");
-          }
+          this.setStatusState("error", "Не удалось запустить синхронизацию.");
         }),
         catchError((error: ApiError) => {
           this.handleApiError(error, "Не удалось запустить синхронизацию.");
@@ -407,42 +431,9 @@ export class OnboardingPageComponent implements OnInit {
     this.loadConnections(this.accountId, false);
   }
 
-  private refreshConnections(accountId: number) {
-    return this.connectionApi.list(accountId).pipe(
-      takeUntilDestroyed(this.destroyRef),
-      tap((connections) => {
-        this.connections = connections;
-      }),
-      catchError((error: ApiError) => {
-        this.handleApiError(error, "Не удалось загрузить подключения.");
-        return of([]);
-      })
-    );
-  }
-
-  private pollSyncStatus(accountId: number) {
-    return timer(0, 4000).pipe(
-      switchMap(() => this.connectionApi.list(accountId)),
-      tap((connections) => {
-        this.connections = connections;
-      }),
-      filter(
-        (connections) =>
-          this.hasSuccessfulSync(connections) || this.hasFailedSync(connections)
-      ),
-      take(1)
-    );
-  }
-
   private hasSuccessfulSync(connections: AccountConnection[]): boolean {
     return connections.some(
       (connection) => connection.active && connection.lastSyncStatus === SYNC_SUCCESS
-    );
-  }
-
-  private hasFailedSync(connections: AccountConnection[]): boolean {
-    return connections.some(
-      (connection) => connection.active && connection.lastSyncStatus === SYNC_FAILED
     );
   }
 
@@ -452,6 +443,19 @@ export class OnboardingPageComponent implements OnInit {
         connection.active &&
         (connection.lastSyncStatus === SYNC_RUNNING || connection.lastSyncStatus === SYNC_QUEUED)
     );
+  }
+
+  private isAccountNameChanged(): boolean {
+    if (!this.accountForm || this.accountId == null) {
+      return false;
+    }
+    const currentName = this.accountForm.getCurrentName();
+    const storedName = (this.accountName ?? "").trim();
+    return currentName !== storedName;
+  }
+
+  private isSyncStarted(): boolean {
+    return this.hasSuccessfulSync(this.connections) || this.hasInProgressSync(this.connections);
   }
 
   private buildScenarioRequest(accountId: number): EtlScenarioRequest {

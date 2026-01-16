@@ -50,6 +50,14 @@ export class AccountFormComponent implements OnChanges {
     return {name, active: true};
   }
 
+  getCurrentName(): string {
+    return this.form.getRawValue().name.trim();
+  }
+
+  isValid(): boolean {
+    return this.form.valid;
+  }
+
   submit(): void {
     const request = this.getRequest();
     if (!request) {

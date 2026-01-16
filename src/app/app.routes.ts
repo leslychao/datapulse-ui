@@ -3,7 +3,7 @@ import {Routes} from "@angular/router";
 import {APP_ROUTE_SEGMENTS} from "./core/app-paths";
 import {authGuard} from "./core/guards/auth.guard";
 import {publicGuard} from "./core/guards/public.guard";
-import {onboardingGuard} from "./core/guards/onboarding.guard";
+import {accountGuard} from "./core/guards/account.guard";
 import {accountlessRouteMatcher} from "./core/routing/accountless-route.matcher";
 
 export const appRoutes: Routes = [
@@ -23,6 +23,7 @@ export const appRoutes: Routes = [
   {
     path: APP_ROUTE_SEGMENTS.app,
     canMatch: [authGuard],
+    canActivateChild: [accountGuard],
     children: [
       {
         path: "",
@@ -31,7 +32,6 @@ export const appRoutes: Routes = [
       },
       {
         path: APP_ROUTE_SEGMENTS.home,
-        canActivate: [onboardingGuard],
         loadComponent: () =>
           import("./pages/home/home-redirect-page.component").then(
             (m) => m.HomeRedirectPageComponent

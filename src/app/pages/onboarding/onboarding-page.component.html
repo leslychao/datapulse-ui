@@ -44,18 +44,10 @@
             <dp-button
               type="button"
               variant="primary"
-              (click)="saveAccount()"
-              [disabled]="!canSaveAccount"
+              (click)="submitAccount()"
+              [disabled]="!canSubmitAccount"
             >
-              {{
-                accountId != null
-                  ? isProcessing
-                    ? "Сохраняем..."
-                    : "Сохранить аккаунт"
-                  : isProcessing
-                    ? "Создаем..."
-                    : "Создать аккаунт"
-              }}
+              {{ accountActionLabel }}
             </dp-button>
           </div>
         </div>
@@ -107,7 +99,7 @@
               (click)="startSync()"
               [disabled]="!canStartSync"
             >
-              {{ isProcessing ? "Запускаем..." : "Начать" }}
+              Начать
             </dp-button>
           </div>
         </div>
