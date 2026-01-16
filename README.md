@@ -1,27 +1,77 @@
-# DatapulseUi
+# DataPulse UI
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.21.
+DataPulse UI is an Angular 18 application for the DataPulse product. It provides authenticated routing, account selection, onboarding, and summary dashboards with a strict, predictable account context model.
 
-## Development server
+## Requirements
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- Node.js 18+
+- npm 9+
 
-## Code scaffolding
+## Install
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+```bash
+npm install
+```
+
+## Development
+
+```bash
+npm run start
+```
+
+The dev server runs on `http://localhost:4200` and uses `proxy.conf.json` for API routing.
+
+## Environment configuration
+
+Runtime auth and OAuth2 endpoints are configured in `src/environments/environment.ts`.
+
+Key fields:
+- `auth.loginPath`: OAuth2 login start endpoint.
+- `auth.logoutPath`: OAuth2 logout endpoint.
+- `auth.logoutRedirectUrl`: URL to return to after logout.
+- `auth.keycloak.*`: Keycloak registration settings.
+
+## Architecture
+
+The application follows a strict layered layout:
+
+- **core**: infrastructure (routing, guards, auth, API client, state).
+- **shared**: shared UI components, models, and utilities.
+- **features**: domain-specific UI building blocks.
+- **pages**: routed screens.
+
+See `ARCHITECTURE.md` for details.
+
+## Key flows
+
+### Login → accounts → onboarding/select
+
+1. After login, the app loads accounts via `GET /api/iam/accounts`.
+2. If the list is empty, the app always redirects to `/app/onboarding`.
+3. If the list is not empty, the app shows account selection.
+4. Selecting an account **does not** call the backend; it only stores the account id and redirects to summary.
+
+### Onboarding
+
+- The onboarding wizard has three steps and supports returning to previous steps.
+- Wizard state is stored in memory only (no localStorage).
+- After successful sync start, the app navigates to `/app/:accountId/home/summary`.
+
+### Local storage
+
+Only one key is used:
+
+- `datapulse.accountId`
+
+No other localStorage keys are permitted.
+
+## Debugging
+
+- Use the browser network tab to verify `GET /api/iam/accounts` on refresh and navigation.
+- Inspect routing decisions in `core/guards` and state updates in `core/state`.
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+```bash
+npm run build
+```

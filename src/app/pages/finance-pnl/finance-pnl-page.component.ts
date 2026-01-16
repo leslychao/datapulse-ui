@@ -1,9 +1,9 @@
-import {Component, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {Observable} from "rxjs";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
-import {AccountContextService} from "../../core/state";
 import {
   ChartCardComponent,
   DashboardShellComponent,
@@ -27,7 +27,8 @@ import {OrderPnlApi} from "../../core/api";
     ChartCardComponent
   ],
   templateUrl: "./finance-pnl-page.component.html",
-  styleUrl: "./finance-pnl-page.component.css"
+  styleUrl: "./finance-pnl-page.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FinancePnlPageComponent implements OnInit {
   accountId: number | null = null;
@@ -64,9 +65,10 @@ export class FinancePnlPageComponent implements OnInit {
     {id: "profit", label: "Profit", value: "—", semantic: "profit"}
   ];
 
+  private readonly destroyRef = inject(DestroyRef);
+
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly accountContext: AccountContextService,
     private readonly dashboardState: DashboardStateQuery,
     private readonly orderPnlApi: OrderPnlApi
   ) {}
@@ -75,7 +77,6 @@ export class FinancePnlPageComponent implements OnInit {
     const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
     this.accountId = Number.isFinite(accountId) ? accountId : null;
     if (this.accountId != null) {
-      this.accountContext.setAccountId(this.accountId);
       this.fetchOrderPnl();
     }
     this.state$ = this.dashboardState.getState(this.accountId, DATA_STATE.unavailable);
@@ -87,15 +88,18 @@ export class FinancePnlPageComponent implements OnInit {
     }
     this.isLoading = true;
     this.loadError = null;
-    this.orderPnlApi.list(this.accountId, {page: 0, size: 20}).subscribe({
-      next: (response: PageResponse<OrderPnlResponse>) => {
-        this.orderPnl = response.content ?? [];
-        this.isLoading = false;
-      },
-      error: () => {
-        this.loadError = "Не удалось загрузить данные по заказам.";
-        this.isLoading = false;
-      }
-    });
+    this.orderPnlApi
+      .list(this.accountId, {page: 0, size: 20})
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response: PageResponse<OrderPnlResponse>) => {
+          this.orderPnl = response.content ?? [];
+          this.isLoading = false;
+        },
+        error: () => {
+          this.loadError = "Не удалось загрузить данные по заказам.";
+          this.isLoading = false;
+        }
+      });
   }
 }

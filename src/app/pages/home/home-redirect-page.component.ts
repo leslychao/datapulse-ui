@@ -1,4 +1,4 @@
-import {Component, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {Router} from "@angular/router";
 
@@ -11,7 +11,8 @@ import {LoaderComponent} from "../../shared/ui";
   standalone: true,
   imports: [CommonModule, LoaderComponent],
   templateUrl: "./home-redirect-page.component.html",
-  styleUrl: "./home-redirect-page.component.css"
+  styleUrl: "./home-redirect-page.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomeRedirectPageComponent implements OnInit {
   constructor(

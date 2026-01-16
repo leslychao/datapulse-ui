@@ -1,4 +1,4 @@
-import {Component, Input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {RouterModule} from "@angular/router";
 import {APP_PATHS} from "../../../core/app-paths";
@@ -19,7 +19,8 @@ interface SidebarSection {
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: "./dashboard-shell.component.html",
-  styleUrl: "./dashboard-shell.component.css"
+  styleUrl: "./dashboard-shell.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardShellComponent {
   private cachedAccountId: number | null = null;
@@ -65,7 +66,7 @@ export class DashboardShellComponent {
     return [
       {
         label: "Overview",
-        items: [{label: "Home / Summary", path: APP_PATHS.overview(accountId), testId: "sidebar-overview"}]
+        items: [{label: "Home / Summary", path: APP_PATHS.homeSummary(accountId), testId: "sidebar-overview"}]
       },
       {
         label: "Finance",

@@ -4,6 +4,7 @@ import {APP_ROUTE_SEGMENTS} from "../app-paths";
 
 const ACCOUNTLESS_SEGMENTS = new Set<string>([
   APP_ROUTE_SEGMENTS.dashboard,
+  APP_ROUTE_SEGMENTS.home,
   APP_ROUTE_SEGMENTS.overview,
   APP_ROUTE_SEGMENTS.finance,
   APP_ROUTE_SEGMENTS.operations,

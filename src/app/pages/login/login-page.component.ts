@@ -1,4 +1,4 @@
-import {Component} from "@angular/core";
+import {ChangeDetectionStrategy, Component} from "@angular/core";
 import {CommonModule} from "@angular/common";
 
 import {AuthRedirectService} from "../../core/auth";
@@ -10,7 +10,8 @@ import {APP_PATHS} from "../../core/app-paths";
   standalone: true,
   imports: [CommonModule, ButtonComponent],
   templateUrl: "./login-page.component.html",
-  styleUrl: "./login-page.component.css"
+  styleUrl: "./login-page.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginPageComponent {
   constructor(private readonly authRedirect: AuthRedirectService) {}

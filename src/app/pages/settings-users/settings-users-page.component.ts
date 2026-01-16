@@ -1,10 +1,9 @@
-import {Component, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {Observable} from "rxjs";
 import {map} from "rxjs/operators";
 
-import {AccountContextService} from "../../core/state";
 import {MembersQuery} from "../../queries/members.query";
 import {DashboardShellComponent, DataTableCardComponent} from "../../shared/ui";
 import {TableColumnVm} from "../../vm/table-column.vm";
@@ -16,7 +15,8 @@ import {DataState} from "../../shared/models";
   standalone: true,
   imports: [CommonModule, DashboardShellComponent, DataTableCardComponent],
   templateUrl: "./settings-users-page.component.html",
-  styleUrl: "./settings-users-page.component.css"
+  styleUrl: "./settings-users-page.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingsUsersPageComponent implements OnInit {
   accountId: number | null = null;
@@ -30,16 +30,12 @@ export class SettingsUsersPageComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly accountContext: AccountContextService,
     private readonly membersQuery: MembersQuery
   ) {}
 
   ngOnInit(): void {
     const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
     this.accountId = Number.isFinite(accountId) ? accountId : null;
-    if (this.accountId != null) {
-      this.accountContext.setAccountId(this.accountId);
-    }
     this.members$ = this.membersQuery.load(this.accountId).pipe(
       map((result) => ({
         state: result.state,

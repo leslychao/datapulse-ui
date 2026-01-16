@@ -2,6 +2,7 @@ export const APP_ROUTE_SEGMENTS = {
   login: "login",
   app: "app",
   home: "home",
+  summary: "summary",
   selectAccount: "select-account",
   onboarding: "onboarding",
   dashboard: "dashboard",
@@ -30,6 +31,8 @@ export const APP_PATHS = {
   home: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.home}`,
   selectAccount: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.selectAccount}`,
   onboarding: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.onboarding}`,
+  homeSummary: (accountId: number) =>
+    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.home}/${APP_ROUTE_SEGMENTS.summary}`,
   dashboard: (accountId: number) =>
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.dashboard}`,
   overview: (accountId: number) =>

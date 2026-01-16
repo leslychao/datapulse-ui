@@ -1,4 +1,4 @@
-import {Component, DestroyRef, OnInit, ViewChild, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewChild, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {Router} from "@angular/router";
 import {catchError, finalize, of, tap} from "rxjs";
@@ -7,14 +7,13 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {AccountFormComponent} from "../../features/accounts";
 import {ConnectionFormComponent} from "../../features/connections";
 import {AccountApi, AccountConnectionApi, ApiError, EtlScenarioApi} from "../../core/api";
+import {AccountConnection, EtlScenarioEvent, EtlScenarioRequest} from "../../shared/models";
 import {
-  AccountConnection,
-  AccountSummary,
-  EtlScenarioEvent,
-  EtlScenarioRequest
-} from "../../shared/models";
-import {AccountContextService} from "../../core/state";
-import {AuthSessionService} from "../../core/auth";
+  AccountContextService,
+  OnboardingState,
+  OnboardingStateService,
+  OnboardingStatusState
+} from "../../core/state";
 import {APP_PATHS} from "../../core/app-paths";
 import {ButtonComponent} from "../../shared/ui";
 
@@ -23,8 +22,6 @@ interface OnboardingStep {
   label: string;
   description: string;
 }
-
-type StatusState = "idle" | "processing" | "success" | "error";
 
 const SYNC_SUCCESS = "SUCCESS";
 const SYNC_RUNNING = "RUNNING";
@@ -50,7 +47,8 @@ const DEFAULT_ETL_EVENTS: EtlScenarioEvent[] = [
     ButtonComponent
   ],
   templateUrl: "./onboarding-page.component.html",
-  styleUrl: "./onboarding-page.component.css"
+  styleUrl: "./onboarding-page.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OnboardingPageComponent implements OnInit {
   @ViewChild(AccountFormComponent) accountForm?: AccountFormComponent;
@@ -74,58 +72,125 @@ export class OnboardingPageComponent implements OnInit {
     }
   ];
 
-  currentStep = 0;
-  accountId: number | null = null;
-  accountName: string | null = null;
-  connections: AccountConnection[] = [];
-  error: ApiError | null = null;
-  tokenErrorMessage: string | null = null;
-
-  statusState: StatusState = "idle";
-  statusText = "Онбординг · не завершён";
-  statusHint: string | null = null;
-  isStatusActive = false;
-  isProcessing = false;
-  formLocked = false;
-
   private readonly destroyRef = inject(DestroyRef);
+  private readonly onboardingState = inject(OnboardingStateService);
+
+  private get snapshot() {
+    return this.onboardingState.state();
+  }
+
+  private patchState(partial: Partial<OnboardingState>): void {
+    this.onboardingState.patch(partial);
+  }
+
+  get currentStep(): number {
+    return this.snapshot.currentStep;
+  }
+
+  set currentStep(step: number) {
+    this.patchState({currentStep: step});
+  }
+
+  get accountId(): number | null {
+    return this.snapshot.accountId;
+  }
+
+  set accountId(value: number | null) {
+    this.patchState({accountId: value});
+  }
+
+  get accountName(): string | null {
+    return this.snapshot.accountName;
+  }
+
+  set accountName(value: string | null) {
+    this.patchState({accountName: value});
+  }
+
+  get connections(): AccountConnection[] {
+    return this.snapshot.connections;
+  }
+
+  set connections(value: AccountConnection[]) {
+    this.patchState({connections: value});
+  }
+
+  get error(): ApiError | null {
+    return this.snapshot.error;
+  }
+
+  set error(value: ApiError | null) {
+    this.patchState({error: value});
+  }
+
+  get tokenErrorMessage(): string | null {
+    return this.snapshot.tokenErrorMessage;
+  }
+
+  set tokenErrorMessage(value: string | null) {
+    this.patchState({tokenErrorMessage: value});
+  }
+
+  get statusState(): OnboardingStatusState {
+    return this.snapshot.statusState;
+  }
+
+  set statusState(value: OnboardingStatusState) {
+    this.patchState({statusState: value});
+  }
+
+  get statusText(): string {
+    return this.snapshot.statusText;
+  }
+
+  set statusText(value: string) {
+    this.patchState({statusText: value});
+  }
+
+  get statusHint(): string | null {
+    return this.snapshot.statusHint;
+  }
+
+  set statusHint(value: string | null) {
+    this.patchState({statusHint: value});
+  }
+
+  get isStatusActive(): boolean {
+    return this.snapshot.isStatusActive;
+  }
+
+  set isStatusActive(value: boolean) {
+    this.patchState({isStatusActive: value});
+  }
+
+  get isProcessing(): boolean {
+    return this.snapshot.isProcessing;
+  }
+
+  set isProcessing(value: boolean) {
+    this.patchState({isProcessing: value});
+  }
+
+  get formLocked(): boolean {
+    return this.snapshot.formLocked;
+  }
+
+  set formLocked(value: boolean) {
+    this.patchState({formLocked: value});
+  }
 
   constructor(
     private readonly accountApi: AccountApi,
     private readonly connectionApi: AccountConnectionApi,
     private readonly etlScenarioApi: EtlScenarioApi,
     private readonly accountContext: AccountContextService,
-    private readonly authSession: AuthSessionService,
     private readonly router: Router
   ) {}
 
   ngOnInit(): void {
-    if (!this.authSession.snapshot().authenticated) {
-      this.router.navigateByUrl(APP_PATHS.login, {replaceUrl: true});
-      return;
+    if (this.accountId != null) {
+      this.loadConnections(this.accountId, false);
     }
-
-    this.accountApi
-      .list()
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap((accounts) => {
-          if (accounts.length === 0) {
-            this.resetOnboardingState();
-            return;
-          }
-
-          const selectedAccountId = this.selectAccount(accounts);
-          this.accountId = selectedAccountId;
-          this.accountName = accounts.find((account) => account.id === selectedAccountId)?.name ?? null;
-          this.loadConnections(selectedAccountId, true);
-        }),
-        catchError((error: ApiError) => {
-          this.handleApiError(error, "Не удалось загрузить аккаунты.");
-          return of([]);
-        })
-      )
-      .subscribe();
   }
 
   get canSubmitAccount(): boolean {
@@ -327,7 +392,7 @@ export class OnboardingPageComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
         tap((response) => {
           if (response.status === 200 || response.status === 202) {
-            this.router.navigateByUrl(APP_PATHS.overview(this.accountId!), {replaceUrl: true});
+            this.router.navigateByUrl(APP_PATHS.homeSummary(this.accountId!), {replaceUrl: true});
             return;
           }
           this.setStatusState("error", "Не удалось запустить синхронизацию.");
@@ -341,7 +406,7 @@ export class OnboardingPageComponent implements OnInit {
       .subscribe();
   }
 
-  private setStatusState(state: StatusState, text: string, hint: string | null = null): void {
+  private setStatusState(state: OnboardingStatusState, text: string, hint: string | null = null): void {
     this.statusState = state;
     this.statusText = text;
     this.statusHint = hint;
@@ -363,32 +428,12 @@ export class OnboardingPageComponent implements OnInit {
     this.error = null;
     this.tokenErrorMessage = null;
     if (this.statusState === "error") {
-      this.setStatusState("idle", "Онбординг · не завершён");
+      this.onboardingState.resetStatus();
     }
   }
 
   private mapErrorMessage(error: ApiError): string {
     return error.message;
-  }
-
-  private resetOnboardingState(): void {
-    this.accountContext.clear();
-    this.accountId = null;
-    this.accountName = null;
-    this.connections = [];
-    this.currentStep = 0;
-    this.setStatusState("idle", "Онбординг · не завершён");
-  }
-
-  private selectAccount(accounts: AccountSummary[]): number {
-    const lastSelectedAccountId = this.accountContext.snapshot;
-    const match =
-      lastSelectedAccountId != null
-        ? accounts.find((account) => account.id === lastSelectedAccountId)
-        : null;
-    const selectedAccountId = match?.id ?? accounts[0].id;
-    this.accountContext.setAccountId(selectedAccountId);
-    return selectedAccountId;
   }
 
   private loadConnections(accountId: number, allowAutoAdvance: boolean): void {
@@ -403,7 +448,7 @@ export class OnboardingPageComponent implements OnInit {
         tap((connections) => {
           this.connections = connections;
           if (this.hasSuccessfulSync(connections)) {
-            this.router.navigateByUrl(APP_PATHS.overview(accountId), {replaceUrl: true});
+            this.router.navigateByUrl(APP_PATHS.homeSummary(accountId), {replaceUrl: true});
             return;
           }
           if (allowAutoAdvance) {
