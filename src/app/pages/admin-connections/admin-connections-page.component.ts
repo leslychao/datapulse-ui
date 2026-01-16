@@ -1,13 +1,14 @@
 import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
-import {ActivatedRoute} from "@angular/router";
-import {catchError, of} from "rxjs";
+import {Router} from "@angular/router";
+import {catchError, finalize, of} from "rxjs";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountConnectionApi, ApiError} from "../../core/api";
 import {AccountConnection} from "../../shared/models";
 import {ConnectionsTableComponent} from "../../features/connections";
 import {LoaderComponent, ToastService} from "../../shared/ui";
+import {APP_PATHS} from "../../core/app-paths";
 
 @Component({
   selector: "dp-admin-connections-page",
@@ -26,19 +27,19 @@ export class AdminConnectionsPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   constructor(
-    private readonly route: ActivatedRoute,
     private readonly connectionApi: AccountConnectionApi,
-    private readonly toastService: ToastService
+    private readonly toastService: ToastService,
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {
-    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
-    this.accountId = Number.isFinite(accountId) ? accountId : null;
-    if (this.accountId != null) {
-      this.loadConnections();
-    } else {
+    this.accountId = this.readAccountId();
+    if (this.accountId == null) {
       this.loading = false;
+      this.router.navigateByUrl(APP_PATHS.selectAccount, {replaceUrl: true});
+      return;
     }
+    this.loadConnections();
   }
 
   loadConnections(): void {
@@ -54,11 +55,13 @@ export class AdminConnectionsPageComponent implements OnInit {
         catchError((error: ApiError) => {
           this.error = error;
           return of([]);
+        }),
+        finalize(() => {
+          this.loading = false;
         })
       )
       .subscribe((connections) => {
         this.connections = connections;
-        this.loading = false;
       });
   }
 
@@ -95,5 +98,14 @@ export class AdminConnectionsPageComponent implements OnInit {
         this.loadConnections();
       }
     });
+  }
+
+  private readAccountId(): number | null {
+    const raw = localStorage.getItem("datapulse.accountId");
+    if (!raw) {
+      return null;
+    }
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 }

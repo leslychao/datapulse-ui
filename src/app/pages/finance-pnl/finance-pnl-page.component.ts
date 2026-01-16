@@ -1,8 +1,9 @@
 import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
-import {Observable} from "rxjs";
+import {Observable, of} from "rxjs";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {catchError, finalize, map} from "rxjs/operators";
 
 import {
   ChartCardComponent,
@@ -90,16 +91,21 @@ export class FinancePnlPageComponent implements OnInit {
     this.loadError = null;
     this.orderPnlApi
       .list(this.accountId, {page: 0, size: 20})
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (response: PageResponse<OrderPnlResponse>) => {
-          this.orderPnl = response.content ?? [];
-          this.isLoading = false;
-        },
-        error: () => {
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        map((response: PageResponse<OrderPnlResponse> | OrderPnlResponse[]) =>
+          Array.isArray(response) ? response : response.content ?? []
+        ),
+        catchError(() => {
           this.loadError = "Не удалось загрузить данные по заказам.";
+          return of([] as OrderPnlResponse[]);
+        }),
+        finalize(() => {
           this.isLoading = false;
-        }
+        })
+      )
+      .subscribe((rows) => {
+        this.orderPnl = rows;
       });
   }
 }
