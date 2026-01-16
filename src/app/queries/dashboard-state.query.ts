@@ -2,7 +2,7 @@ import {Injectable} from "@angular/core";
 import {Observable, of} from "rxjs";
 import {catchError, map} from "rxjs/operators";
 
-import {AccountConnectionApi} from "../core/api";
+import {AccountConnectionsApiClient} from "../core/api";
 import {DataState, DATA_STATE} from "../shared/models";
 
 export interface DashboardStateResult {
@@ -11,7 +11,7 @@ export interface DashboardStateResult {
 
 @Injectable({providedIn: "root"})
 export class DashboardStateQuery {
-  constructor(private readonly connectionApi: AccountConnectionApi) {}
+  constructor(private readonly connectionApi: AccountConnectionsApiClient) {}
 
   getState(accountId: number | null, fallbackState: DataState): Observable<DashboardStateResult> {
     if (accountId == null) {

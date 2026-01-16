@@ -12,8 +12,6 @@
   <div class="card" *ngIf="!loading && !error">
     <dp-connections-table
       [connections]="connections"
-      (testConnection)="testConnection($event)"
-      (syncConnection)="syncConnection($event)"
       (disableConnection)="disableConnection($event)"
     ></dp-connections-table>
   </div>

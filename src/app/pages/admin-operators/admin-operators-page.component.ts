@@ -5,10 +5,10 @@ import {forkJoin, of} from "rxjs";
 import {catchError, finalize} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
-import {AccountConnectionApi, AccountMemberApi, ApiError} from "../../core/api";
+import {AccountConnectionsApiClient, AccountMembersApiClient, ApiError} from "../../core/api";
 import {
   AccountMember,
-  AccountMemberAccessScope,
+  AccountMemberCreateRequest,
   AccountMemberRole,
   AccountMemberStatus,
   AccountMemberUpdateRequest
@@ -50,8 +50,8 @@ export class AdminOperatorsPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   constructor(
-    private readonly memberApi: AccountMemberApi,
-    private readonly connectionApi: AccountConnectionApi,
+    private readonly memberApi: AccountMembersApiClient,
+    private readonly connectionApi: AccountConnectionsApiClient,
     private readonly toastService: ToastService,
     private readonly router: Router
   ) {}
@@ -92,15 +92,12 @@ export class AdminOperatorsPageComponent implements OnInit {
       });
   }
 
-  inviteOperator(request: {
-    accountId: number;
-    email: string;
-    role: AccountMemberRole;
-    accessScope: AccountMemberAccessScope;
-    connectionIds: number[];
-  }): void {
+  inviteOperator(request: AccountMemberCreateRequest): void {
+    if (this.accountId == null) {
+      return;
+    }
     this.memberApi
-      .create(request)
+      .create(this.accountId, request)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (member) => {
@@ -145,12 +142,15 @@ export class AdminOperatorsPageComponent implements OnInit {
   }
 
   private optimisticUpdate(member: AccountMember, update: AccountMemberUpdateRequest): void {
+    if (this.accountId == null) {
+      return;
+    }
     const previous = {...member};
     this.operators = this.operators.map((item) =>
       item.id === member.id ? {...item, ...update} : item
     );
     this.memberApi
-      .update(member.id, update)
+      .update(this.accountId, member.id, update)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {

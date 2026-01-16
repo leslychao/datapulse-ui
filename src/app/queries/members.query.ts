@@ -2,7 +2,7 @@ import {Injectable} from "@angular/core";
 import {Observable, of} from "rxjs";
 import {catchError, map} from "rxjs/operators";
 
-import {AccountMemberApi} from "../core/api";
+import {AccountMembersApiClient} from "../core/api";
 import {DataState, DATA_STATE} from "../shared/models";
 import {mapAccountMemberToVm} from "../mappers/account-member.mapper";
 import {MemberVm} from "../vm/member.vm";
@@ -14,7 +14,7 @@ export interface MembersQueryResult {
 
 @Injectable({providedIn: "root"})
 export class MembersQuery {
-  constructor(private readonly memberApi: AccountMemberApi) {}
+  constructor(private readonly memberApi: AccountMembersApiClient) {}
 
   load(accountId: number | null): Observable<MembersQueryResult> {
     if (accountId == null) {

@@ -5,7 +5,7 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {catchError, finalize, map} from "rxjs/operators";
 import {of} from "rxjs";
 import {APP_PATHS} from "../../core/app-paths";
-import {OrderPnlApi} from "../../core/api";
+import {OrderPnlApiClient} from "../../core/api";
 import {OrderPnlResponse, PageResponse} from "../../shared/models";
 import {DashboardShellComponent} from "../../shared/ui";
 
@@ -30,7 +30,7 @@ export class DashboardPageComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly orderPnlApi: OrderPnlApi
+    private readonly orderPnlApi: OrderPnlApiClient
   ) {}
 
   ngOnInit(): void {
@@ -48,12 +48,10 @@ export class DashboardPageComponent implements OnInit {
     this.isLoading = true;
     this.loadError = null;
     this.orderPnlApi
-      .list(this.accountId, {page: 0, size: 20})
+      .list(this.accountId, {}, {page: 0, size: 20})
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        map((response: PageResponse<OrderPnlResponse> | OrderPnlResponse[]) =>
-          Array.isArray(response) ? response : response.content ?? []
-        ),
+        map((response: PageResponse<OrderPnlResponse>) => response.content ?? []),
         catchError(() => {
           this.loadError = "Не удалось загрузить данные по заказам.";
           return of([] as OrderPnlResponse[]);

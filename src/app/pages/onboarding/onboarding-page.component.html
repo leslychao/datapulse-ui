@@ -57,7 +57,6 @@
         <dp-connection-form
           *ngIf="accountId != null && connections.length === 0"
           class="connection-block"
-          [accountId]="accountId"
           [disabled]="formLocked"
           [errorMessage]="tokenErrorMessage"
         ></dp-connection-form>

@@ -6,3 +6,5 @@ export * from "./page.model";
 export * from "./order-pnl.model";
 export * from "./data-state.model";
 export * from "./etl-scenario.model";
+export * from "./inventory-snapshot.model";
+export * from "./product-cost.model";

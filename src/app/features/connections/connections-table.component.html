@@ -18,8 +18,6 @@
         <td>{{ connection.lastSyncAt || "—" }}</td>
         <td>{{ connection.maskedCredentials || "—" }}</td>
         <td class="actions">
-          <dp-button type="button" (click)="testConnection.emit(connection)">Test</dp-button>
-          <dp-button type="button" (click)="syncConnection.emit(connection)">Sync</dp-button>
           <dp-button
             type="button"
             variant="danger"

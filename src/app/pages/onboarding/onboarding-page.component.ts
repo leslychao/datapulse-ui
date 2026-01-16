@@ -6,7 +6,7 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountFormComponent} from "../../features/accounts";
 import {ConnectionFormComponent} from "../../features/connections";
-import {AccountApi, AccountConnectionApi, ApiError, EtlScenarioApi} from "../../core/api";
+import {AccountsApiClient, AccountConnectionsApiClient, ApiError, EtlScenarioApi} from "../../core/api";
 import {AccountConnection, EtlScenarioEvent, EtlScenarioRequest} from "../../shared/models";
 import {
   AccountContextService,
@@ -180,8 +180,8 @@ export class OnboardingPageComponent implements OnInit {
   }
 
   constructor(
-    private readonly accountApi: AccountApi,
-    private readonly connectionApi: AccountConnectionApi,
+    private readonly accountApi: AccountsApiClient,
+    private readonly connectionApi: AccountConnectionsApiClient,
     private readonly etlScenarioApi: EtlScenarioApi,
     private readonly accountContext: AccountContextService,
     private readonly router: Router
@@ -360,14 +360,14 @@ export class OnboardingPageComponent implements OnInit {
       this.setStatusState("error", "Сначала создайте аккаунт.");
       return;
     }
-    const request = this.connectionForm?.getRequest(this.accountId);
+    const request = this.connectionForm?.getRequest();
     if (!request) {
       this.setStatusState("error", "Заполните данные подключения.");
       return;
     }
     this.setStatusState("processing", "Создаем подключение...");
     this.connectionApi
-      .create(request)
+      .create(this.accountId, request)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         tap(() => {
