@@ -14,9 +14,18 @@ import {APP_PATHS} from "../../core/app-paths";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginPageComponent {
+  isRedirecting = false;
+
   constructor(private readonly authRedirect: AuthRedirectService) {}
 
   login(): void {
+    if (this.isRedirecting) {
+      return;
+    }
+    this.isRedirecting = true;
+    window.setTimeout(() => {
+      this.isRedirecting = false;
+    }, 4000);
     this.authRedirect.login(APP_PATHS.home);
   }
 }

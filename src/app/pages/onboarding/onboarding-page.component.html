@@ -69,16 +69,10 @@
             <dp-button
               type="button"
               variant="primary"
-              (click)="createConnection()"
-              [disabled]="!canCreateConnection"
+              (click)="handleConnectionAction()"
+              [disabled]="connections.length > 0 ? !canProceedToSync : !canCreateConnection"
             >
-              {{
-                connections.length > 0
-                  ? "Подключение создано"
-                  : isProcessing
-                    ? "Создаем..."
-                    : "Создать подключение"
-              }}
+              {{ connectionActionLabel }}
             </dp-button>
           </div>
         </div>

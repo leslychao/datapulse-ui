@@ -1,11 +1,11 @@
 <div class="login-page">
   <div class="login-panel">
-    <img class="login-logo" src="assets/logo.svg" alt="Data Pulse" />
-    <div class="login-icon" aria-hidden="true">
-      <img src="assets/logo.svg" alt="" />
-    </div>
-    <dp-button type="button" variant="primary" (click)="login()">
+    <img class="login-logo" src="assets/logo.svg" alt="DataPulse" />
+    <h1 class="login-title">DataPulse</h1>
+    <p class="login-subtitle">Войдите, чтобы продолжить работу</p>
+    <dp-button type="button" variant="primary" (click)="login()" [disabled]="isRedirecting">
       Войти
     </dp-button>
+    <p class="login-note">Вы будете перенаправлены на страницу авторизации.</p>
   </div>
 </div>

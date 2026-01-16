@@ -22,6 +22,9 @@ export class AppHeaderComponent {
   private readonly accountContext = inject(AccountContextService);
 
   readonly userProfile$ = this.authUser.userProfile$;
+  isLoginRedirecting = false;
+  isLogoutRedirecting = false;
+
   get homePath(): string {
     if (!this.authSession.snapshot().authenticated) {
       return APP_PATHS.login;
@@ -32,10 +35,24 @@ export class AppHeaderComponent {
   }
 
   login(): void {
+    if (this.isLoginRedirecting) {
+      return;
+    }
+    this.isLoginRedirecting = true;
+    window.setTimeout(() => {
+      this.isLoginRedirecting = false;
+    }, 4000);
     this.authRedirect.login(window.location.pathname + window.location.search);
   }
 
   logout(): void {
+    if (this.isLogoutRedirecting) {
+      return;
+    }
+    this.isLogoutRedirecting = true;
+    window.setTimeout(() => {
+      this.isLogoutRedirecting = false;
+    }, 4000);
     this.authRedirect.logout();
   }
 }
