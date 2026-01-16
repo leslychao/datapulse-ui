@@ -1,15 +1,28 @@
 import {Routes} from "@angular/router";
 
 import {APP_ROUTE_SEGMENTS} from "./core/app-paths";
+import {authGuard} from "./core/guards/auth.guard";
+import {publicGuard} from "./core/guards/public.guard";
+import {onboardingGuard} from "./core/guards/onboarding.guard";
+import {accountlessRouteMatcher} from "./core/routing/accountless-route.matcher";
 
 export const appRoutes: Routes = [
   {
     path: "",
     pathMatch: "full",
-    redirectTo: `${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.home}`
+    canMatch: [publicGuard],
+    loadComponent: () =>
+      import("./pages/login/login-page.component").then((m) => m.LoginPageComponent)
+  },
+  {
+    path: APP_ROUTE_SEGMENTS.login,
+    canMatch: [publicGuard],
+    loadComponent: () =>
+      import("./pages/login/login-page.component").then((m) => m.LoginPageComponent)
   },
   {
     path: APP_ROUTE_SEGMENTS.app,
+    canMatch: [authGuard],
     children: [
       {
         path: "",
@@ -18,6 +31,7 @@ export const appRoutes: Routes = [
       },
       {
         path: APP_ROUTE_SEGMENTS.home,
+        canActivate: [onboardingGuard],
         loadComponent: () =>
           import("./pages/home/home-redirect-page.component").then(
             (m) => m.HomeRedirectPageComponent
@@ -35,6 +49,13 @@ export const appRoutes: Routes = [
         loadComponent: () =>
           import("./pages/onboarding/onboarding-page.component").then(
             (m) => m.OnboardingPageComponent
+          )
+      },
+      {
+        matcher: accountlessRouteMatcher,
+        loadComponent: () =>
+          import("./pages/accountless-redirect/accountless-redirect-page.component").then(
+            (m) => m.AccountlessRedirectPageComponent
           )
       },
       {
@@ -167,6 +188,6 @@ export const appRoutes: Routes = [
   },
   {
     path: "**",
-    redirectTo: `${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.home}`
+    redirectTo: ""
   }
 ];

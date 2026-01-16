@@ -9,6 +9,7 @@ import {ConnectionFormComponent} from "../../features/connections";
 import {AccountApi, AccountConnectionApi, ApiError} from "../../core/api";
 import {AccountConnection, AccountConnectionSyncStatusType} from "../../shared/models";
 import {AccountContextService} from "../../core/state";
+import {AuthSessionService} from "../../core/auth";
 import {APP_PATHS} from "../../core/app-paths";
 import {ButtonComponent} from "../../shared/ui";
 
@@ -19,6 +20,8 @@ interface OnboardingStep {
 }
 
 type StatusState = "idle" | "processing" | "success" | "error";
+
+type SyncAction = "start";
 
 const ONBOARDING_ACTIVE_KEY = "datapulse.onboarding.active";
 
@@ -76,10 +79,16 @@ export class OnboardingPageComponent implements OnInit {
     private readonly accountApi: AccountApi,
     private readonly connectionApi: AccountConnectionApi,
     private readonly accountContext: AccountContextService,
+    private readonly authSession: AuthSessionService,
     private readonly router: Router
   ) {}
 
   ngOnInit(): void {
+    if (!this.authSession.snapshot().authenticated) {
+      this.router.navigateByUrl(APP_PATHS.login, {replaceUrl: true});
+      return;
+    }
+
     const lastSelectedAccountId = this.accountContext.snapshot;
     this.accountApi
       .list()
@@ -261,6 +270,10 @@ export class OnboardingPageComponent implements OnInit {
   }
 
   startSync(): void {
+    this.startSyncAction("start");
+  }
+
+  private startSyncAction(_action: SyncAction): void {
     if (this.accountId == null) {
       this.setStatusState("error", "Создайте аккаунт, чтобы запустить синхронизацию.");
       return;
