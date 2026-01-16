@@ -15,13 +15,23 @@
       </span>
     </div>
 
-    <dp-button type="button" variant="secondary" (click)="logout()">
+    <dp-button
+      type="button"
+      variant="secondary"
+      (click)="logout()"
+      [disabled]="isLogoutRedirecting"
+    >
       Выйти
     </dp-button>
   </div>
   <ng-template #loginTemplate>
     <div class="app-header__profile">
-      <dp-button type="button" variant="secondary" (click)="login()">
+      <dp-button
+        type="button"
+        variant="secondary"
+        (click)="login()"
+        [disabled]="isLoginRedirecting"
+      >
         Войти
       </dp-button>
     </div>

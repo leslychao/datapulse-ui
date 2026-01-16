@@ -220,6 +220,17 @@ export class OnboardingPageComponent implements OnInit {
     return this.accountId != null && this.connections.length === 0 && !this.isProcessing;
   }
 
+  get canProceedToSync(): boolean {
+    return this.connections.length > 0 && !this.isProcessing;
+  }
+
+  get connectionActionLabel(): string {
+    if (this.connections.length > 0) {
+      return "Далее";
+    }
+    return this.isProcessing ? "Создаем..." : "Создать подключение";
+  }
+
   get canStartSync(): boolean {
     return (
       this.accountId != null &&
@@ -371,6 +382,17 @@ export class OnboardingPageComponent implements OnInit {
         finalize(() => this.setProcessing(false))
       )
       .subscribe();
+  }
+
+  handleConnectionAction(): void {
+    if (this.isProcessing) {
+      return;
+    }
+    if (this.connections.length > 0) {
+      this.goToStep(2);
+      return;
+    }
+    this.createConnection();
   }
 
   startSync(): void {

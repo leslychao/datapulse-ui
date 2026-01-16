@@ -1,6 +1,5 @@
 import {Injectable} from "@angular/core";
 import {environment} from "../../../environments/environment";
-import {Router} from "@angular/router";
 import {APP_PATHS} from "../app-paths";
 import {AuthSessionService} from "./auth-session.service";
 import {AUTH_SESSION_FLAG} from "./auth-storage";
@@ -12,8 +11,7 @@ export class AuthRedirectService {
   constructor(
     private readonly authSession: AuthSessionService,
     private readonly accountContext: AccountContextService,
-    private readonly accountCatalog: AccountCatalogService,
-    private readonly router: Router
+    private readonly accountCatalog: AccountCatalogService
   ) {}
 
   login(returnUrl: string = APP_PATHS.selectAccount): void {
@@ -25,9 +23,10 @@ export class AuthRedirectService {
   logout(): void {
     this.authSession.clear();
     sessionStorage.removeItem(AUTH_SESSION_FLAG);
+    localStorage.removeItem("datapulse.accountId");
     this.accountContext.clear();
     this.accountCatalog.reset();
-    this.router.navigateByUrl(APP_PATHS.login, {replaceUrl: true});
+    window.location.assign(this.buildLogoutUrl());
   }
 
   register(): void {
@@ -53,5 +52,17 @@ export class AuthRedirectService {
     }
 
     return trimmed;
+  }
+
+  private buildLogoutUrl(): string {
+    const logoutPath = environment.auth.logoutPath;
+    const redirectUrl = environment.auth.logoutRedirectUrl?.trim();
+
+    if (!redirectUrl) {
+      return logoutPath;
+    }
+
+    const separator = logoutPath.includes("?") ? "&" : "?";
+    return `${logoutPath}${separator}rd=${encodeURIComponent(redirectUrl)}`;
   }
 }
