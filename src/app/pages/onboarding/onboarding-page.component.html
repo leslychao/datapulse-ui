@@ -63,7 +63,7 @@
 
       <ng-container *ngSwitchCase="1">
         <dp-connection-form
-          *ngIf="accountId != null"
+          *ngIf="accountId != null && connections.length === 0"
           class="connection-block"
           [accountId]="accountId"
           [disabled]="formLocked"
@@ -80,7 +80,13 @@
               (click)="createConnection()"
               [disabled]="!canCreateConnection"
             >
-              {{ connectionId != null ? "Подключение создано" : isProcessing ? "Создаем..." : "Создать подключение" }}
+              {{
+                connections.length > 0
+                  ? "Подключение создано"
+                  : isProcessing
+                    ? "Создаем..."
+                    : "Создать подключение"
+              }}
             </dp-button>
           </div>
         </div>
@@ -95,9 +101,6 @@
         </div>
         <div class="form-actions">
           <div class="form-actions__group">
-            <dp-button type="button" variant="secondary" (click)="goToStep(1)" [disabled]="isProcessing">
-              Назад
-            </dp-button>
             <dp-button
               type="button"
               variant="primary"
