@@ -33,7 +33,6 @@ export class HomeRedirectPageComponent implements OnInit {
       return;
     }
 
-    const lastSelectedAccountId = this.accountContext.snapshot;
     this.accountApi
       .list()
       .pipe(
@@ -46,16 +45,6 @@ export class HomeRedirectPageComponent implements OnInit {
           this.router.navigateByUrl(APP_PATHS.onboarding, {replaceUrl: true});
           return;
         }
-
-        if (lastSelectedAccountId != null) {
-          const hasSelectedAccount = accounts.some((account) => account.id === lastSelectedAccountId);
-          if (hasSelectedAccount) {
-            this.router.navigateByUrl(APP_PATHS.overview(lastSelectedAccountId), {replaceUrl: true});
-            return;
-          }
-          this.accountContext.clear();
-        }
-
         this.router.navigateByUrl(APP_PATHS.selectAccount, {replaceUrl: true});
       });
   }

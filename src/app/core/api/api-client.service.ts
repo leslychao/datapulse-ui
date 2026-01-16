@@ -1,4 +1,4 @@
-import {HttpClient, HttpHeaders, HttpParams} from "@angular/common/http";
+import {HttpClient, HttpHeaders, HttpParams, HttpResponse} from "@angular/common/http";
 import {Injectable} from "@angular/core";
 import {catchError, Observable, throwError} from "rxjs";
 import {ApiError} from "./api-error.model";
@@ -22,6 +22,12 @@ export class ApiClient {
 
   post<T, B>(url: string, body: B): Observable<T> {
     return this.http.post<T>(url, body).pipe(
+      catchError((error) => this.handleError(error))
+    );
+  }
+
+  postWithResponse<T, B>(url: string, body: B): Observable<HttpResponse<T>> {
+    return this.http.post<T>(url, body, {observe: "response"}).pipe(
       catchError((error) => this.handleError(error))
     );
   }
