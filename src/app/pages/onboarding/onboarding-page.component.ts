@@ -413,7 +413,7 @@ export class OnboardingPageComponent implements OnInit {
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         tap((response) => {
-          if (response.status >= 200 && response.status < 300) {
+          if (response.status === 200 || response.status === 201) {
             this.router.navigateByUrl(APP_PATHS.homeSummary(this.accountId!), {replaceUrl: true});
             return;
           }
