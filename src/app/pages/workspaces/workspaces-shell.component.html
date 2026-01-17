@@ -1,0 +1,77 @@
+<ng-container *ngIf="vm$ | async as vm">
+  <div class="workspaces-shell">
+    <header class="workspaces-shell__header">
+      <div>
+        <p class="muted">Workspace Admin Console</p>
+        <h1 *ngIf="vm.activeAccount; else fallbackTitle">
+          Workspace: {{ vm.activeAccount.name }}
+        </h1>
+        <ng-template #fallbackTitle>
+          <h1>Workspace</h1>
+        </ng-template>
+      </div>
+
+      <div class="workspaces-shell__selector" *ngIf="vm.state.status === 'ready'">
+        <label>
+          Workspace
+          <select [value]="vm.accountId ?? ''" (change)="onWorkspaceChange($event)">
+            <option value="" disabled>Выберите workspace</option>
+            <option *ngFor="let account of vm.accounts" [value]="account.id">
+              {{ account.name }}
+            </option>
+          </select>
+        </label>
+      </div>
+    </header>
+
+    <div class="workspaces-shell__body">
+      <ng-container *ngIf="vm.state.status === 'loading'">
+        <dp-loader label="Загружаем список workspaces..."></dp-loader>
+      </ng-container>
+
+      <ng-container *ngIf="vm.state.status === 'error'">
+        <div class="state-card">
+          <h3>Не удалось загрузить workspaces</h3>
+          <p class="muted">{{ vm.state.error.message }}</p>
+          <a class="link" [routerLink]="APP_PATHS.settingsWorkspaces">Вернуться к списку</a>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="vm.state.status === 'ready'">
+        <div class="state-card" *ngIf="vm.invalidAccount">
+          <h3>Workspace недоступен</h3>
+          <p class="muted">Выбранный workspace не найден или нет доступа.</p>
+          <a class="link" [routerLink]="APP_PATHS.settingsWorkspaces">Вернуться к списку</a>
+        </div>
+
+        <div *ngIf="!vm.invalidAccount && vm.accounts.length === 0" class="state-card">
+          <h3>Workspaces пока нет</h3>
+          <p class="muted">Добавьте workspace, чтобы управлять доступом и подключениями.</p>
+        </div>
+
+        <ng-container *ngIf="!vm.invalidAccount && vm.accounts.length > 0">
+          <nav class="tabs">
+            <a
+              [routerLink]="APP_PATHS.settingsWorkspaceUsers(vm.accountId!)"
+              routerLinkActive="is-active"
+              class="tab"
+            >
+              Users & Access
+            </a>
+            <a
+              [routerLink]="APP_PATHS.settingsWorkspaceConnections(vm.accountId!)"
+              routerLinkActive="is-active"
+              class="tab"
+            >
+              Connections
+            </a>
+          </nav>
+
+          <div class="workspaces-shell__content">
+            <router-outlet></router-outlet>
+          </div>
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
+</ng-container>

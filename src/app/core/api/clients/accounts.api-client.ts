@@ -7,6 +7,18 @@ import {AccountCreateRequest, AccountResponse, AccountUpdateRequest} from "../..
 export class AccountsApiClient {
   constructor(private readonly api: ApiClient) {}
 
+  createAccount(request: AccountCreateRequest): Observable<AccountResponse> {
+    return this.create(request);
+  }
+
+  updateAccount(accountId: number, request: AccountUpdateRequest): Observable<AccountResponse> {
+    return this.update(accountId, request);
+  }
+
+  deleteAccount(accountId: number): Observable<void> {
+    return this.remove(accountId);
+  }
+
   create(request: AccountCreateRequest): Observable<AccountResponse> {
     return this.api.post<AccountResponse, AccountCreateRequest>("/api/accounts", request);
   }

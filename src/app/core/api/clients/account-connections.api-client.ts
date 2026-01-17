@@ -11,6 +11,29 @@ import {
 export class AccountConnectionsApiClient {
   constructor(private readonly api: ApiClient) {}
 
+  listConnections(accountId: number): Observable<AccountConnectionResponse[]> {
+    return this.list(accountId);
+  }
+
+  createConnection(
+    accountId: number,
+    request: AccountConnectionCreateRequest
+  ): Observable<AccountConnectionResponse> {
+    return this.create(accountId, request);
+  }
+
+  updateConnection(
+    accountId: number,
+    connectionId: number,
+    request: AccountConnectionUpdateRequest
+  ): Observable<AccountConnectionResponse> {
+    return this.update(accountId, connectionId, request);
+  }
+
+  deleteConnection(accountId: number, connectionId: number): Observable<void> {
+    return this.remove(accountId, connectionId);
+  }
+
   list(accountId: number): Observable<AccountConnectionResponse[]> {
     return this.api.get<AccountConnectionResponse[]>(`/api/accounts/${accountId}/connections`);
   }

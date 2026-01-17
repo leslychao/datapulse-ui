@@ -7,11 +7,19 @@ import {AccountResponse, UserProfileResponse} from "../../../shared/models";
 export class IamApiClient {
   constructor(private readonly api: ApiClient) {}
 
-  getProfile(): Observable<UserProfileResponse> {
+  getUserProfile(): Observable<UserProfileResponse> {
     return this.api.get<UserProfileResponse>("/api/iam");
   }
 
-  listAccounts(): Observable<AccountResponse[]> {
+  getAccounts(): Observable<AccountResponse[]> {
     return this.api.get<AccountResponse[]>("/api/iam/accounts");
+  }
+
+  getProfile(): Observable<UserProfileResponse> {
+    return this.getUserProfile();
+  }
+
+  listAccounts(): Observable<AccountResponse[]> {
+    return this.getAccounts();
   }
 }

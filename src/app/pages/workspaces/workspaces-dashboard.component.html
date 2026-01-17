@@ -1,0 +1,92 @@
+<ng-container *ngIf="vm$ | async as vm">
+  <div class="dashboard">
+    <header class="dashboard__header">
+      <div>
+        <p class="muted">Settings</p>
+        <h1>Workspaces</h1>
+        <p class="muted">Выберите workspace для управления пользователями и подключениями.</p>
+      </div>
+
+      <dp-button type="button" variant="primary" (click)="openInviteModal()">
+        Add user to workspace
+      </dp-button>
+    </header>
+
+    <section class="card">
+      <ng-container *ngIf="vm.state.status === 'loading'">
+        <dp-loader label="Загружаем workspaces..."></dp-loader>
+      </ng-container>
+
+      <ng-container *ngIf="vm.state.status === 'error'">
+        <div class="state-card">
+          <h3>Не удалось загрузить workspaces</h3>
+          <p class="muted">{{ vm.state.error.message }}</p>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="vm.state.status === 'ready'">
+        <div class="state-card" *ngIf="vm.accounts.length === 0">
+          <h3>Workspaces пока нет</h3>
+          <p class="muted">Создайте workspace, чтобы управлять доступом и подключениями.</p>
+        </div>
+
+        <div *ngIf="vm.accounts.length > 0">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Workspace</th>
+                <th>ID</th>
+                <th>Активен</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let account of vm.accounts; trackBy: trackByAccountId">
+                <td>{{ account.name }}</td>
+                <td>{{ account.id }}</td>
+                <td>{{ account.active ? "Да" : "Нет" }}</td>
+                <td class="actions">
+                  <a
+                    class="link"
+                    [routerLink]="APP_PATHS.settingsWorkspaceUsers(account.id)"
+                  >
+                    Manage
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+    </section>
+  </div>
+
+  <dp-modal [visible]="inviteModalVisible" (close)="closeInviteModal()">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h2>Add user to workspace</h2>
+        <p class="muted">Выберите workspace и заполните данные участника.</p>
+      </header>
+      <form class="form" [formGroup]="inviteForm">
+        <label>
+          Workspace
+          <select formControlName="accountId">
+            <option value="" disabled>Выберите workspace</option>
+            <option *ngFor="let account of vm.accounts; trackBy: trackByAccountId" [value]="account.id">
+              {{ account.name }}
+            </option>
+          </select>
+        </label>
+        <p class="error-text" *ngIf="inviteForm.controls.accountId.touched && inviteForm.controls.accountId.invalid">
+          Выберите workspace.
+        </p>
+      </form>
+      <div class="invite-form">
+        <dp-invite-operator-form
+          submitLabel="Добавить"
+          (invite)="inviteMember($event)"
+        ></dp-invite-operator-form>
+      </div>
+    </div>
+  </dp-modal>
+</ng-container>

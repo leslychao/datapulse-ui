@@ -108,21 +108,6 @@ export class DashboardShellComponent {
             testId: "sidebar-data-freshness"
           }
         ]
-      },
-      {
-        label: "Settings",
-        items: [
-          {
-            label: "Accounts & Connections",
-            path: APP_PATHS.settingsConnections(accountId),
-            testId: "sidebar-settings-connections"
-          },
-          {
-            label: "Users / Access",
-            path: APP_PATHS.settingsUsers(accountId),
-            testId: "sidebar-settings-users"
-          }
-        ]
       }
     ];
   }
