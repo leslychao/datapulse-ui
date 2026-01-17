@@ -6,7 +6,7 @@ import {of} from "rxjs";
 
 import {APP_PATHS} from "../../core/app-paths";
 import {AccountsApiClient, AccountConnectionsApiClient, EtlScenarioApi} from "../../core/api";
-import {AccountContextService} from "../../core/state";
+import {AccountCatalogService, AccountContextService} from "../../core/state";
 import {Marketplace, AccountConnection} from "../../shared/models";
 import {OnboardingPageComponent} from "./onboarding-page.component";
 
@@ -25,7 +25,8 @@ describe("OnboardingPageComponent", () => {
         {provide: EtlScenarioApi, useValue: etlScenarioApi},
         {provide: AccountsApiClient, useValue: jasmine.createSpyObj("AccountsApiClient", ["create", "update"])},
         {provide: AccountConnectionsApiClient, useValue: jasmine.createSpyObj("AccountConnectionsApiClient", ["list", "create"])},
-        {provide: AccountContextService, useValue: jasmine.createSpyObj("AccountContextService", ["setAccountId", "clear"])}
+        {provide: AccountContextService, useValue: jasmine.createSpyObj("AccountContextService", ["setAccountId", "clear"])},
+        {provide: AccountCatalogService, useValue: jasmine.createSpyObj("AccountCatalogService", ["upsertAccount"])}
       ],
       schemas: [NO_ERRORS_SCHEMA]
     });

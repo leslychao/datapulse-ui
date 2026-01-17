@@ -63,6 +63,17 @@ export class AccountCatalogService {
     this.stateSubject.next(INITIAL_STATE);
   }
 
+  upsertAccount(account: AccountSummary): void {
+    const currentAccounts = this.stateSubject.value.accounts ?? [];
+    const existingIndex = currentAccounts.findIndex((item) => item.id === account.id);
+    const accounts =
+      existingIndex === -1
+        ? [...currentAccounts, account]
+        : currentAccounts.map((item, index) => (index === existingIndex ? account : item));
+
+    this.stateSubject.next({accounts, error: null});
+  }
+
   hasAccounts(): Observable<boolean> {
     return this.load().pipe(map((accounts) => accounts.length > 0));
   }

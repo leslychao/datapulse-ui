@@ -12,7 +12,8 @@ import {
   AccountContextService,
   OnboardingState,
   OnboardingStateService,
-  OnboardingStatusState
+  OnboardingStatusState,
+  AccountCatalogService
 } from "../../core/state";
 import {APP_PATHS} from "../../core/app-paths";
 import {ButtonComponent} from "../../shared/ui";
@@ -184,6 +185,7 @@ export class OnboardingPageComponent implements OnInit {
     private readonly connectionApi: AccountConnectionsApiClient,
     private readonly etlScenarioApi: EtlScenarioApi,
     private readonly accountContext: AccountContextService,
+    private readonly accountCatalog: AccountCatalogService,
     private readonly router: Router
   ) {}
 
@@ -310,6 +312,7 @@ export class OnboardingPageComponent implements OnInit {
           this.accountId = account.id;
           this.accountName = account.name;
           this.accountContext.setAccountId(account.id);
+          this.accountCatalog.upsertAccount(account);
           this.currentStep = 1;
           this.setStatusState("success", "Аккаунт создан.");
         }),
