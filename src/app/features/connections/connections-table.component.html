@@ -13,16 +13,20 @@
     <tbody>
       <tr *ngFor="let connection of connections">
         <td>{{ connection.marketplace }}</td>
-        <td>{{ connection.active ? "Да" : "Нет" }}</td>
+        <td>
+          <span class="status-pill" [class.status-pill--active]="connection.active" [class.status-pill--inactive]="!connection.active">
+            {{ connection.active ? "Active" : "Inactive" }}
+          </span>
+        </td>
         <td>{{ connection.lastSyncStatus || "—" }}</td>
-        <td>{{ connection.lastSyncAt || "—" }}</td>
-        <td>{{ connection.maskedCredentials || "—" }}</td>
+        <td>{{ connection.lastSyncAt ? (connection.lastSyncAt | date: "short") : "—" }}</td>
+        <td>Configured</td>
         <td class="actions">
           <dp-button
             type="button"
-            (click)="editConnection.emit(connection)"
+            (click)="replaceCredentials.emit(connection)"
           >
-            Edit
+            Replace credentials
           </dp-button>
           <dp-button
             type="button"

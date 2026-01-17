@@ -4,4 +4,6 @@ export interface ToastItem {
   id: string;
   message: string;
   variant: ToastVariant;
+  details?: string;
+  correlationId?: string;
 }

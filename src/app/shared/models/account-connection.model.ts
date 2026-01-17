@@ -12,7 +12,6 @@ export interface AccountConnectionResponse {
   lastSyncStatus: string | null;
   createdAt: string;
   updatedAt: string;
-  maskedCredentials: string | null;
 }
 
 export type AccountConnection = AccountConnectionResponse;

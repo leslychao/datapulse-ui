@@ -15,30 +15,45 @@
         </dp-button>
       </header>
 
-      <div class="card" *ngIf="vm.state.status === 'loading'">
-        <dp-loader label="Загружаем подключения..."></dp-loader>
-      </div>
+      <section class="table-card">
+        <div class="table-header">
+          <div>
+            <h3>Connections</h3>
+            <p class="muted">Управляйте подключениями и синхронизацией.</p>
+          </div>
+        </div>
 
-      <div class="card error" *ngIf="vm.state.status === 'error'">
-        {{ vm.state.error.message }}
-      </div>
+        <div *ngIf="vm.state.status === 'loading'">
+          <dp-loader label="Загружаем подключения..."></dp-loader>
+        </div>
 
-      <div class="card" *ngIf="vm.state.status === 'ready'">
-        <dp-connections-table
-          [connections]="vm.state.data"
-          (editConnection)="openEditModal($event)"
-          (deleteConnection)="confirmDelete($event)"
-        ></dp-connections-table>
-      </div>
+        <div class="error-text" *ngIf="vm.state.status === 'error'">
+          {{ vm.state.error.message }}
+        </div>
+
+        <ng-container *ngIf="vm.state.status === 'ready'">
+          <dp-connections-table
+            *ngIf="vm.state.data.length > 0; else emptyState"
+            [connections]="vm.state.data"
+            (replaceCredentials)="openReplaceModal($event)"
+            (deleteConnection)="confirmDelete($event)"
+          ></dp-connections-table>
+          <ng-template #emptyState>
+            <div class="empty-state">
+              <p class="muted">Подключений пока нет.</p>
+              <dp-button type="button" variant="primary" (click)="openCreateModal()">
+                Add connection
+              </dp-button>
+            </div>
+          </ng-template>
+        </ng-container>
+      </section>
     </div>
 
-    <dp-modal [visible]="modalVisible" (close)="closeModal()">
+    <dp-modal [visible]="createModalVisible" (close)="closeCreateModal()">
       <div class="modal-content">
-        <h3>{{ editingConnection ? "Edit connection" : "Add connection" }}</h3>
-        <p class="muted" *ngIf="editingConnection?.maskedCredentials">
-          Current credentials: {{ editingConnection?.maskedCredentials }}
-        </p>
-        <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+        <h3>Add connection</h3>
+        <form class="form" [formGroup]="createForm" (ngSubmit)="submitCreate()">
           <label>
             Marketplace
             <select formControlName="marketplace">
@@ -53,13 +68,13 @@
             Active
           </label>
 
-          <ng-container *ngIf="isWildberries; else ozonBlock">
+          <ng-container *ngIf="createIsWildberries; else createOzonBlock">
             <label>
               Token
               <dp-input type="password" placeholder="Token" formControlName="token"></dp-input>
             </label>
           </ng-container>
-          <ng-template #ozonBlock>
+          <ng-template #createOzonBlock>
             <label>
               Client ID
               <dp-input placeholder="Client ID" formControlName="clientId"></dp-input>
@@ -70,17 +85,64 @@
             </label>
           </ng-template>
 
-          <p class="muted" *ngIf="editingConnection">
-            Заполните поля доступа, если нужно обновить ключи. Пустые поля не меняют доступ.
-          </p>
-
           <div class="modal-actions">
-            <dp-button type="button" variant="secondary" (click)="closeModal()">Cancel</dp-button>
+            <dp-button type="button" variant="secondary" (click)="closeCreateModal()">
+              Cancel
+            </dp-button>
             <dp-button type="submit" variant="primary" [disabled]="saving">
               {{ saving ? "Saving..." : "Save" }}
             </dp-button>
           </div>
         </form>
+      </div>
+    </dp-modal>
+
+    <dp-modal [visible]="replaceModalVisible" (close)="closeReplaceModal()">
+      <div class="modal-content">
+        <h3>Replace credentials</h3>
+        <p class="muted">Введите новые credentials. Старые будут заменены.</p>
+        <form class="form" [formGroup]="replaceForm" (ngSubmit)="submitReplace()">
+          <ng-container *ngIf="replaceIsWildberries; else replaceOzonBlock">
+            <label>
+              Token
+              <dp-input type="password" placeholder="Token" formControlName="token"></dp-input>
+            </label>
+          </ng-container>
+          <ng-template #replaceOzonBlock>
+            <label>
+              Client ID
+              <dp-input placeholder="Client ID" formControlName="clientId"></dp-input>
+            </label>
+            <label>
+              API Key
+              <dp-input type="password" placeholder="API Key" formControlName="apiKey"></dp-input>
+            </label>
+          </ng-template>
+
+          <div class="modal-actions">
+            <dp-button type="button" variant="secondary" (click)="closeReplaceModal()">
+              Cancel
+            </dp-button>
+            <dp-button type="submit" variant="primary" [disabled]="saving">
+              {{ saving ? "Replacing..." : "Replace" }}
+            </dp-button>
+          </div>
+        </form>
+      </div>
+    </dp-modal>
+
+    <dp-modal [visible]="deleteModalVisible" (close)="closeDeleteModal()">
+      <div class="modal-content">
+        <h3>Delete connection?</h3>
+        <p class="muted">This action cannot be undone.</p>
+        <div class="modal-actions">
+          <dp-button type="button" variant="secondary" (click)="closeDeleteModal()">
+            Cancel
+          </dp-button>
+          <dp-button type="button" variant="danger" [disabled]="saving" (click)="deleteConnection()">
+            {{ saving ? "Deleting..." : "Delete" }}
+          </dp-button>
+        </div>
       </div>
     </dp-modal>
   </dp-dashboard-shell>

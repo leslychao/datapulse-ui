@@ -4,5 +4,4 @@ export interface ConnectionVm {
   active: boolean;
   lastSyncAt: string;
   lastSyncStatus: string;
-  maskedCredentials: string;
 }

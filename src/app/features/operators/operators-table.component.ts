@@ -23,8 +23,8 @@ export class OperatorsTableComponent {
 
   readonly roles = Object.values(AccountMemberRole);
 
-  isBlocked(member: AccountMember): boolean {
-    return member.status === AccountMemberStatus.Blocked;
+  isInactive(member: AccountMember): boolean {
+    return member.status === AccountMemberStatus.Inactive;
   }
 
   onRoleSelect(member: AccountMember, value: string): void {

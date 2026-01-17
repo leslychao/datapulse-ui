@@ -49,8 +49,11 @@ interface ConnectionsViewModel {
 })
 export class SettingsConnectionsPageComponent {
   saving = false;
-  modalVisible = false;
-  editingConnection: AccountConnection | null = null;
+  createModalVisible = false;
+  replaceModalVisible = false;
+  deleteModalVisible = false;
+  replacingConnection: AccountConnection | null = null;
+  deletingConnection: AccountConnection | null = null;
 
   private readonly route = inject(ActivatedRoute);
   private readonly connectionApi = inject(AccountConnectionsApiClient);
@@ -59,10 +62,8 @@ export class SettingsConnectionsPageComponent {
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly marketplaceOptions = Object.values(Marketplace);
-  readonly marketplaceWildberries = Marketplace.Wildberries;
-  readonly marketplaceOzon = Marketplace.Ozon;
 
-  readonly form: FormGroup<{
+  readonly createForm: FormGroup<{
     marketplace: FormControl<Marketplace>;
     active: FormControl<boolean>;
     token: FormControl<string>;
@@ -76,10 +77,26 @@ export class SettingsConnectionsPageComponent {
     apiKey: [""]
   });
 
+  readonly replaceForm: FormGroup<{
+    token: FormControl<string>;
+    clientId: FormControl<string>;
+    apiKey: FormControl<string>;
+  }> = this.fb.nonNullable.group({
+    token: [""],
+    clientId: [""],
+    apiKey: [""]
+  });
+
   private readonly refresh$ = new Subject<void>();
   private readonly accountId$ = this.route.paramMap.pipe(
-    map((params) => Number(params.get("accountId"))),
-    map((accountId) => (Number.isFinite(accountId) ? accountId : null)),
+    map((params) => {
+      const accountIdParam = params.get("accountId");
+      if (accountIdParam == null) {
+        return null;
+      }
+      const accountId = Number(accountIdParam);
+      return Number.isFinite(accountId) ? accountId : null;
+    }),
     distinctUntilChanged()
   );
 
@@ -97,7 +114,11 @@ export class SettingsConnectionsPageComponent {
         tap((state) => {
           if (state.status === "error") {
             this.toastService.error(
-              this.mapErrorMessage(state.error, "Не удалось загрузить подключения.")
+              this.mapErrorMessage(state.error, "Не удалось загрузить подключения."),
+              {
+                details: state.error.details,
+                correlationId: state.error.correlationId
+              }
             );
           }
         }),
@@ -106,108 +127,91 @@ export class SettingsConnectionsPageComponent {
     })
   );
 
-  get isWildberries(): boolean {
-    return this.form.controls.marketplace.value === Marketplace.Wildberries;
+  get createIsWildberries(): boolean {
+    return this.createForm.controls.marketplace.value === Marketplace.Wildberries;
+  }
+
+  get replaceIsWildberries(): boolean {
+    return (this.replacingConnection?.marketplace ?? Marketplace.Wildberries) === Marketplace.Wildberries;
   }
 
   openCreateModal(): void {
-    this.editingConnection = null;
-    this.form.reset({
+    this.createForm.reset({
       marketplace: Marketplace.Wildberries,
       active: true,
       token: "",
       clientId: "",
       apiKey: ""
     });
-    this.form.controls.marketplace.enable();
-    this.modalVisible = true;
+    this.createModalVisible = true;
+    this.cdr.markForCheck();
   }
 
-  openEditModal(connection: AccountConnection): void {
-    this.editingConnection = connection;
-    this.form.reset({
-      marketplace: connection.marketplace,
-      active: connection.active,
+  openReplaceModal(connection: AccountConnection): void {
+    this.replacingConnection = connection;
+    this.replaceForm.reset({
       token: "",
       clientId: "",
       apiKey: ""
     });
-    this.form.controls.marketplace.disable();
-    this.modalVisible = true;
+    this.replaceModalVisible = true;
+    this.cdr.markForCheck();
   }
 
-  closeModal(): void {
-    this.modalVisible = false;
-    this.editingConnection = null;
-    this.form.reset({
+  closeCreateModal(): void {
+    this.createModalVisible = false;
+    this.createForm.reset({
       marketplace: Marketplace.Wildberries,
       active: true,
       token: "",
       clientId: "",
       apiKey: ""
     });
+    this.cdr.markForCheck();
   }
 
-  submit(): void {
+  closeReplaceModal(): void {
+    this.replaceModalVisible = false;
+    this.replacingConnection = null;
+    this.replaceForm.reset({
+      token: "",
+      clientId: "",
+      apiKey: ""
+    });
+    this.cdr.markForCheck();
+  }
+
+  openDeleteModal(connection: AccountConnection): void {
+    this.deletingConnection = connection;
+    this.deleteModalVisible = true;
+    this.cdr.markForCheck();
+  }
+
+  closeDeleteModal(): void {
+    this.deleteModalVisible = false;
+    this.deletingConnection = null;
+    this.cdr.markForCheck();
+  }
+
+  submitCreate(): void {
     const accountId = this.getAccountId();
     if (accountId == null || this.saving) {
       return;
     }
-    const {marketplace, active, token, clientId, apiKey} = this.form.getRawValue();
+    const {marketplace, active, token, clientId, apiKey} = this.createForm.getRawValue();
     const credentials = this.buildCredentials(marketplace, token, clientId, apiKey);
-    const hasCredentialInput = Boolean(token || clientId || apiKey);
-
-    if (!this.editingConnection) {
-      if (!credentials) {
-        this.toastService.error("Заполните данные доступа для подключения.");
-        return;
-      }
-      const request: AccountConnectionCreateRequest = {
-        marketplace,
-        credentials,
-        active
-      };
-      this.saving = true;
-      this.connectionApi
-        .create(accountId, request)
-        .pipe(
-          finalize(() => {
-            this.saving = false;
-            this.cdr.markForCheck();
-          })
-        )
-        .subscribe({
-          next: () => {
-            this.toastService.success("Подключение добавлено.");
-            this.closeModal();
-            this.refresh$.next();
-            this.cdr.markForCheck();
-          },
-          error: (error: ApiError) => {
-            this.toastService.error(this.mapErrorMessage(error, "Не удалось создать подключение."));
-            this.cdr.markForCheck();
-          }
-        });
+    if (!credentials) {
+      this.toastService.error("Заполните данные доступа для подключения.");
       return;
     }
-
-    if (hasCredentialInput && !credentials) {
-      this.toastService.error("Заполните все поля доступа для выбранного маркетплейса.");
-      return;
-    }
-
-    const update: AccountConnectionUpdateRequest = {
+    const request: AccountConnectionCreateRequest = {
       marketplace,
+      credentials,
       active
     };
-    if (credentials) {
-      update.credentials = credentials;
-    }
-
-    const connectionId = this.editingConnection.id;
     this.saving = true;
     this.connectionApi
-      .update(accountId, connectionId, update)
+      .create(accountId, request)
       .pipe(
         finalize(() => {
           this.saving = false;
@@ -216,49 +220,103 @@ export class SettingsConnectionsPageComponent {
       )
       .subscribe({
         next: () => {
-          this.toastService.success("Подключение обновлено.");
-          this.closeModal();
+          this.toastService.success("Подключение добавлено.");
+          this.closeCreateModal();
           this.refresh$.next();
           this.cdr.markForCheck();
         },
         error: (error: ApiError) => {
-          this.toastService.error(this.mapErrorMessage(error, "Не удалось обновить подключение."));
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось создать подключение."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  submitReplace(): void {
+    const accountId = this.getAccountId();
+    if (accountId == null || this.saving || !this.replacingConnection) {
+      return;
+    }
+    const {token, clientId, apiKey} = this.replaceForm.getRawValue();
+    const credentials = this.buildCredentials(this.replacingConnection.marketplace, token, clientId, apiKey);
+    if (!credentials) {
+      this.toastService.error("Заполните данные доступа для подключения.");
+      return;
+    }
+    const update: AccountConnectionUpdateRequest = {
+      marketplace: this.replacingConnection.marketplace,
+      credentials
+    };
+    this.saving = true;
+    this.connectionApi
+      .update(accountId, this.replacingConnection.id, update)
+      .pipe(
+        finalize(() => {
+          this.saving = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.toastService.success("Credentials обновлены.");
+          this.closeReplaceModal();
+          this.refresh$.next();
+          this.cdr.markForCheck();
+        },
+        error: (error: ApiError) => {
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось обновить подключение."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
           this.cdr.markForCheck();
         }
       });
   }
 
   confirmDelete(connection: AccountConnection): void {
+    this.openDeleteModal(connection);
+  }
+
+  deleteConnection(): void {
     const accountId = this.getAccountId();
-    if (accountId == null) {
+    if (accountId == null || !this.deletingConnection || this.saving) {
       return;
     }
-    const confirmed = window.confirm("Удалить подключение?");
-    if (!confirmed) {
-      return;
-    }
+    this.saving = true;
     this.connectionApi
-      .remove(accountId, connection.id)
+      .remove(accountId, this.deletingConnection.id)
       .pipe(
         finalize(() => {
+          this.saving = false;
           this.cdr.markForCheck();
         })
       )
       .subscribe({
         next: () => {
           this.toastService.success("Подключение удалено.");
+          this.closeDeleteModal();
           this.refresh$.next();
           this.cdr.markForCheck();
         },
         error: (error: ApiError) => {
-          this.toastService.error(this.mapErrorMessage(error, "Не удалось удалить подключение."));
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось удалить подключение."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
           this.cdr.markForCheck();
         }
       });
   }
 
   private getAccountId(): number | null {
-    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
+    const accountIdParam = this.route.snapshot.paramMap.get("accountId");
+    if (accountIdParam == null) {
+      return null;
+    }
+    const accountId = Number(accountIdParam);
     return Number.isFinite(accountId) ? accountId : null;
   }
 
@@ -281,9 +339,6 @@ export class SettingsConnectionsPageComponent {
   }
 
   private mapErrorMessage(error: ApiError, fallback: string): string {
-    if (error.status === 409) {
-      return "Подключение уже существует.";
-    }
     return error.message || fallback;
   }
 }

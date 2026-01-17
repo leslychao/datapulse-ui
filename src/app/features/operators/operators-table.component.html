@@ -18,10 +18,10 @@
             <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
           </select>
         </td>
-        <td>{{ operator.lastLoginAt || "—" }}</td>
+        <td>—</td>
         <td class="actions">
           <dp-button type="button" (click)="blockToggle.emit(operator)">
-            {{ isBlocked(operator) ? "Разблокировать" : "Заблокировать" }}
+            {{ isInactive(operator) ? "Разблокировать" : "Заблокировать" }}
           </dp-button>
           <dp-button
             type="button"

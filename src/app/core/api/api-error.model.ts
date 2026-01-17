@@ -2,4 +2,5 @@ export interface ApiError {
   status: number;
   message: string;
   details?: string;
+  correlationId?: string;
 }

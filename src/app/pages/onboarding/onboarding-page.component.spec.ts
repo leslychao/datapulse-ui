@@ -44,8 +44,7 @@ describe("OnboardingPageComponent", () => {
       lastSyncAt: null,
       lastSyncStatus: null,
       createdAt: "",
-      updatedAt: "",
-      maskedCredentials: null
+      updatedAt: ""
     };
 
     component.accountId = 10;
@@ -73,8 +72,7 @@ describe("OnboardingPageComponent", () => {
       lastSyncAt: null,
       lastSyncStatus: null,
       createdAt: "",
-      updatedAt: "",
-      maskedCredentials: null
+      updatedAt: ""
     };
 
     component.accountId = 11;
@@ -99,8 +97,7 @@ describe("OnboardingPageComponent", () => {
       lastSyncAt: null,
       lastSyncStatus: null,
       createdAt: "",
-      updatedAt: "",
-      maskedCredentials: null
+      updatedAt: ""
     };
 
     component.accountId = 12;
