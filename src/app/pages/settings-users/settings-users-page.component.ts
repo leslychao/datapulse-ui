@@ -4,9 +4,8 @@ import {ActivatedRoute} from "@angular/router";
 import {Subject, distinctUntilChanged, forkJoin, map, of, switchMap} from "rxjs";
 import {finalize, startWith, tap} from "rxjs/operators";
 
-import {AccountConnectionsApiClient, AccountMembersApiClient, ApiError} from "../../core/api";
+import {AccountMembersApiClient, ApiError} from "../../core/api";
 import {
-  AccountConnection,
   AccountMember,
   AccountMemberCreateRequest,
   AccountMemberRole,
@@ -14,17 +13,11 @@ import {
   AccountMemberUpdateRequest
 } from "../../shared/models";
 import {DashboardShellComponent, LoaderComponent, ToastService} from "../../shared/ui";
-import {
-  AccessModalComponent,
-  AccessModalSubmit,
-  InviteOperatorFormComponent,
-  OperatorsTableComponent
-} from "../../features/operators";
+import {InviteOperatorFormComponent, OperatorsTableComponent} from "../../features/operators";
 import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
 
 interface UsersData {
   members: AccountMember[];
-  connections: AccountConnection[];
 }
 
 interface UsersViewModel {
@@ -40,7 +33,6 @@ interface UsersViewModel {
     DashboardShellComponent,
     InviteOperatorFormComponent,
     OperatorsTableComponent,
-    AccessModalComponent,
     LoaderComponent
   ],
   templateUrl: "./settings-users-page.component.html",
@@ -48,12 +40,8 @@ interface UsersViewModel {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingsUsersPageComponent {
-  accessModalVisible = false;
-  selectedMember: AccountMember | null = null;
-
   private readonly route = inject(ActivatedRoute);
   private readonly memberApi = inject(AccountMembersApiClient);
-  private readonly connectionApi = inject(AccountConnectionsApiClient);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -76,8 +64,7 @@ export class SettingsUsersPageComponent {
         startWith(void 0),
         switchMap(() =>
           forkJoin({
-            members: this.memberApi.list(accountId),
-            connections: this.connectionApi.list(accountId)
+            members: this.memberApi.list(accountId)
           }).pipe(toLoadState<UsersData, ApiError>())
         ),
         tap((state) => {
@@ -125,28 +112,6 @@ export class SettingsUsersPageComponent {
 
   changeRole(event: {member: AccountMember; role: AccountMemberRole}): void {
     this.optimisticUpdate(event.member, {role: event.role});
-  }
-
-  openAccessModal(member: AccountMember): void {
-    this.selectedMember = member;
-    this.accessModalVisible = true;
-  }
-
-  closeAccessModal(): void {
-    this.accessModalVisible = false;
-    this.selectedMember = null;
-  }
-
-  saveAccess(payload: AccessModalSubmit): void {
-    if (!this.selectedMember) {
-      return;
-    }
-    const update: AccountMemberUpdateRequest = {
-      accessScope: payload.accessScope,
-      connectionIds: payload.connectionIds
-    };
-    this.optimisticUpdate(this.selectedMember, update);
-    this.closeAccessModal();
   }
 
   deleteMember(member: AccountMember): void {
@@ -210,7 +175,7 @@ export class SettingsUsersPageComponent {
 
   private mapErrorMessage(error: ApiError, fallback: string): string {
     if (error.status === 409) {
-      return "Участник с таким email уже существует.";
+      return "Участник уже существует.";
     }
     return error.message || fallback;
   }

@@ -27,18 +27,9 @@
           [operators]="vm.state.data.members"
           (blockToggle)="toggleBlock($event)"
           (changeRole)="changeRole($event)"
-          (editAccess)="openAccessModal($event)"
           (deleteMember)="deleteMember($event)"
         ></dp-operators-table>
       </div>
-
-      <dp-access-modal
-        [visible]="accessModalVisible"
-        [member]="selectedMember"
-        [connections]="vm.state.status === 'ready' ? vm.state.data.connections : []"
-        (close)="closeAccessModal()"
-        (save)="saveAccess($event)"
-      ></dp-access-modal>
     </div>
   </dp-dashboard-shell>
 </ng-container>
