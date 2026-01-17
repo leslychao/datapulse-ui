@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {Subject, distinctUntilChanged, forkJoin, map, of, switchMap} from "rxjs";
@@ -51,6 +51,12 @@ export class SettingsUsersPageComponent {
   accessModalVisible = false;
   selectedMember: AccountMember | null = null;
 
+  private readonly route = inject(ActivatedRoute);
+  private readonly memberApi = inject(AccountMembersApiClient);
+  private readonly connectionApi = inject(AccountConnectionsApiClient);
+  private readonly toastService = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   private readonly refresh$ = new Subject<void>();
   private readonly accountId$ = this.route.paramMap.pipe(
     map((params) => Number(params.get("accountId"))),
@@ -83,14 +89,6 @@ export class SettingsUsersPageComponent {
       );
     })
   );
-
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly memberApi: AccountMembersApiClient,
-    private readonly connectionApi: AccountConnectionsApiClient,
-    private readonly toastService: ToastService,
-    private readonly cdr: ChangeDetectorRef
-  ) {}
 
   inviteMember(request: AccountMemberCreateRequest): void {
     const accountId = this.getAccountId();

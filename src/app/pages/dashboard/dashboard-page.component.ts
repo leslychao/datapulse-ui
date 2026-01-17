@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {distinctUntilChanged, map, of, switchMap} from "rxjs";
@@ -21,6 +21,9 @@ interface OrdersViewModel {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardPageComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly orderPnlApi = inject(OrderPnlApiClient);
+
   private readonly accountId$ = this.route.paramMap.pipe(
     map((params) => Number(params.get("accountId"))),
     map((accountId) => (Number.isFinite(accountId) ? accountId : null)),
@@ -47,8 +50,4 @@ export class DashboardPageComponent {
     })
   );
 
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly orderPnlApi: OrderPnlApiClient
-  ) {}
 }

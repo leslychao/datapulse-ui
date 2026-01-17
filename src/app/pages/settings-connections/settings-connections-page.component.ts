@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule} from "@angular/forms";
@@ -52,6 +52,12 @@ export class SettingsConnectionsPageComponent {
   modalVisible = false;
   editingConnection: AccountConnection | null = null;
 
+  private readonly route = inject(ActivatedRoute);
+  private readonly connectionApi = inject(AccountConnectionsApiClient);
+  private readonly toastService = inject(ToastService);
+  private readonly fb = inject(FormBuilder);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   readonly marketplaceOptions = Object.values(Marketplace);
   readonly marketplaceWildberries = Marketplace.Wildberries;
   readonly marketplaceOzon = Marketplace.Ozon;
@@ -62,7 +68,13 @@ export class SettingsConnectionsPageComponent {
     token: FormControl<string>;
     clientId: FormControl<string>;
     apiKey: FormControl<string>;
-  }>;
+  }> = this.fb.nonNullable.group({
+    marketplace: [Marketplace.Wildberries],
+    active: [true],
+    token: [""],
+    clientId: [""],
+    apiKey: [""]
+  });
 
   private readonly refresh$ = new Subject<void>();
   private readonly accountId$ = this.route.paramMap.pipe(
@@ -93,22 +105,6 @@ export class SettingsConnectionsPageComponent {
       );
     })
   );
-
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly connectionApi: AccountConnectionsApiClient,
-    private readonly toastService: ToastService,
-    private readonly fb: FormBuilder,
-    private readonly cdr: ChangeDetectorRef
-  ) {
-    this.form = this.fb.nonNullable.group({
-      marketplace: [Marketplace.Wildberries],
-      active: [true],
-      token: [""],
-      clientId: [""],
-      apiKey: [""]
-    });
-  }
 
   get isWildberries(): boolean {
     return this.form.controls.marketplace.value === Marketplace.Wildberries;
