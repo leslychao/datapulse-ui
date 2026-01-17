@@ -9,11 +9,5 @@
       <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
     </select>
   </label>
-  <label>
-    Доступ
-    <select formControlName="accessScope">
-      <option *ngFor="let scope of scopes" [value]="scope">{{ scope }}</option>
-    </select>
-  </label>
   <dp-button type="submit" variant="primary">Пригласить</dp-button>
 </form>
