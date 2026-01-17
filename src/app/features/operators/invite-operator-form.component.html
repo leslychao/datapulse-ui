@@ -1,7 +1,7 @@
 <form class="form" [formGroup]="form" (ngSubmit)="submit()">
   <label>
-    Email
-    <dp-input type="email" formControlName="email" placeholder="operator@company.com"></dp-input>
+    User ID
+    <dp-input type="number" formControlName="userId" placeholder="12345"></dp-input>
   </label>
   <label>
     Роль
@@ -9,5 +9,5 @@
       <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
     </select>
   </label>
-  <dp-button type="submit" variant="primary">Пригласить</dp-button>
+  <dp-button type="submit" variant="primary">Invite</dp-button>
 </form>

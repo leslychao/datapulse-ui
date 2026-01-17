@@ -7,7 +7,6 @@ export const mapAccountConnectionToVm = (connection: AccountConnection): Connect
     marketplace: connection.marketplace,
     active: connection.active,
     lastSyncAt: connection.lastSyncAt ?? "—",
-    lastSyncStatus: connection.lastSyncStatus ?? "—",
-    maskedCredentials: connection.maskedCredentials ?? "—"
+    lastSyncStatus: connection.lastSyncStatus ?? "—"
   };
 };

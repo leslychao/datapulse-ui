@@ -47,8 +47,14 @@ export class SettingsUsersPageComponent {
 
   private readonly refresh$ = new Subject<void>();
   private readonly accountId$ = this.route.paramMap.pipe(
-    map((params) => Number(params.get("accountId"))),
-    map((accountId) => (Number.isFinite(accountId) ? accountId : null)),
+    map((params) => {
+      const accountIdParam = params.get("accountId");
+      if (accountIdParam == null) {
+        return null;
+      }
+      const accountId = Number(accountIdParam);
+      return Number.isFinite(accountId) ? accountId : null;
+    }),
     distinctUntilChanged()
   );
 
@@ -69,7 +75,13 @@ export class SettingsUsersPageComponent {
         ),
         tap((state) => {
           if (state.status === "error") {
-            this.toastService.error(this.mapErrorMessage(state.error, "Не удалось загрузить участников."));
+            this.toastService.error(
+              this.mapErrorMessage(state.error, "Не удалось загрузить участников."),
+              {
+                details: state.error.details,
+                correlationId: state.error.correlationId
+              }
+            );
           }
         }),
         map((state) => ({accountId, state}))
@@ -96,7 +108,10 @@ export class SettingsUsersPageComponent {
           this.cdr.markForCheck();
         },
         error: (error: ApiError) => {
-          this.toastService.error(this.mapErrorMessage(error, "Не удалось пригласить участника."));
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось пригласить участника."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
           this.cdr.markForCheck();
         }
       });
@@ -104,14 +119,14 @@ export class SettingsUsersPageComponent {
 
   toggleBlock(member: AccountMember): void {
     const targetStatus =
-      member.status === AccountMemberStatus.Blocked
+      member.status === AccountMemberStatus.Inactive
         ? AccountMemberStatus.Active
-        : AccountMemberStatus.Blocked;
-    this.optimisticUpdate(member, {status: targetStatus});
+        : AccountMemberStatus.Inactive;
+    this.optimisticUpdate(member, {status: targetStatus, role: member.role});
   }
 
   changeRole(event: {member: AccountMember; role: AccountMemberRole}): void {
-    this.optimisticUpdate(event.member, {role: event.role});
+    this.optimisticUpdate(event.member, {role: event.role, status: event.member.status});
   }
 
   deleteMember(member: AccountMember): void {
@@ -137,7 +152,10 @@ export class SettingsUsersPageComponent {
           this.cdr.markForCheck();
         },
         error: (error: ApiError) => {
-          this.toastService.error(this.mapErrorMessage(error, "Не удалось удалить участника."));
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось удалить участника."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
           this.cdr.markForCheck();
         }
       });
@@ -160,23 +178,27 @@ export class SettingsUsersPageComponent {
           this.refresh$.next();
           this.cdr.markForCheck();
         },
-        error: () => {
+        error: (error: ApiError) => {
           this.refresh$.next();
-          this.toastService.error("Не удалось обновить участника.");
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось обновить участника."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
           this.cdr.markForCheck();
         }
       });
   }
 
   private getAccountId(): number | null {
-    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
+    const accountIdParam = this.route.snapshot.paramMap.get("accountId");
+    if (accountIdParam == null) {
+      return null;
+    }
+    const accountId = Number(accountIdParam);
     return Number.isFinite(accountId) ? accountId : null;
   }
 
   private mapErrorMessage(error: ApiError, fallback: string): string {
-    if (error.status === 409) {
-      return "Участник уже существует.";
-    }
     return error.message || fallback;
   }
 }

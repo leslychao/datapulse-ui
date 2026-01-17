@@ -1,7 +1,7 @@
 import {Component, EventEmitter, Output} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {AccountMemberCreateRequest, AccountMemberRole} from "../../shared/models";
+import {AccountMemberCreateRequest, AccountMemberRole, AccountMemberStatus} from "../../shared/models";
 import {ButtonComponent, InputComponent} from "../../shared/ui";
 
 @Component({
@@ -16,13 +16,13 @@ export class InviteOperatorFormComponent {
 
   readonly roles = Object.values(AccountMemberRole);
   readonly form: FormGroup<{
-    email: FormControl<string>;
+    userId: FormControl<string>;
     role: FormControl<AccountMemberRole>;
   }>;
 
   constructor(private readonly fb: FormBuilder) {
     this.form = this.fb.nonNullable.group({
-      email: ["", [Validators.required, Validators.email]],
+      userId: ["", [Validators.required, Validators.pattern(/^[0-9]+$/)]],
       role: [AccountMemberRole.Operator, Validators.required]
     });
   }
@@ -33,12 +33,19 @@ export class InviteOperatorFormComponent {
       return;
     }
 
-    const {role} = this.form.getRawValue();
+    const {role, userId} = this.form.getRawValue();
+    const parsedUserId = Number(userId);
+    if (!Number.isFinite(parsedUserId) || parsedUserId <= 0) {
+      this.form.controls.userId.setErrors({invalid: true});
+      return;
+    }
     this.invite.emit({
-      role
+      userId: parsedUserId,
+      role,
+      status: AccountMemberStatus.Active
     });
     this.form.reset({
-      email: "",
+      userId: "",
       role: AccountMemberRole.Operator
     });
   }

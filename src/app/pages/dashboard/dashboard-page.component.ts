@@ -25,8 +25,14 @@ export class DashboardPageComponent {
   private readonly orderPnlApi = inject(OrderPnlApiClient);
 
   private readonly accountId$ = this.route.paramMap.pipe(
-    map((params) => Number(params.get("accountId"))),
-    map((accountId) => (Number.isFinite(accountId) ? accountId : null)),
+    map((params) => {
+      const accountIdParam = params.get("accountId");
+      if (accountIdParam == null) {
+        return null;
+      }
+      const accountId = Number(accountIdParam);
+      return Number.isFinite(accountId) ? accountId : null;
+    }),
     distinctUntilChanged()
   );
 

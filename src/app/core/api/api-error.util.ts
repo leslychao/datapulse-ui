@@ -3,7 +3,7 @@ import {ApiError} from "./api-error.model";
 
 export const DEFAULT_API_ERROR: ApiError = {
   status: 0,
-  message: "Unexpected error. Please try again."
+  message: "Неожиданная ошибка. Попробуйте еще раз."
 };
 
 export const toApiError = (error: unknown): ApiError => {
@@ -13,10 +13,15 @@ export const toApiError = (error: unknown): ApiError => {
         ? error.error.message
         : error.statusText || DEFAULT_API_ERROR.message;
     const details = typeof error.error?.details === "string" ? error.error.details : undefined;
+    const correlationId =
+      error.headers?.get("x-correlation-id") ??
+      error.headers?.get("X-Correlation-Id") ??
+      (typeof error.error?.correlationId === "string" ? error.error.correlationId : undefined);
     return {
       status: error.status,
       message,
-      details
+      details,
+      correlationId
     };
   }
   if (error instanceof Error) {

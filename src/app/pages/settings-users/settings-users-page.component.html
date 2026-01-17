@@ -6,30 +6,47 @@
   >
     <div class="page">
       <header class="page-header">
-        <h2>Users</h2>
-        <p class="muted">Добавляйте участников и управляйте ролями.</p>
+        <div>
+          <h2>Users / Access</h2>
+          <p class="muted">Команда и уровни доступа</p>
+        </div>
       </header>
 
-      <div class="card" *ngIf="vm.accountId">
-        <dp-invite-operator-form (invite)="inviteMember($event)"></dp-invite-operator-form>
-      </div>
+      <section class="table-card">
+        <div class="table-header">
+          <div>
+            <h3>Members</h3>
+            <p class="muted">Управляйте доступом и ролями участников.</p>
+          </div>
+        </div>
 
-      <div class="card" *ngIf="vm.state.status === 'loading'">
-        <dp-loader label="Загружаем участников..."></dp-loader>
-      </div>
+        <div class="invite-bar" *ngIf="vm.accountId">
+          <dp-invite-operator-form (invite)="inviteMember($event)"></dp-invite-operator-form>
+        </div>
 
-      <div class="card error" *ngIf="vm.state.status === 'error'">
-        {{ vm.state.error.message }}
-      </div>
+        <div *ngIf="vm.state.status === 'loading'">
+          <dp-loader label="Загружаем участников..."></dp-loader>
+        </div>
 
-      <div class="card" *ngIf="vm.state.status === 'ready'">
-        <dp-operators-table
-          [operators]="vm.state.data.members"
-          (blockToggle)="toggleBlock($event)"
-          (changeRole)="changeRole($event)"
-          (deleteMember)="deleteMember($event)"
-        ></dp-operators-table>
-      </div>
+        <div class="error-text" *ngIf="vm.state.status === 'error'">
+          {{ vm.state.error.message }}
+        </div>
+
+        <ng-container *ngIf="vm.state.status === 'ready'">
+          <dp-operators-table
+            *ngIf="vm.state.data.members.length > 0; else emptyState"
+            [operators]="vm.state.data.members"
+            (blockToggle)="toggleBlock($event)"
+            (changeRole)="changeRole($event)"
+            (deleteMember)="deleteMember($event)"
+          ></dp-operators-table>
+          <ng-template #emptyState>
+            <div class="empty-state">
+              <p class="muted">Участников пока нет.</p>
+            </div>
+          </ng-template>
+        </ng-container>
+      </section>
     </div>
   </dp-dashboard-shell>
 </ng-container>
