@@ -1,9 +1,8 @@
-import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
-import {forkJoin, of} from "rxjs";
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {catchError, finalize} from "rxjs/operators";
+import {Subject, distinctUntilChanged, forkJoin, map, of, switchMap} from "rxjs";
+import {finalize, startWith, tap} from "rxjs/operators";
 
 import {AccountConnectionsApiClient, AccountMembersApiClient, ApiError} from "../../core/api";
 import {
@@ -21,6 +20,17 @@ import {
   InviteOperatorFormComponent,
   OperatorsTableComponent
 } from "../../features/operators";
+import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
+
+interface UsersData {
+  members: AccountMember[];
+  connections: AccountConnection[];
+}
+
+interface UsersViewModel {
+  accountId: number | null;
+  state: LoadState<UsersData, ApiError>;
+}
 
 @Component({
   selector: "dp-settings-users-page",
@@ -37,77 +47,71 @@ import {
   styleUrl: "./settings-users-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SettingsUsersPageComponent implements OnInit {
-  accountId: number | null = null;
-  members: AccountMember[] = [];
-  connections: AccountConnection[] = [];
-  loading = true;
-  error: ApiError | null = null;
-
+export class SettingsUsersPageComponent {
   accessModalVisible = false;
   selectedMember: AccountMember | null = null;
 
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly memberApi = inject(AccountMembersApiClient);
+  private readonly connectionApi = inject(AccountConnectionsApiClient);
+  private readonly toastService = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly refresh$ = new Subject<void>();
+  private readonly accountId$ = this.route.paramMap.pipe(
+    map((params) => Number(params.get("accountId"))),
+    map((accountId) => (Number.isFinite(accountId) ? accountId : null)),
+    distinctUntilChanged()
+  );
 
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly memberApi: AccountMembersApiClient,
-    private readonly connectionApi: AccountConnectionsApiClient,
-    private readonly toastService: ToastService
-  ) {}
-
-  ngOnInit(): void {
-    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
-    this.accountId = Number.isFinite(accountId) ? accountId : null;
-    if (this.accountId == null) {
-      this.loading = false;
-      this.error = {status: 400, message: "Account is not selected."};
-      return;
-    }
-    this.loadData();
-  }
-
-  loadData(): void {
-    if (this.accountId == null) {
-      return;
-    }
-    this.loading = true;
-    this.error = null;
-    forkJoin({
-      members: this.memberApi.list(this.accountId),
-      connections: this.connectionApi.list(this.accountId)
-    })
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        catchError((error: ApiError) => {
-          this.error = error;
-          this.toastService.error(this.mapErrorMessage(error, "Не удалось загрузить участников."));
-          return of({members: [], connections: []});
+  readonly vm$ = this.accountId$.pipe(
+    switchMap((accountId) => {
+      if (accountId == null) {
+        return of({
+          accountId,
+          state: {status: "error", error: {status: 400, message: "Account is not selected."}}
+        } as UsersViewModel);
+      }
+      return this.refresh$.pipe(
+        startWith(void 0),
+        switchMap(() =>
+          forkJoin({
+            members: this.memberApi.list(accountId),
+            connections: this.connectionApi.list(accountId)
+          }).pipe(toLoadState<UsersData, ApiError>())
+        ),
+        tap((state) => {
+          if (state.status === "error") {
+            this.toastService.error(this.mapErrorMessage(state.error, "Не удалось загрузить участников."));
+          }
         }),
-        finalize(() => {
-          this.loading = false;
-        })
-      )
-      .subscribe(({members, connections}) => {
-        this.members = members;
-        this.connections = connections;
-      });
-  }
+        map((state) => ({accountId, state}))
+      );
+    })
+  );
+
+  constructor() {}
 
   inviteMember(request: AccountMemberCreateRequest): void {
-    if (this.accountId == null) {
+    const accountId = this.getAccountId();
+    if (accountId == null) {
       return;
     }
     this.memberApi
-      .create(this.accountId, request)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .create(accountId, request)
+      .pipe(
+        finalize(() => {
+          this.cdr.markForCheck();
+        })
+      )
       .subscribe({
-        next: (member) => {
-          this.members = [member, ...this.members];
+        next: () => {
+          this.refresh$.next();
           this.toastService.success("Приглашение отправлено.");
+          this.cdr.markForCheck();
         },
         error: (error: ApiError) => {
           this.toastService.error(this.mapErrorMessage(error, "Не удалось пригласить участника."));
+          this.cdr.markForCheck();
         }
       });
   }
@@ -147,7 +151,8 @@ export class SettingsUsersPageComponent implements OnInit {
   }
 
   deleteMember(member: AccountMember): void {
-    if (this.accountId == null) {
+    const accountId = this.getAccountId();
+    if (accountId == null) {
       return;
     }
     const confirmed = window.confirm("Удалить участника?");
@@ -155,39 +160,53 @@ export class SettingsUsersPageComponent implements OnInit {
       return;
     }
     this.memberApi
-      .remove(this.accountId, member.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .remove(accountId, member.id)
+      .pipe(
+        finalize(() => {
+          this.cdr.markForCheck();
+        })
+      )
       .subscribe({
         next: () => {
-          this.members = this.members.filter((item) => item.id !== member.id);
+          this.refresh$.next();
           this.toastService.success("Участник удален.");
+          this.cdr.markForCheck();
         },
         error: (error: ApiError) => {
           this.toastService.error(this.mapErrorMessage(error, "Не удалось удалить участника."));
+          this.cdr.markForCheck();
         }
       });
   }
 
   private optimisticUpdate(member: AccountMember, update: AccountMemberUpdateRequest): void {
-    if (this.accountId == null) {
+    const accountId = this.getAccountId();
+    if (accountId == null) {
       return;
     }
-    const previous = {...member};
-    this.members = this.members.map((item) =>
-      item.id === member.id ? {...item, ...update} : item
-    );
     this.memberApi
-      .update(this.accountId, member.id, update)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .update(accountId, member.id, update)
+      .pipe(
+        finalize(() => {
+          this.cdr.markForCheck();
+        })
+      )
       .subscribe({
-        next: (updated) => {
-          this.members = this.members.map((item) => (item.id === updated.id ? updated : item));
+        next: () => {
+          this.refresh$.next();
+          this.cdr.markForCheck();
         },
         error: () => {
-          this.members = this.members.map((item) => (item.id === previous.id ? previous : item));
+          this.refresh$.next();
           this.toastService.error("Не удалось обновить участника.");
+          this.cdr.markForCheck();
         }
       });
+  }
+
+  private getAccountId(): number | null {
+    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
+    return Number.isFinite(accountId) ? accountId : null;
   }
 
   private mapErrorMessage(error: ApiError, fallback: string): string {

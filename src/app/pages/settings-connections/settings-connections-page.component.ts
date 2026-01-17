@@ -1,9 +1,9 @@
-import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule} from "@angular/forms";
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {finalize} from "rxjs/operators";
+import {Subject, distinctUntilChanged, map, of, switchMap} from "rxjs";
+import {finalize, startWith, tap} from "rxjs/operators";
 
 import {AccountConnectionsApiClient, ApiError} from "../../core/api";
 import {
@@ -23,6 +23,12 @@ import {
   ToastService
 } from "../../shared/ui";
 import {ConnectionsTableComponent} from "../../features/connections";
+import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
+
+interface ConnectionsViewModel {
+  accountId: number | null;
+  state: LoadState<AccountConnection[], ApiError>;
+}
 
 @Component({
   selector: "dp-settings-connections-page",
@@ -41,13 +47,8 @@ import {ConnectionsTableComponent} from "../../features/connections";
   styleUrl: "./settings-connections-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SettingsConnectionsPageComponent implements OnInit {
-  accountId: number | null = null;
-  connections: AccountConnection[] = [];
-  loading = true;
+export class SettingsConnectionsPageComponent {
   saving = false;
-  error: ApiError | null = null;
-
   modalVisible = false;
   editingConnection: AccountConnection | null = null;
 
@@ -63,14 +64,42 @@ export class SettingsConnectionsPageComponent implements OnInit {
     apiKey: FormControl<string>;
   }>;
 
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly connectionApi = inject(AccountConnectionsApiClient);
+  private readonly toastService = inject(ToastService);
+  private readonly fb = inject(FormBuilder);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly refresh$ = new Subject<void>();
+  private readonly accountId$ = this.route.paramMap.pipe(
+    map((params) => Number(params.get("accountId"))),
+    map((accountId) => (Number.isFinite(accountId) ? accountId : null)),
+    distinctUntilChanged()
+  );
 
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly connectionApi: AccountConnectionsApiClient,
-    private readonly toastService: ToastService,
-    private readonly fb: FormBuilder
-  ) {
+  readonly vm$ = this.accountId$.pipe(
+    switchMap((accountId) => {
+      if (accountId == null) {
+        return of({
+          accountId,
+          state: {status: "error", error: {status: 400, message: "Account is not selected."}}
+        } as ConnectionsViewModel);
+      }
+      return this.refresh$.pipe(
+        startWith(void 0),
+        switchMap(() => this.connectionApi.list(accountId).pipe(toLoadState<AccountConnection[], ApiError>())),
+        tap((state) => {
+          if (state.status === "error") {
+            this.toastService.error(
+              this.mapErrorMessage(state.error, "Не удалось загрузить подключения.")
+            );
+          }
+        }),
+        map((state) => ({accountId, state}))
+      );
+    })
+  );
+
+  constructor() {
     this.form = this.fb.nonNullable.group({
       marketplace: [Marketplace.Wildberries],
       active: [true],
@@ -80,44 +109,8 @@ export class SettingsConnectionsPageComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
-    this.accountId = Number.isFinite(accountId) ? accountId : null;
-    if (this.accountId == null) {
-      this.loading = false;
-      this.error = {status: 400, message: "Account is not selected."};
-      return;
-    }
-    this.loadConnections();
-  }
-
   get isWildberries(): boolean {
     return this.form.controls.marketplace.value === Marketplace.Wildberries;
-  }
-
-  loadConnections(): void {
-    if (this.accountId == null) {
-      return;
-    }
-    this.loading = true;
-    this.error = null;
-    this.connectionApi
-      .list(this.accountId)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => {
-          this.loading = false;
-        })
-      )
-      .subscribe({
-        next: (connections) => {
-          this.connections = connections;
-        },
-        error: (error: ApiError) => {
-          this.error = error;
-          this.toastService.error(this.mapErrorMessage(error, "Не удалось загрузить подключения."));
-        }
-      });
   }
 
   openCreateModal(): void {
@@ -159,7 +152,8 @@ export class SettingsConnectionsPageComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.accountId == null || this.saving) {
+    const accountId = this.getAccountId();
+    if (accountId == null || this.saving) {
       return;
     }
     const {marketplace, active, token, clientId, apiKey} = this.form.getRawValue();
@@ -178,21 +172,23 @@ export class SettingsConnectionsPageComponent implements OnInit {
       };
       this.saving = true;
       this.connectionApi
-        .create(this.accountId, request)
+        .create(accountId, request)
         .pipe(
-          takeUntilDestroyed(this.destroyRef),
           finalize(() => {
             this.saving = false;
+            this.cdr.markForCheck();
           })
         )
         .subscribe({
-          next: (connection) => {
-            this.connections = [connection, ...this.connections];
+          next: () => {
             this.toastService.success("Подключение добавлено.");
             this.closeModal();
+            this.refresh$.next();
+            this.cdr.markForCheck();
           },
           error: (error: ApiError) => {
             this.toastService.error(this.mapErrorMessage(error, "Не удалось создать подключение."));
+            this.cdr.markForCheck();
           }
         });
       return;
@@ -214,29 +210,30 @@ export class SettingsConnectionsPageComponent implements OnInit {
     const connectionId = this.editingConnection.id;
     this.saving = true;
     this.connectionApi
-      .update(this.accountId, connectionId, update)
+      .update(accountId, connectionId, update)
       .pipe(
-        takeUntilDestroyed(this.destroyRef),
         finalize(() => {
           this.saving = false;
+          this.cdr.markForCheck();
         })
       )
       .subscribe({
-        next: (updated) => {
-          this.connections = this.connections.map((item) =>
-            item.id === updated.id ? updated : item
-          );
+        next: () => {
           this.toastService.success("Подключение обновлено.");
           this.closeModal();
+          this.refresh$.next();
+          this.cdr.markForCheck();
         },
         error: (error: ApiError) => {
           this.toastService.error(this.mapErrorMessage(error, "Не удалось обновить подключение."));
+          this.cdr.markForCheck();
         }
       });
   }
 
   confirmDelete(connection: AccountConnection): void {
-    if (this.accountId == null) {
+    const accountId = this.getAccountId();
+    if (accountId == null) {
       return;
     }
     const confirmed = window.confirm("Удалить подключение?");
@@ -244,17 +241,28 @@ export class SettingsConnectionsPageComponent implements OnInit {
       return;
     }
     this.connectionApi
-      .remove(this.accountId, connection.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .remove(accountId, connection.id)
+      .pipe(
+        finalize(() => {
+          this.cdr.markForCheck();
+        })
+      )
       .subscribe({
         next: () => {
-          this.connections = this.connections.filter((item) => item.id !== connection.id);
           this.toastService.success("Подключение удалено.");
+          this.refresh$.next();
+          this.cdr.markForCheck();
         },
         error: (error: ApiError) => {
           this.toastService.error(this.mapErrorMessage(error, "Не удалось удалить подключение."));
+          this.cdr.markForCheck();
         }
       });
+  }
+
+  private getAccountId(): number | null {
+    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
+    return Number.isFinite(accountId) ? accountId : null;
   }
 
   private buildCredentials(

@@ -1,40 +1,44 @@
-<dp-dashboard-shell
-  [accountId]="accountId"
-  title="Users / Access"
-  subtitle="Команда и уровни доступа"
->
-  <div class="page">
-    <header class="page-header">
-      <h2>Users</h2>
-      <p class="muted">Добавляйте участников и управляйте ролями.</p>
-    </header>
+<ng-container *ngIf="vm$ | async as vm">
+  <dp-dashboard-shell
+    [accountId]="vm.accountId"
+    title="Users / Access"
+    subtitle="Команда и уровни доступа"
+  >
+    <div class="page">
+      <header class="page-header">
+        <h2>Users</h2>
+        <p class="muted">Добавляйте участников и управляйте ролями.</p>
+      </header>
 
-    <div class="card" *ngIf="accountId">
-      <dp-invite-operator-form (invite)="inviteMember($event)"></dp-invite-operator-form>
+      <div class="card" *ngIf="vm.accountId">
+        <dp-invite-operator-form (invite)="inviteMember($event)"></dp-invite-operator-form>
+      </div>
+
+      <div class="card" *ngIf="vm.state.status === 'loading'">
+        <dp-loader label="Загружаем участников..."></dp-loader>
+      </div>
+
+      <div class="card error" *ngIf="vm.state.status === 'error'">
+        {{ vm.state.error.message }}
+      </div>
+
+      <div class="card" *ngIf="vm.state.status === 'ready'">
+        <dp-operators-table
+          [operators]="vm.state.data.members"
+          (blockToggle)="toggleBlock($event)"
+          (changeRole)="changeRole($event)"
+          (editAccess)="openAccessModal($event)"
+          (deleteMember)="deleteMember($event)"
+        ></dp-operators-table>
+      </div>
+
+      <dp-access-modal
+        [visible]="accessModalVisible"
+        [member]="selectedMember"
+        [connections]="vm.state.status === 'ready' ? vm.state.data.connections : []"
+        (close)="closeAccessModal()"
+        (save)="saveAccess($event)"
+      ></dp-access-modal>
     </div>
-
-    <div class="card" *ngIf="loading">
-      <dp-loader label="Загружаем участников..."></dp-loader>
-    </div>
-
-    <div class="card error" *ngIf="error">{{ error.message }}</div>
-
-    <div class="card" *ngIf="!loading && !error">
-      <dp-operators-table
-        [operators]="members"
-        (blockToggle)="toggleBlock($event)"
-        (changeRole)="changeRole($event)"
-        (editAccess)="openAccessModal($event)"
-        (deleteMember)="deleteMember($event)"
-      ></dp-operators-table>
-    </div>
-
-    <dp-access-modal
-      [visible]="accessModalVisible"
-      [member]="selectedMember"
-      [connections]="connections"
-      (close)="closeAccessModal()"
-      (save)="saveAccess($event)"
-    ></dp-access-modal>
-  </div>
-</dp-dashboard-shell>
+  </dp-dashboard-shell>
+</ng-container>
