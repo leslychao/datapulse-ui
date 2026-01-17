@@ -20,10 +20,16 @@
         <td class="actions">
           <dp-button
             type="button"
-            variant="danger"
-            (click)="disableConnection.emit(connection)"
+            (click)="editConnection.emit(connection)"
           >
-            Disable
+            Edit
+          </dp-button>
+          <dp-button
+            type="button"
+            variant="danger"
+            (click)="deleteConnection.emit(connection)"
+          >
+            Delete
           </dp-button>
         </td>
       </tr>

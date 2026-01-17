@@ -1,10 +1,9 @@
 import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
-import {ActivatedRoute, RouterModule} from "@angular/router";
+import {ActivatedRoute} from "@angular/router";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {catchError, finalize, map} from "rxjs/operators";
 import {of} from "rxjs";
-import {APP_PATHS} from "../../core/app-paths";
 import {OrderPnlApiClient} from "../../core/api";
 import {OrderPnlResponse, PageResponse} from "../../shared/models";
 import {DashboardShellComponent} from "../../shared/ui";
@@ -12,7 +11,7 @@ import {DashboardShellComponent} from "../../shared/ui";
 @Component({
   selector: "dp-dashboard-page",
   standalone: true,
-  imports: [CommonModule, RouterModule, DashboardShellComponent],
+  imports: [CommonModule, DashboardShellComponent],
   templateUrl: "./dashboard-page.component.html",
   styleUrl: "./dashboard-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -24,9 +23,6 @@ export class DashboardPageComponent implements OnInit {
   loadError: string | null = null;
 
   private readonly destroyRef = inject(DestroyRef);
-
-  readonly adminConnectionsPath = (id: number) => APP_PATHS.adminConnections(id);
-  readonly adminOperatorsPath = (id: number) => APP_PATHS.adminOperators(id);
 
   constructor(
     private readonly route: ActivatedRoute,
