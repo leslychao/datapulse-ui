@@ -1,12 +1,16 @@
-import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {catchError, finalize, map} from "rxjs/operators";
-import {of} from "rxjs";
+import {distinctUntilChanged, map, of, switchMap} from "rxjs";
 import {OrderPnlApiClient} from "../../core/api";
 import {OrderPnlResponse, PageResponse} from "../../shared/models";
 import {DashboardShellComponent} from "../../shared/ui";
+import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
+
+interface OrdersViewModel {
+  accountId: number | null;
+  state: LoadState<OrderPnlResponse[], string>;
+}
 
 @Component({
   selector: "dp-dashboard-page",
@@ -16,48 +20,35 @@ import {DashboardShellComponent} from "../../shared/ui";
   styleUrl: "./dashboard-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardPageComponent implements OnInit {
-  accountId: number | null = null;
-  orderPnl: OrderPnlResponse[] = [];
-  isLoading = false;
-  loadError: string | null = null;
+export class DashboardPageComponent {
+  private readonly accountId$ = this.route.paramMap.pipe(
+    map((params) => Number(params.get("accountId"))),
+    map((accountId) => (Number.isFinite(accountId) ? accountId : null)),
+    distinctUntilChanged()
+  );
 
-  private readonly destroyRef = inject(DestroyRef);
+  readonly vm$ = this.accountId$.pipe(
+    switchMap((accountId) => {
+      if (accountId == null) {
+        return of({
+          accountId,
+          state: {status: "error", error: "Account is not selected."} as const
+        });
+      }
+      return this.orderPnlApi
+        .list(accountId, {}, {page: 0, size: 20})
+        .pipe(
+          map((response: PageResponse<OrderPnlResponse>) => response.content ?? []),
+          toLoadState<OrderPnlResponse[], string>(
+            () => "Не удалось загрузить данные по заказам."
+          ),
+          map((state) => ({accountId, state}))
+        );
+    })
+  );
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly orderPnlApi: OrderPnlApiClient
   ) {}
-
-  ngOnInit(): void {
-    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
-    this.accountId = Number.isFinite(accountId) ? accountId : null;
-    if (this.accountId != null) {
-      this.fetchOrderPnl();
-    }
-  }
-
-  private fetchOrderPnl(): void {
-    if (this.accountId == null) {
-      return;
-    }
-    this.isLoading = true;
-    this.loadError = null;
-    this.orderPnlApi
-      .list(this.accountId, {}, {page: 0, size: 20})
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        map((response: PageResponse<OrderPnlResponse>) => response.content ?? []),
-        catchError(() => {
-          this.loadError = "Не удалось загрузить данные по заказам.";
-          return of([] as OrderPnlResponse[]);
-        }),
-        finalize(() => {
-          this.isLoading = false;
-        })
-      )
-      .subscribe((rows) => {
-        this.orderPnl = rows;
-      });
-  }
 }
