@@ -9,5 +9,11 @@
       <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
     </select>
   </label>
-  <dp-button type="submit" variant="primary">Invite</dp-button>
+  <label>
+    Статус
+    <select formControlName="status">
+      <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+    </select>
+  </label>
+  <dp-button type="submit" variant="primary">{{ submitLabel }}</dp-button>
 </form>

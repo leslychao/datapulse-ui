@@ -1,0 +1,36 @@
+.table-card {
+  background: #fff;
+  border: 1px solid #e1e5ea;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.error-text {
+  color: #b91c1c;
+  padding: 12px 0;
+}
+
+.empty-state {
+  padding: 12px 0;
+}
+
+.modal-content {
+  padding: 20px;
+  max-width: 520px;
+}
+
+.modal-header {
+  margin-bottom: 12px;
+}

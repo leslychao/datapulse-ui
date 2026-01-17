@@ -1,0 +1,84 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 24px 32px;
+}
+
+.dashboard__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e1e5ea;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid #eef2f6;
+  font-size: 14px;
+}
+
+.actions {
+  text-align: right;
+}
+
+.link {
+  color: #111827;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.state-card {
+  padding: 12px 0;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.error-text {
+  color: #b91c1c;
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+
+.modal-content {
+  padding: 20px;
+  max-width: 520px;
+}
+
+.modal-header {
+  margin-bottom: 12px;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form select {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.invite-form {
+  margin-top: 16px;
+}

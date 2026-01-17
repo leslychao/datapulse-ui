@@ -22,6 +22,52 @@ export const appRoutes: Routes = [
       import("./pages/login/login-page.component").then((m) => m.LoginPageComponent)
   },
   {
+    path: APP_ROUTE_SEGMENTS.settings,
+    canMatch: [authGuard],
+    children: [
+      {
+        path: APP_ROUTE_SEGMENTS.workspaces,
+        children: [
+          {
+            path: "",
+            loadComponent: () =>
+              import("./pages/workspaces/workspaces-dashboard.component").then(
+                (m) => m.WorkspacesDashboardComponent
+              )
+          },
+          {
+            path: ":accountId",
+            loadComponent: () =>
+              import("./pages/workspaces/workspaces-shell.component").then(
+                (m) => m.WorkspacesShellComponent
+              ),
+            children: [
+              {
+                path: "",
+                pathMatch: "full",
+                redirectTo: APP_ROUTE_SEGMENTS.users
+              },
+              {
+                path: APP_ROUTE_SEGMENTS.users,
+                loadComponent: () =>
+                  import("./pages/workspaces/workspaces-users.component").then(
+                    (m) => m.WorkspacesUsersComponent
+                  )
+              },
+              {
+                path: APP_ROUTE_SEGMENTS.connections,
+                loadComponent: () =>
+                  import("./pages/workspaces/workspaces-connections.component").then(
+                    (m) => m.WorkspacesConnectionsComponent
+                  )
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
     path: APP_ROUTE_SEGMENTS.app,
     canMatch: [authGuard],
     canActivateChild: [accountGuard],

@@ -11,6 +11,29 @@ import {
 export class AccountMembersApiClient {
   constructor(private readonly api: ApiClient) {}
 
+  listMembers(accountId: number): Observable<AccountMemberResponse[]> {
+    return this.list(accountId);
+  }
+
+  createMember(
+    accountId: number,
+    request: AccountMemberCreateRequest
+  ): Observable<AccountMemberResponse> {
+    return this.create(accountId, request);
+  }
+
+  updateMember(
+    accountId: number,
+    memberId: number,
+    request: AccountMemberUpdateRequest
+  ): Observable<AccountMemberResponse> {
+    return this.update(accountId, memberId, request);
+  }
+
+  deleteMember(accountId: number, memberId: number): Observable<void> {
+    return this.remove(accountId, memberId);
+  }
+
   list(accountId: number): Observable<AccountMemberResponse[]> {
     return this.api.get<AccountMemberResponse[]>(`/api/accounts/${accountId}/members`);
   }

@@ -1,0 +1,77 @@
+.workspaces-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 24px 32px;
+}
+
+.workspaces-shell__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.workspaces-shell__selector label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.workspaces-shell__selector select {
+  min-width: 220px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.workspaces-shell__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.workspaces-shell__content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 12px;
+  border-bottom: 1px solid #e1e5ea;
+}
+
+.tab {
+  padding: 10px 4px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  color: #6b7280;
+  border-bottom: 2px solid transparent;
+}
+
+.tab.is-active {
+  color: #111827;
+  border-color: #111827;
+}
+
+.state-card {
+  border: 1px solid #e1e5ea;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+}
+
+.link {
+  color: #111827;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.muted {
+  color: #6b7280;
+}
