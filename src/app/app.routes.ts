@@ -179,25 +179,6 @@ export const appRoutes: Routes = [
                   )
               }
             ]
-          },
-          {
-            path: APP_ROUTE_SEGMENTS.admin,
-            children: [
-              {
-                path: APP_ROUTE_SEGMENTS.connections,
-                loadComponent: () =>
-                  import("./pages/admin-connections/admin-connections-page.component").then(
-                    (m) => m.AdminConnectionsPageComponent
-                  )
-              },
-              {
-                path: APP_ROUTE_SEGMENTS.operators,
-                loadComponent: () =>
-                  import("./pages/admin-operators/admin-operators-page.component").then(
-                    (m) => m.AdminOperatorsPageComponent
-                  )
-              }
-            ]
           }
         ]
       }

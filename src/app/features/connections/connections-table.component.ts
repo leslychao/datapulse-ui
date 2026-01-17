@@ -13,5 +13,6 @@ import {ButtonComponent, TableComponent} from "../../shared/ui";
 export class ConnectionsTableComponent {
   @Input() connections: readonly AccountConnection[] = [];
 
-  @Output() disableConnection = new EventEmitter<AccountConnection>();
+  @Output() editConnection = new EventEmitter<AccountConnection>();
+  @Output() deleteConnection = new EventEmitter<AccountConnection>();
 }

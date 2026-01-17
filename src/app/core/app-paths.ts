@@ -20,9 +20,7 @@ export const APP_ROUTE_SEGMENTS = {
   freshness: "freshness",
   settings: "settings",
   users: "users",
-  admin: "admin",
-  connections: "connections",
-  operators: "operators"
+  connections: "connections"
 } as const;
 
 export const APP_PATHS = {
@@ -54,9 +52,5 @@ export const APP_PATHS = {
   settingsConnections: (accountId: number) =>
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.connections}`,
   settingsUsers: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.users}`,
-  adminConnections: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.admin}/${APP_ROUTE_SEGMENTS.connections}`,
-  adminOperators: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.admin}/${APP_ROUTE_SEGMENTS.operators}`
+    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.users}`
 } as const;

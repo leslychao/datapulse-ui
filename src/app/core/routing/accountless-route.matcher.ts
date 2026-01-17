@@ -10,8 +10,7 @@ const ACCOUNTLESS_SEGMENTS = new Set<string>([
   APP_ROUTE_SEGMENTS.operations,
   APP_ROUTE_SEGMENTS.marketing,
   APP_ROUTE_SEGMENTS.dataHealth,
-  APP_ROUTE_SEGMENTS.settings,
-  APP_ROUTE_SEGMENTS.admin
+  APP_ROUTE_SEGMENTS.settings
 ]);
 
 export const accountlessRouteMatcher: UrlMatcher = (segments: UrlSegment[]) => {

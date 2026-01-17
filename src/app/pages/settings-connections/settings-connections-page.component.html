@@ -3,15 +3,81 @@
   title="Accounts & Connections"
   subtitle="Управление подключениями marketplace"
 >
-  <ng-container *ngIf="connections$ | async as connections">
-    <dp-data-table-card
-      title="Connections"
-      subtitle="Активные источники"
-      [columns]="columns"
-      [rows]="connections.rows"
-      [state]="connections.state"
-      [accountId]="accountId"
-      testId="settings-connections-table"
-    ></dp-data-table-card>
-  </ng-container>
+  <div class="page">
+    <header class="page-header">
+      <div>
+        <h2>Connections</h2>
+        <p class="muted">Список активных подключений marketplace.</p>
+      </div>
+      <dp-button type="button" variant="primary" (click)="openCreateModal()">
+        Add connection
+      </dp-button>
+    </header>
+
+    <div class="card" *ngIf="loading">
+      <dp-loader label="Загружаем подключения..."></dp-loader>
+    </div>
+
+    <div class="card error" *ngIf="error">{{ error.message }}</div>
+
+    <div class="card" *ngIf="!loading && !error">
+      <dp-connections-table
+        [connections]="connections"
+        (editConnection)="openEditModal($event)"
+        (deleteConnection)="confirmDelete($event)"
+      ></dp-connections-table>
+    </div>
+  </div>
+
+  <dp-modal [visible]="modalVisible" (close)="closeModal()">
+    <div class="modal-content">
+      <h3>{{ editingConnection ? "Edit connection" : "Add connection" }}</h3>
+      <p class="muted" *ngIf="editingConnection?.maskedCredentials">
+        Current credentials: {{ editingConnection?.maskedCredentials }}
+      </p>
+      <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+        <label>
+          Marketplace
+          <select formControlName="marketplace">
+            <option *ngFor="let marketplace of marketplaceOptions" [value]="marketplace">
+              {{ marketplace }}
+            </option>
+          </select>
+        </label>
+
+        <label class="checkbox">
+          <input type="checkbox" formControlName="active" />
+          Active
+        </label>
+
+        <ng-container *ngIf="isWildberries; else ozonBlock">
+          <label>
+            Token
+            <dp-input type="password" placeholder="Token" formControlName="token"></dp-input>
+          </label>
+        </ng-container>
+        <ng-template #ozonBlock>
+          <label>
+            Client ID
+            <dp-input placeholder="Client ID" formControlName="clientId"></dp-input>
+          </label>
+          <label>
+            API Key
+            <dp-input type="password" placeholder="API Key" formControlName="apiKey"></dp-input>
+          </label>
+        </ng-template>
+
+        <p class="muted" *ngIf="editingConnection">
+          Заполните поля доступа, если нужно обновить ключи. Пустые поля не меняют доступ.
+        </p>
+
+        <div class="modal-actions">
+          <dp-button type="button" variant="secondary" (click)="closeModal()">Cancel</dp-button>
+          <dp-button type="submit" variant="primary" [disabled]="saving">
+            {{ saving ? "Saving..." : "Save" }}
+          </dp-button>
+        </div>
+      </form>
+    </div>
+  </dp-modal>
 </dp-dashboard-shell>

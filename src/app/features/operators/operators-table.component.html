@@ -26,6 +26,13 @@
           <dp-button type="button" (click)="blockToggle.emit(operator)">
             {{ isBlocked(operator) ? "Разблокировать" : "Заблокировать" }}
           </dp-button>
+          <dp-button
+            type="button"
+            variant="danger"
+            (click)="deleteMember.emit(operator)"
+          >
+            Удалить
+          </dp-button>
         </td>
       </tr>
     </tbody>
@@ -33,5 +40,5 @@
 </dp-table>
 
 <ng-template #empty>
-  <div class="empty">Операторов пока нет.</div>
+  <div class="empty">Участников пока нет.</div>
 </ng-template>

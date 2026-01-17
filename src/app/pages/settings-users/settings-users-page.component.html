@@ -3,15 +3,38 @@
   title="Users / Access"
   subtitle="Команда и уровни доступа"
 >
-  <ng-container *ngIf="members$ | async as members">
-    <dp-data-table-card
-      title="Workspace users"
-      subtitle="Список участников"
-      [columns]="columns"
-      [rows]="members.rows"
-      [state]="members.state"
-      [accountId]="accountId"
-      testId="settings-users-table"
-    ></dp-data-table-card>
-  </ng-container>
+  <div class="page">
+    <header class="page-header">
+      <h2>Users</h2>
+      <p class="muted">Добавляйте участников и управляйте ролями.</p>
+    </header>
+
+    <div class="card" *ngIf="accountId">
+      <dp-invite-operator-form (invite)="inviteMember($event)"></dp-invite-operator-form>
+    </div>
+
+    <div class="card" *ngIf="loading">
+      <dp-loader label="Загружаем участников..."></dp-loader>
+    </div>
+
+    <div class="card error" *ngIf="error">{{ error.message }}</div>
+
+    <div class="card" *ngIf="!loading && !error">
+      <dp-operators-table
+        [operators]="members"
+        (blockToggle)="toggleBlock($event)"
+        (changeRole)="changeRole($event)"
+        (editAccess)="openAccessModal($event)"
+        (deleteMember)="deleteMember($event)"
+      ></dp-operators-table>
+    </div>
+
+    <dp-access-modal
+      [visible]="accessModalVisible"
+      [member]="selectedMember"
+      [connections]="connections"
+      (close)="closeAccessModal()"
+      (save)="saveAccess($event)"
+    ></dp-access-modal>
+  </div>
 </dp-dashboard-shell>

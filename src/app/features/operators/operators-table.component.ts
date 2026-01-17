@@ -20,6 +20,7 @@ export class OperatorsTableComponent {
   @Output() blockToggle = new EventEmitter<AccountMember>();
   @Output() changeRole = new EventEmitter<{member: AccountMember; role: AccountMemberRole}>();
   @Output() editAccess = new EventEmitter<AccountMember>();
+  @Output() deleteMember = new EventEmitter<AccountMember>();
 
   readonly roles = Object.values(AccountMemberRole);
 

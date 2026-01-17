@@ -3,13 +3,6 @@
   title="Home / Summary"
   subtitle="Сводка по прибыли и убыткам по заказам."
 >
-  <ng-container topbar-actions>
-    <div class="actions" *ngIf="accountId">
-      <a class="link" [routerLink]="adminConnectionsPath(accountId)">Подключения</a>
-      <a class="link" [routerLink]="adminOperatorsPath(accountId)">Операторы</a>
-    </div>
-  </ng-container>
-
   <div class="page">
     <div class="card" *ngIf="accountId">
       <div class="table-header">
