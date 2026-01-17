@@ -15,21 +15,6 @@
       </span>
     </div>
 
-    <div class="app-header__menu">
-      <dp-button type="button" variant="secondary" (click)="toggleMenu()">
-        Settings
-      </dp-button>
-      <div class="app-header__dropdown" *ngIf="menuOpen">
-        <a
-          class="app-header__dropdown-item"
-          [routerLink]="APP_PATHS.settingsWorkspaces"
-          (click)="closeMenu()"
-        >
-          Workspaces
-        </a>
-      </div>
-    </div>
-
     <dp-button
       type="button"
       variant="secondary"

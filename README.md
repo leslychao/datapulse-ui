@@ -74,20 +74,6 @@ Only one key is used:
 
 No other localStorage keys are permitted.
 
-## Workspaces Admin Console
-
-New settings entry point for managing workspaces, users, and connections:
-
-- `/settings/workspaces` — list of доступных workspaces и кнопка **Add user to workspace**.
-- `/settings/workspaces/:accountId/users` — управление участниками выбранного workspace.
-- `/settings/workspaces/:accountId/connections` — управление подключениями выбранного workspace.
-
-Навигация:
-
-- В правом верхнем углу (профиль) откройте **Settings → Workspaces**.
-- На дашборде выберите workspace и нажмите **Manage**.
-- Внутри workspace доступны вкладки **Users & Access** и **Connections**.
-
 ## Debugging
 
 - Use the browser network tab to verify `GET /api/iam/accounts` on refresh and navigation.

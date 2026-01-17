@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, ElementRef, HostListener, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {RouterModule} from "@angular/router";
 
@@ -20,13 +20,10 @@ export class AppHeaderComponent {
   private readonly authSession = inject(AuthSessionService);
   private readonly authRedirect = inject(AuthRedirectService);
   private readonly accountContext = inject(AccountContextService);
-  private readonly elementRef = inject(ElementRef<HTMLElement>);
 
   readonly userProfile$ = this.authUser.userProfile$;
   isLoginRedirecting = false;
   isLogoutRedirecting = false;
-  menuOpen = false;
-  readonly APP_PATHS = APP_PATHS;
 
   get homePath(): string {
     if (!this.authSession.snapshot().authenticated) {
@@ -57,25 +54,5 @@ export class AppHeaderComponent {
       this.isLogoutRedirecting = false;
     }, 4000);
     this.authRedirect.logout();
-  }
-
-  toggleMenu(): void {
-    this.menuOpen = !this.menuOpen;
-  }
-
-  closeMenu(): void {
-    this.menuOpen = false;
-  }
-
-  @HostListener("document:click", ["$event"])
-  handleDocumentClick(event: MouseEvent): void {
-    if (!this.menuOpen) {
-      return;
-    }
-    const target = event.target as Node | null;
-    if (target && this.elementRef.nativeElement.contains(target)) {
-      return;
-    }
-    this.closeMenu();
   }
 }

@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from "@angular/core";
+import {Component, EventEmitter, Output} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {AccountMemberCreateRequest, AccountMemberRole, AccountMemberStatus} from "../../shared/models";
@@ -12,22 +12,18 @@ import {ButtonComponent, InputComponent} from "../../shared/ui";
   styleUrl: "./invite-operator-form.component.css"
 })
 export class InviteOperatorFormComponent {
-  @Input() submitLabel = "Invite";
   @Output() invite = new EventEmitter<AccountMemberCreateRequest>();
 
   readonly roles = Object.values(AccountMemberRole);
-  readonly statuses = Object.values(AccountMemberStatus);
   readonly form: FormGroup<{
     userId: FormControl<string>;
     role: FormControl<AccountMemberRole>;
-    status: FormControl<AccountMemberStatus>;
   }>;
 
   constructor(private readonly fb: FormBuilder) {
     this.form = this.fb.nonNullable.group({
       userId: ["", [Validators.required, Validators.pattern(/^[0-9]+$/)]],
-      role: [AccountMemberRole.Operator, Validators.required],
-      status: [AccountMemberStatus.Active, Validators.required]
+      role: [AccountMemberRole.Operator, Validators.required]
     });
   }
 
@@ -37,7 +33,7 @@ export class InviteOperatorFormComponent {
       return;
     }
 
-    const {role, userId, status} = this.form.getRawValue();
+    const {role, userId} = this.form.getRawValue();
     const parsedUserId = Number(userId);
     if (!Number.isFinite(parsedUserId) || parsedUserId <= 0) {
       this.form.controls.userId.setErrors({invalid: true});
@@ -46,12 +42,11 @@ export class InviteOperatorFormComponent {
     this.invite.emit({
       userId: parsedUserId,
       role,
-      status
+      status: AccountMemberStatus.Active
     });
     this.form.reset({
       userId: "",
-      role: AccountMemberRole.Operator,
-      status: AccountMemberStatus.Active
+      role: AccountMemberRole.Operator
     });
   }
 }

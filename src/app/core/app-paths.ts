@@ -19,7 +19,6 @@ export const APP_ROUTE_SEGMENTS = {
   dataHealth: "data-health",
   freshness: "freshness",
   settings: "settings",
-  workspaces: "workspaces",
   users: "users",
   connections: "connections"
 } as const;
@@ -53,10 +52,5 @@ export const APP_PATHS = {
   settingsConnections: (accountId: number) =>
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.connections}`,
   settingsUsers: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.users}`,
-  settingsWorkspaces: `/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.workspaces}`,
-  settingsWorkspaceUsers: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.workspaces}/${accountId}/${APP_ROUTE_SEGMENTS.users}`,
-  settingsWorkspaceConnections: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.workspaces}/${accountId}/${APP_ROUTE_SEGMENTS.connections}`
+    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.users}`
 } as const;

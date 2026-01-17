@@ -40,38 +40,6 @@
   gap: 16px;
 }
 
-.app-header__menu {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.app-header__dropdown {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 8px);
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-  min-width: 180px;
-  padding: 8px;
-  z-index: 10;
-}
-
-.app-header__dropdown-item {
-  display: block;
-  padding: 8px 10px;
-  border-radius: 8px;
-  text-decoration: none;
-  color: var(--text);
-  font-size: 14px;
-}
-
-.app-header__dropdown-item:hover {
-  background: rgba(15, 23, 42, 0.04);
-}
-
 .app-header__user {
   display: flex;
   flex-direction: column;

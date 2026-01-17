@@ -34,7 +34,7 @@ export class AccountCatalogService {
       return this.loadInFlight;
     }
 
-    this.loadInFlight = this.iamApi.getAccounts().pipe(
+    this.loadInFlight = this.iamApi.listAccounts().pipe(
       tap((accounts) => {
         this.stateSubject.next({accounts, error: null});
       }),
