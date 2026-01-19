@@ -1,19 +1,20 @@
 <ng-container *ngIf="vm$ | async as vm">
   <dp-dashboard-shell
     [accountId]="vm.accountId"
-    title="Accounts & Connections"
-    subtitle="Управление подключениями marketplace"
+    title="Connections"
+    subtitle="Управление подключениями marketplace в рабочем пространстве"
   >
+    <ng-container topbar-actions>
+      <dp-button type="button" variant="primary" (click)="openCreateModal()">
+        Add connection
+      </dp-button>
+    </ng-container>
+
     <div class="page">
-      <header class="page-header">
-        <div>
-          <h2>Connections</h2>
-          <p class="muted">Список активных подключений marketplace.</p>
-        </div>
-        <dp-button type="button" variant="primary" (click)="openCreateModal()">
-          Add connection
-        </dp-button>
-      </header>
+      <div class="controls-row">
+        <p class="muted">Список активных подключений marketplace.</p>
+        <dp-button type="button" variant="secondary" (click)="refresh()">Refresh</dp-button>
+      </div>
 
       <section class="table-card">
         <div class="table-header">
@@ -36,6 +37,7 @@
             *ngIf="vm.state.data.length > 0; else emptyState"
             [connections]="vm.state.data"
             (replaceCredentials)="openReplaceModal($event)"
+            (toggleActive)="toggleActive($event)"
             (deleteConnection)="confirmDelete($event)"
           ></dp-connections-table>
           <ng-template #emptyState>
@@ -61,11 +63,6 @@
                 {{ marketplace }}
               </option>
             </select>
-          </label>
-
-          <label class="checkbox">
-            <input type="checkbox" formControlName="active" />
-            Active
           </label>
 
           <ng-container *ngIf="createIsWildberries; else createOzonBlock">

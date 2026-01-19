@@ -5,15 +5,9 @@ import {Subject, distinctUntilChanged, forkJoin, map, of, switchMap} from "rxjs"
 import {finalize, startWith, tap} from "rxjs/operators";
 
 import {AccountMembersApiClient, ApiError} from "../../core/api";
-import {
-  AccountMember,
-  AccountMemberCreateRequest,
-  AccountMemberRole,
-  AccountMemberStatus,
-  AccountMemberUpdateRequest
-} from "../../shared/models";
-import {DashboardShellComponent, LoaderComponent, ToastService} from "../../shared/ui";
-import {InviteOperatorFormComponent, OperatorsTableComponent} from "../../features/operators";
+import {AccountMember, AccountMemberUpdateRequest} from "../../shared/models";
+import {ButtonComponent, DashboardShellComponent, LoaderComponent, ToastService} from "../../shared/ui";
+import {OperatorsTableComponent} from "../../features/operators";
 import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
 
 interface UsersData {
@@ -28,13 +22,7 @@ interface UsersViewModel {
 @Component({
   selector: "dp-settings-users-page",
   standalone: true,
-  imports: [
-    CommonModule,
-    DashboardShellComponent,
-    InviteOperatorFormComponent,
-    OperatorsTableComponent,
-    LoaderComponent
-  ],
+  imports: [CommonModule, DashboardShellComponent, OperatorsTableComponent, LoaderComponent, ButtonComponent],
   templateUrl: "./settings-users-page.component.html",
   styleUrl: "./settings-users-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -89,44 +77,12 @@ export class SettingsUsersPageComponent {
     })
   );
 
-  inviteMember(request: AccountMemberCreateRequest): void {
-    const accountId = this.getAccountId();
-    if (accountId == null) {
-      return;
-    }
-    this.memberApi
-      .create(accountId, request)
-      .pipe(
-        finalize(() => {
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe({
-        next: () => {
-          this.refresh$.next();
-          this.toastService.success("Приглашение отправлено.");
-          this.cdr.markForCheck();
-        },
-        error: (error: ApiError) => {
-          this.toastService.error(this.mapErrorMessage(error, "Не удалось пригласить участника."), {
-            details: error.details,
-            correlationId: error.correlationId
-          });
-          this.cdr.markForCheck();
-        }
-      });
+  refresh(): void {
+    this.refresh$.next();
   }
 
-  toggleBlock(member: AccountMember): void {
-    const targetStatus =
-      member.status === AccountMemberStatus.Inactive
-        ? AccountMemberStatus.Active
-        : AccountMemberStatus.Inactive;
-    this.optimisticUpdate(member, {status: targetStatus, role: member.role});
-  }
-
-  changeRole(event: {member: AccountMember; role: AccountMemberRole}): void {
-    this.optimisticUpdate(event.member, {role: event.role, status: event.member.status});
+  updateMember(event: {member: AccountMember; update: AccountMemberUpdateRequest}): void {
+    this.optimisticUpdate(event.member, event.update);
   }
 
   deleteMember(member: AccountMember): void {

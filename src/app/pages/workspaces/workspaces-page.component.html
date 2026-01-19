@@ -1,0 +1,206 @@
+<dp-dashboard-shell
+  [accountId]="selectedAccountId"
+  title="Workspaces"
+  subtitle="Управление рабочими пространствами и доступом"
+>
+  <ng-container topbar-actions>
+    <dp-button type="button" variant="primary" (click)="openCreateModal()">
+      Create workspace
+    </dp-button>
+  </ng-container>
+
+  <ng-container *ngIf="vm$ | async as vm">
+    <div class="page">
+      <div class="workspace-layout">
+        <section class="workspace-list">
+          <div class="section-header">
+            <h3>Workspaces</h3>
+            <dp-button type="button" variant="secondary" (click)="refreshAccounts()">
+              Refresh
+            </dp-button>
+          </div>
+
+          <div *ngIf="vm.accountsState.status === 'loading'">
+            <dp-loader label="Загружаем рабочие пространства..."></dp-loader>
+          </div>
+
+          <div class="error-text" *ngIf="vm.accountsState.status === 'error'">
+            {{ vm.accountsState.error.message }}
+          </div>
+
+          <ng-container *ngIf="vm.accountsState.status === 'ready'">
+            <div class="empty-state" *ngIf="vm.accountsState.data.length === 0">
+              <p class="muted">Рабочих пространств пока нет.</p>
+            </div>
+            <ul class="workspace-items" *ngIf="vm.accountsState.data.length > 0">
+              <li
+                *ngFor="let account of vm.accountsState.data"
+                class="workspace-item"
+                [class.is-active]="account.id === selectedAccountId"
+                (click)="selectAccount(account.id)"
+              >
+                <div>
+                  <div class="workspace-name">{{ account.name }}</div>
+                  <span
+                    class="status-pill"
+                    [class.status-pill--active]="account.active"
+                    [class.status-pill--inactive]="!account.active"
+                  >
+                    {{ account.active ? "Active" : "Inactive" }}
+                  </span>
+                </div>
+                <div class="workspace-meta">Created {{ account.createdAt }}</div>
+              </li>
+            </ul>
+          </ng-container>
+        </section>
+
+        <section class="workspace-details">
+          <ng-container *ngIf="vm.selectedAccount as selected; else noSelection">
+            <div class="detail-header">
+              <div>
+                <h3>{{ selected.name }}</h3>
+                <p class="muted">ID {{ selected.id }} · Updated {{ selected.updatedAt }}</p>
+              </div>
+              <div class="detail-actions">
+                <dp-button type="button" variant="secondary" (click)="openRenameModal(selected)">
+                  Rename
+                </dp-button>
+                <dp-button type="button" variant="secondary" (click)="toggleActive(selected)">
+                  {{ selected.active ? "Deactivate" : "Activate" }}
+                </dp-button>
+                <dp-button type="button" variant="danger" (click)="deleteWorkspace(selected)">
+                  Delete
+                </dp-button>
+              </div>
+            </div>
+
+            <div class="detail-card">
+              <div class="table-header">
+                <div>
+                  <h4>Connections</h4>
+                  <p class="muted">Подключения marketplace текущего workspace.</p>
+                </div>
+                <dp-button type="button" variant="secondary" (click)="refreshDetails()">Refresh</dp-button>
+              </div>
+
+              <div *ngIf="vm.detailsState.status === 'loading'">
+                <dp-loader label="Загружаем подключения..."></dp-loader>
+              </div>
+
+              <div class="error-text" *ngIf="vm.detailsState.status === 'error'">
+                {{ vm.detailsState.error.message }}
+              </div>
+
+              <ng-container *ngIf="vm.detailsState.status === 'ready'">
+                <div class="empty-state" *ngIf="vm.detailsState.data.connections.length === 0">
+                  <p class="muted">Подключений пока нет.</p>
+                </div>
+                <dp-table *ngIf="vm.detailsState.data.connections.length > 0">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Marketplace</th>
+                        <th>Status</th>
+                        <th>Last sync</th>
+                        <th>Masked credentials</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let connection of vm.detailsState.data.connections">
+                        <td>{{ connection.marketplace }}</td>
+                        <td>{{ connection.lastSyncStatus }}</td>
+                        <td>{{ connection.lastSyncAt || "—" }}</td>
+                        <td>{{ connection.maskedCredentials || "—" }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </dp-table>
+              </ng-container>
+            </div>
+
+            <div class="detail-card">
+              <div class="table-header">
+                <div>
+                  <h4>Members</h4>
+                  <p class="muted">Участники и роли в workspace.</p>
+                </div>
+              </div>
+
+              <ng-container *ngIf="vm.detailsState.status === 'ready'">
+                <div class="empty-state" *ngIf="vm.detailsState.data.members.length === 0">
+                  <p class="muted">Участников пока нет.</p>
+                </div>
+                <dp-table *ngIf="vm.detailsState.data.members.length > 0">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>User ID</th>
+                        <th>Status</th>
+                        <th>Role</th>
+                        <th>Created</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let member of vm.detailsState.data.members">
+                        <td>{{ member.userId }}</td>
+                        <td>{{ member.status }}</td>
+                        <td>{{ member.role }}</td>
+                        <td>{{ member.createdAt }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </dp-table>
+              </ng-container>
+            </div>
+          </ng-container>
+          <ng-template #noSelection>
+            <div class="empty-state">
+              <p class="muted">Выберите workspace, чтобы увидеть детали.</p>
+            </div>
+          </ng-template>
+        </section>
+      </div>
+    </div>
+  </ng-container>
+
+  <dp-modal [visible]="createModalVisible" (close)="closeCreateModal()">
+    <div class="modal-content">
+      <h3>Create workspace</h3>
+      <form class="form" [formGroup]="createForm" (ngSubmit)="submitCreate()">
+        <label>
+          Name
+          <dp-input formControlName="name" maxlength="32" placeholder="Workspace name"></dp-input>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" formControlName="active" />
+          Active
+        </label>
+        <div class="modal-actions">
+          <dp-button type="button" variant="secondary" (click)="closeCreateModal()">Cancel</dp-button>
+          <dp-button type="submit" variant="primary" [disabled]="saving">
+            {{ saving ? "Saving..." : "Save" }}
+          </dp-button>
+        </div>
+      </form>
+    </div>
+  </dp-modal>
+
+  <dp-modal [visible]="renameModalVisible" (close)="closeRenameModal()">
+    <div class="modal-content">
+      <h3>Rename workspace</h3>
+      <form class="form" [formGroup]="renameForm" (ngSubmit)="submitRename()">
+        <label>
+          Name
+          <dp-input formControlName="name" maxlength="32" placeholder="Workspace name"></dp-input>
+        </label>
+        <div class="modal-actions">
+          <dp-button type="button" variant="secondary" (click)="closeRenameModal()">Cancel</dp-button>
+          <dp-button type="submit" variant="primary" [disabled]="saving">
+            {{ saving ? "Saving..." : "Save" }}
+          </dp-button>
+        </div>
+      </form>
+    </div>
+  </dp-modal>
+</dp-dashboard-shell>

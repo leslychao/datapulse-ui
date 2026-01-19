@@ -36,17 +36,6 @@ export class AccountConnectionsApiClient {
     );
   }
 
-  updateFromConnection(
-    accountId: number,
-    connection: AccountConnectionResponse,
-    update: Omit<AccountConnectionUpdateRequest, "marketplace">
-  ): Observable<AccountConnectionResponse> {
-    return this.update(accountId, connection.id, {
-      marketplace: connection.marketplace,
-      ...update
-    });
-  }
-
   remove(accountId: number, connectionId: number): Observable<void> {
     return this.api.delete<void>(`/api/accounts/${accountId}/connections/${connectionId}`);
   }

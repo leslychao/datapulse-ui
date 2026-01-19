@@ -1,16 +1,14 @@
 <ng-container *ngIf="vm$ | async as vm">
   <dp-dashboard-shell
     [accountId]="vm.accountId"
-    title="Users / Access"
+    title="Users & Access"
     subtitle="Команда и уровни доступа"
   >
     <div class="page">
-      <header class="page-header">
-        <div>
-          <h2>Users / Access</h2>
-          <p class="muted">Команда и уровни доступа</p>
-        </div>
-      </header>
+      <div class="controls-row">
+        <p class="muted">Участники текущего workspace и их роли.</p>
+        <dp-button type="button" variant="secondary" (click)="refresh()">Refresh</dp-button>
+      </div>
 
       <section class="table-card">
         <div class="table-header">
@@ -18,10 +16,6 @@
             <h3>Members</h3>
             <p class="muted">Управляйте доступом и ролями участников.</p>
           </div>
-        </div>
-
-        <div class="invite-bar" *ngIf="vm.accountId">
-          <dp-invite-operator-form (invite)="inviteMember($event)"></dp-invite-operator-form>
         </div>
 
         <div *ngIf="vm.state.status === 'loading'">
@@ -36,8 +30,7 @@
           <dp-operators-table
             *ngIf="vm.state.data.members.length > 0; else emptyState"
             [operators]="vm.state.data.members"
-            (blockToggle)="toggleBlock($event)"
-            (changeRole)="changeRole($event)"
+            (updateMember)="updateMember($event)"
             (deleteMember)="deleteMember($event)"
           ></dp-operators-table>
           <ng-template #emptyState>

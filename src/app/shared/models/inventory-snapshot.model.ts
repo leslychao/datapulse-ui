@@ -5,7 +5,8 @@ export interface InventorySnapshotQueryRequest {
   fromDate?: string;
   toDate?: string;
   sourceProductId?: string;
-  warehouseId?: string;
+  warehouseId?: number;
+  dateRangeValid?: boolean;
 }
 
 export interface InventorySnapshotResponse {}

@@ -9,7 +9,7 @@ import {ButtonComponent} from "../button/button.component";
 interface DataStateCopy {
   title: string;
   description: string;
-  primaryLabel: string;
+  primaryLabel?: string;
   primaryPath?: string;
   secondaryLabel?: string;
   secondaryPath?: string;
@@ -42,23 +42,19 @@ export class DataStateGateComponent {
         return {
           title: "Недостаточно данных для построения отчёта",
           description: "Данные ещё не загружены или период пуст.",
-          primaryLabel: "Проверить статус загрузки",
-          primaryPath: accountId != null ? APP_PATHS.dataHealthFreshness(accountId) : APP_PATHS.selectAccount
+          primaryLabel: accountId != null ? "Перейти к подключениям" : "Выбрать аккаунт",
+          primaryPath: accountId != null ? APP_PATHS.settingsConnections(accountId) : APP_PATHS.selectAccount
         };
       case DATA_STATE.unavailable:
         return {
           title: "Раздел в разработке",
-          description: "Экран готов. Данные будут подключены после появления API.",
-          primaryLabel: "Открыть Data Freshness",
-          primaryPath: accountId != null ? APP_PATHS.dataHealthFreshness(accountId) : APP_PATHS.selectAccount
+          description: "Экран готов. Данные будут подключены после появления API."
         };
       case DATA_STATE.error:
         return {
           title: "Не удалось загрузить данные",
           description: "Повторите позже или проверьте статус источника.",
           primaryLabel: "Повторить",
-          secondaryLabel: "Открыть Data Freshness",
-          secondaryPath: accountId != null ? APP_PATHS.dataHealthFreshness(accountId) : APP_PATHS.selectAccount,
           showRetry: true
         };
       default:

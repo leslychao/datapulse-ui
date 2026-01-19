@@ -24,7 +24,7 @@ export class AccountFormComponent implements OnChanges {
 
   constructor(private readonly fb: FormBuilder) {
     this.form = this.fb.nonNullable.group({
-      name: ["", Validators.required]
+      name: ["", [Validators.required, Validators.maxLength(32)]]
     });
   }
 
@@ -47,7 +47,7 @@ export class AccountFormComponent implements OnChanges {
       return null;
     }
     const {name} = this.form.getRawValue();
-    return {name, active: true};
+    return {name: name.trim(), active: true};
   }
 
   getCurrentName(): string {

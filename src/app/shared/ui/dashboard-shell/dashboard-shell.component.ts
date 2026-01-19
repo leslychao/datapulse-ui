@@ -110,15 +110,15 @@ export class DashboardShellComponent {
         ]
       },
       {
-        label: "Settings",
+        label: "WORKSPACE",
         items: [
           {
-            label: "Accounts & Connections",
+            label: "Connections",
             path: APP_PATHS.settingsConnections(accountId),
             testId: "sidebar-settings-connections"
           },
           {
-            label: "Users / Access",
+            label: "Users & Access",
             path: APP_PATHS.settingsUsers(accountId),
             testId: "sidebar-settings-users"
           }

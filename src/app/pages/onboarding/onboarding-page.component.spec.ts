@@ -7,7 +7,7 @@ import {of} from "rxjs";
 import {APP_PATHS} from "../../core/app-paths";
 import {AccountsApiClient, AccountConnectionsApiClient, EtlScenarioApi} from "../../core/api";
 import {AccountCatalogService, AccountContextService} from "../../core/state";
-import {Marketplace, AccountConnection} from "../../shared/models";
+import {AccountConnection, AccountConnectionSyncStatus, Marketplace} from "../../shared/models";
 import {OnboardingPageComponent} from "./onboarding-page.component";
 
 describe("OnboardingPageComponent", () => {
@@ -41,10 +41,11 @@ describe("OnboardingPageComponent", () => {
       accountId: 10,
       marketplace: Marketplace.Wildberries,
       active: true,
-      lastSyncAt: null,
-      lastSyncStatus: null,
+      lastSyncAt: "",
+      lastSyncStatus: AccountConnectionSyncStatus.New,
       createdAt: "",
-      updatedAt: ""
+      updatedAt: "",
+      maskedCredentials: ""
     };
 
     component.accountId = 10;
@@ -69,10 +70,11 @@ describe("OnboardingPageComponent", () => {
       accountId: 11,
       marketplace: Marketplace.Wildberries,
       active: true,
-      lastSyncAt: null,
-      lastSyncStatus: null,
+      lastSyncAt: "",
+      lastSyncStatus: AccountConnectionSyncStatus.New,
       createdAt: "",
-      updatedAt: ""
+      updatedAt: "",
+      maskedCredentials: ""
     };
 
     component.accountId = 11;
@@ -94,10 +96,11 @@ describe("OnboardingPageComponent", () => {
       accountId: 12,
       marketplace: Marketplace.Wildberries,
       active: true,
-      lastSyncAt: null,
-      lastSyncStatus: null,
+      lastSyncAt: "",
+      lastSyncStatus: AccountConnectionSyncStatus.New,
       createdAt: "",
-      updatedAt: ""
+      updatedAt: "",
+      maskedCredentials: ""
     };
 
     component.accountId = 12;

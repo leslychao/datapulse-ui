@@ -1,12 +1,12 @@
 import {Component, EventEmitter, Input, Output} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {AccountConnection} from "../../shared/models";
-import {ButtonComponent, TableComponent} from "../../shared/ui";
+import {TableComponent} from "../../shared/ui";
 
 @Component({
   selector: "dp-connections-table",
   standalone: true,
-  imports: [CommonModule, ButtonComponent, TableComponent],
+  imports: [CommonModule, TableComponent],
   templateUrl: "./connections-table.component.html",
   styleUrl: "./connections-table.component.css"
 })
@@ -14,5 +14,6 @@ export class ConnectionsTableComponent {
   @Input() connections: readonly AccountConnection[] = [];
 
   @Output() replaceCredentials = new EventEmitter<AccountConnection>();
+  @Output() toggleActive = new EventEmitter<AccountConnection>();
   @Output() deleteConnection = new EventEmitter<AccountConnection>();
 }

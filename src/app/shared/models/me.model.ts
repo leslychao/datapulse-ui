@@ -1,16 +1,11 @@
-// me.model.ts
-export interface UserAccountAccess {
-  id: number;
-  name: string;
-  role?: string;
-}
-
 export interface UserProfileResponse {
   id: number;
   keycloakSub: string;
-  email: string | null;
-  fullName: string | null;
-  username: string | null;
+  email: string;
+  fullName: string;
+  username: string;
   createdAt: string;
   updatedAt: string;
+  recentlyActive: boolean;
+  lastActivityAt: string;
 }
