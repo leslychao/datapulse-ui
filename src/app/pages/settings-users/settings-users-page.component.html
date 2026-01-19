@@ -1,19 +1,19 @@
 <ng-container *ngIf="vm$ | async as vm">
   <dp-dashboard-shell
     [accountId]="vm.accountId"
-    title="Users & Access"
+    title="Пользователи и доступ"
     subtitle="Команда и уровни доступа"
   >
     <div class="page">
       <div class="controls-row">
         <p class="muted">Участники текущего workspace и их роли.</p>
-        <dp-button type="button" variant="secondary" (click)="refresh()">Refresh</dp-button>
+        <dp-button type="button" variant="secondary" (click)="refresh()">Обновить</dp-button>
       </div>
 
       <section class="table-card">
         <div class="table-header">
           <div>
-            <h3>Members</h3>
+            <h3>Участники</h3>
             <p class="muted">Управляйте доступом и ролями участников.</p>
           </div>
         </div>

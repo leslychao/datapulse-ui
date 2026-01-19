@@ -5,8 +5,13 @@
   </a>
 
   <div class="app-header__profile" *ngIf="userProfile$ | async as profile; else loginTemplate">
-    <details class="profile-menu">
-      <summary>
+    <div class="profile-menu" cdkOverlayOrigin #menuTrigger="cdkOverlayOrigin">
+      <button
+        type="button"
+        class="profile-trigger"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="isMenuOpen"
+      >
         <div class="app-header__user">
           <span class="app-header__name">
             {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
@@ -17,19 +22,37 @@
           </span>
         </div>
         <span class="profile-menu__caret">▾</span>
-      </summary>
-      <div class="profile-menu__panel">
-        <a class="profile-menu__item" [routerLink]="workspacesPath">Workspaces</a>
+      </button>
+    </div>
+
+    <ng-template
+      cdkConnectedOverlay
+      [cdkConnectedOverlayOrigin]="menuTrigger"
+      [cdkConnectedOverlayOpen]="isMenuOpen"
+      [cdkConnectedOverlayHasBackdrop]="true"
+      cdkConnectedOverlayBackdropClass="profile-menu__backdrop"
+      [cdkConnectedOverlayPanelClass]="'profile-menu__panel'"
+      [cdkConnectedOverlayPositions]="[
+        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 8 }
+      ]"
+      (backdropClick)="closeMenu()"
+      (overlayKeydown)="onOverlayKeydown($event)"
+      (detach)="closeMenu()"
+    >
+      <div class="profile-menu__panel-content">
+        <a class="profile-menu__item" [routerLink]="workspacesPath" (click)="closeMenu()">
+          Workspaces
+        </a>
         <button
           type="button"
           class="profile-menu__item"
-          (click)="logout()"
+          (click)="logout(); closeMenu()"
           [disabled]="isLogoutRedirecting"
         >
           Выйти
         </button>
       </div>
-    </details>
+    </ng-template>
   </div>
   <ng-template #loginTemplate>
     <div class="app-header__profile">

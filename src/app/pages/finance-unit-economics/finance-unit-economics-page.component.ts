@@ -1,7 +1,8 @@
-import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
-import {Observable} from "rxjs";
+import {combineLatest} from "rxjs";
+import {map, switchMap} from "rxjs/operators";
 
 import {
   DashboardShellComponent,
@@ -9,11 +10,12 @@ import {
   MetricTileGroupComponent,
   DataTableCardComponent
 } from "../../shared/ui";
-import {DashboardStateQuery, DashboardStateResult} from "../../queries/dashboard-state.query";
+import {DashboardStateQuery} from "../../queries/dashboard-state.query";
 import {DATA_STATE} from "../../shared/models";
 import {FilterFieldVm} from "../../vm/filter-field.vm";
 import {MetricTileVm} from "../../vm/metric-tile.vm";
 import {TableColumnVm} from "../../vm/table-column.vm";
+import {accountIdFromRoute} from "../../core/routing/account-id.util";
 
 @Component({
   selector: "dp-finance-unit-economics-page",
@@ -29,9 +31,17 @@ import {TableColumnVm} from "../../vm/table-column.vm";
   styleUrl: "./finance-unit-economics-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FinanceUnitEconomicsPageComponent implements OnInit {
-  accountId: number | null = null;
-  state$?: Observable<DashboardStateResult>;
+export class FinanceUnitEconomicsPageComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly dashboardState = inject(DashboardStateQuery);
+
+  private readonly accountId$ = accountIdFromRoute(this.route);
+  readonly vm$ = combineLatest({
+    accountId: this.accountId$,
+    state: this.accountId$.pipe(
+      switchMap((accountId) => this.dashboardState.getState(accountId, DATA_STATE.unavailable))
+    )
+  }).pipe(map(({accountId, state}) => ({accountId, state})));
 
   readonly filters: FilterFieldVm[] = [
     {id: "account", label: "Account", type: "select", options: [{label: "Все аккаунты", value: "all"}]},
@@ -53,14 +63,6 @@ export class FinanceUnitEconomicsPageComponent implements OnInit {
     {key: "margin", label: "Margin / unit", sortable: true, align: "right", semantic: "profitLoss"}
   ];
 
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly dashboardState: DashboardStateQuery
-  ) {}
+  constructor() {}
 
-  ngOnInit(): void {
-    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
-    this.accountId = Number.isFinite(accountId) ? accountId : null;
-    this.state$ = this.dashboardState.getState(this.accountId, DATA_STATE.unavailable);
-  }
 }

@@ -6,7 +6,7 @@
         <th>Активно</th>
         <th>Статус синхронизации</th>
         <th>Последняя синхронизация</th>
-        <th>Masked credentials</th>
+        <th>Маскированные данные</th>
         <th></th>
       </tr>
     </thead>
@@ -15,7 +15,7 @@
         <td>{{ connection.marketplace }}</td>
         <td>
           <span class="status-pill" [class.status-pill--active]="connection.active" [class.status-pill--inactive]="!connection.active">
-            {{ connection.active ? "Active" : "Inactive" }}
+            {{ connection.active ? "Активно" : "Неактивно" }}
           </span>
         </td>
         <td>{{ connection.lastSyncStatus || "—" }}</td>
@@ -28,16 +28,9 @@
               <button
                 type="button"
                 class="action-menu__item"
-                (click)="replaceCredentials.emit(connection); menu.open = false"
+                (click)="editConnection.emit(connection); menu.open = false"
               >
-                Replace credentials
-              </button>
-              <button
-                type="button"
-                class="action-menu__item"
-                (click)="toggleActive.emit(connection); menu.open = false"
-              >
-                {{ connection.active ? "Deactivate" : "Activate" }}
+                Редактировать
               </button>
               <button
                 type="button"

@@ -1,25 +1,25 @@
-<dp-dashboard-shell
-  [accountId]="accountId"
-  title="Home / Summary"
-  subtitle="Ключевые показатели по выбранному аккаунту"
->
-  <ng-container *ngIf="state$ | async as state">
+<ng-container *ngIf="vm$ | async as vm">
+  <dp-dashboard-shell
+    [accountId]="vm.accountId"
+    title="Home / Summary"
+    subtitle="Ключевые показатели по выбранному аккаунту"
+  >
     <dp-filter-bar [fields]="filters"></dp-filter-bar>
-    <dp-metric-tile-group [tiles]="tiles" [state]="state.state"></dp-metric-tile-group>
+    <dp-metric-tile-group [tiles]="tiles" [state]="vm.state.state"></dp-metric-tile-group>
 
     <div class="overview-grid">
       <dp-chart-card
         title="Общая динамика"
         subtitle="Сводный тренд за период"
-        [state]="state.state"
-        [accountId]="accountId"
+        [state]="vm.state.state"
+        [accountId]="vm.accountId"
       ></dp-chart-card>
       <dp-chart-card
         title="Фокусные категории"
         subtitle="Сравнение ключевых сегментов"
-        [state]="state.state"
-        [accountId]="accountId"
+        [state]="vm.state.state"
+        [accountId]="vm.accountId"
       ></dp-chart-card>
     </div>
-  </ng-container>
-</dp-dashboard-shell>
+  </dp-dashboard-shell>
+</ng-container>

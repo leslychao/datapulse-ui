@@ -2,28 +2,34 @@ import {Routes} from "@angular/router";
 
 import {APP_ROUTE_SEGMENTS} from "./core/app-paths";
 import {authGuard} from "./core/guards/auth.guard";
-import {publicGuard} from "./core/guards/public.guard";
 import {accountGuard} from "./core/guards/account.guard";
 import {accountIdGuard} from "./core/guards/account-id.guard";
+import {iamResolvedGuard} from "./core/guards/iam-resolved.guard";
 import {accountlessRouteMatcher} from "./core/routing/accountless-route.matcher";
 
 export const appRoutes: Routes = [
   {
     path: "",
     pathMatch: "full",
-    canMatch: [publicGuard],
     loadComponent: () =>
       import("./pages/login/login-page.component").then((m) => m.LoginPageComponent)
   },
   {
     path: APP_ROUTE_SEGMENTS.login,
-    canMatch: [publicGuard],
     loadComponent: () =>
       import("./pages/login/login-page.component").then((m) => m.LoginPageComponent)
   },
   {
     path: APP_ROUTE_SEGMENTS.workspaces,
-    canMatch: [authGuard],
+    canMatch: [authGuard, iamResolvedGuard],
+    loadComponent: () =>
+      import("./pages/workspaces/workspaces-page.component").then(
+        (m) => m.WorkspacesPageComponent
+      )
+  },
+  {
+    path: `${APP_ROUTE_SEGMENTS.workspaces}/:accountId`,
+    canMatch: [authGuard, iamResolvedGuard],
     loadComponent: () =>
       import("./pages/workspaces/workspaces-page.component").then(
         (m) => m.WorkspacesPageComponent
@@ -31,7 +37,7 @@ export const appRoutes: Routes = [
   },
   {
     path: APP_ROUTE_SEGMENTS.app,
-    canMatch: [authGuard],
+    canMatch: [authGuard, iamResolvedGuard],
     canActivateChild: [accountGuard],
     children: [
       {

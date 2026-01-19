@@ -28,6 +28,7 @@ export const APP_PATHS = {
   login: `/${APP_ROUTE_SEGMENTS.login}`,
   root: `/${APP_ROUTE_SEGMENTS.app}`,
   workspaces: `/${APP_ROUTE_SEGMENTS.workspaces}`,
+  workspacesAccount: (accountId: number) => `/${APP_ROUTE_SEGMENTS.workspaces}/${accountId}`,
   home: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.home}`,
   selectAccount: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.selectAccount}`,
   onboarding: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.onboarding}`,

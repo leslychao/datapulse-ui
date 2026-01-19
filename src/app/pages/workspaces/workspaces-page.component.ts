@@ -1,14 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  DestroyRef,
-  inject
-} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {ActivatedRoute, Router} from "@angular/router";
 import {combineLatest, forkJoin, of, Subject, switchMap} from "rxjs";
-import {finalize, shareReplay, startWith, tap} from "rxjs/operators";
+import {finalize, map, shareReplay, startWith, tap} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {
@@ -25,6 +20,8 @@ import {
   AccountUpdateRequest
 } from "../../shared/models";
 import {AccountContextService} from "../../core/state";
+import {accountIdFromRoute} from "../../core/routing/account-id.util";
+import {APP_PATHS} from "../../core/app-paths";
 import {
   ButtonComponent,
   DashboardShellComponent,
@@ -43,8 +40,10 @@ interface WorkspaceDetails {
 
 interface WorkspacesViewModel {
   accountsState: LoadState<AccountResponse[], ApiError>;
+  filteredAccounts: AccountResponse[];
   selectedAccount: AccountResponse | null;
   detailsState: LoadState<WorkspaceDetails, ApiError>;
+  search: string;
 }
 
 @Component({
@@ -70,6 +69,8 @@ export class WorkspacesPageComponent {
   private readonly connectionsApi = inject(AccountConnectionsApiClient);
   private readonly membersApi = inject(AccountMembersApiClient);
   private readonly accountContext = inject(AccountContextService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly toastService = inject(ToastService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -78,11 +79,11 @@ export class WorkspacesPageComponent {
   saving = false;
   createModalVisible = false;
   renameModalVisible = false;
-  selectedAccountId: number | null = this.accountContext.snapshot;
   renamingAccount: AccountResponse | null = null;
 
   private readonly refreshAccounts$ = new Subject<void>();
   private readonly refreshDetails$ = new Subject<void>();
+  private readonly routeAccountId$ = accountIdFromRoute(this.route);
 
   readonly createForm: FormGroup<{
     name: FormControl<string>;
@@ -98,15 +99,22 @@ export class WorkspacesPageComponent {
     name: ["", [Validators.required, Validators.maxLength(32)]]
   });
 
+  readonly searchControl = this.fb.nonNullable.control("");
+
   readonly accountsState$ = this.refreshAccounts$.pipe(
     startWith(void 0),
-    switchMap(() => this.iamApi.listAccounts().pipe(toLoadState<AccountResponse[], ApiError>())),
+    switchMap(() =>
+      this.iamApi.getAccessibleAccounts().pipe(toLoadState<AccountResponse[], ApiError>())
+    ),
     tap((state) => {
       if (state.status === "ready") {
         const currentId = this.accountContext.snapshot;
         const hasSelection = state.data.some((account) => account.id === currentId);
         if (!hasSelection && state.data.length > 0) {
           this.accountContext.setAccountId(state.data[0].id);
+        }
+        if (state.data.length === 0) {
+          this.accountContext.clear();
         }
       }
       if (state.status === "error") {
@@ -121,15 +129,32 @@ export class WorkspacesPageComponent {
 
   readonly selectedAccount$ = combineLatest({
     accountsState: this.accountsState$,
-    accountId: this.accountContext.accountId$
+    routeAccountId: this.routeAccountId$,
+    contextAccountId: this.accountContext.accountId$
   }).pipe(
-    switchMap(({accountsState, accountId}) => {
+    map(({accountsState, routeAccountId, contextAccountId}) => {
       if (accountsState.status !== "ready") {
-        return of(null);
+        return null;
       }
       const accounts = accountsState.data;
-      const selected = accounts.find((account) => account.id === accountId) ?? accounts[0] ?? null;
-      return of(selected);
+      return (
+        accounts.find((account) => account.id === routeAccountId) ??
+        accounts.find((account) => account.id === contextAccountId) ??
+        accounts[0] ??
+        null
+      );
+    }),
+    tap((selected) => {
+      if (!selected) {
+        return;
+      }
+      if (this.accountContext.snapshot !== selected.id) {
+        this.accountContext.setAccountId(selected.id);
+      }
+      const routeParam = this.route.snapshot.paramMap.get("accountId");
+      if (routeParam !== String(selected.id)) {
+        this.router.navigate([APP_PATHS.workspaces, selected.id], {replaceUrl: true});
+      }
     }),
     shareReplay({bufferSize: 1, refCount: true})
   );
@@ -163,21 +188,36 @@ export class WorkspacesPageComponent {
   readonly vm$ = combineLatest({
     accountsState: this.accountsState$,
     selectedAccount: this.selectedAccount$,
-    detailsState: this.detailsState$
+    detailsState: this.detailsState$,
+    filteredAccounts: combineLatest({
+      accountsState: this.accountsState$,
+      search: this.searchControl.valueChanges.pipe(startWith(""))
+    }).pipe(
+      map(({accountsState, search}) => {
+        if (accountsState.status !== "ready") {
+          return [];
+        }
+        const normalized = search.trim().toLowerCase();
+        if (!normalized) {
+          return accountsState.data;
+        }
+        return accountsState.data.filter((account) =>
+          account.name.toLowerCase().includes(normalized)
+        );
+      })
+    ),
+    search: this.searchControl.valueChanges.pipe(startWith(""))
   });
 
-  constructor() {
-    this.accountContext.accountId$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((accountId) => {
-        this.selectedAccountId = accountId;
-        this.cdr.markForCheck();
-      });
-  }
+  constructor() {}
 
   selectAccount(accountId: number): void {
+    if (accountId === this.accountContext.snapshot) {
+      return;
+    }
     this.accountContext.setAccountId(accountId);
     this.refreshDetails$.next();
+    this.router.navigate([APP_PATHS.workspaces, accountId]);
   }
 
   refreshAccounts(): void {
@@ -349,5 +389,26 @@ export class WorkspacesPageComponent {
         })
       )
       .subscribe();
+  }
+
+  navigateToConnections(accountId: number): void {
+    this.router.navigateByUrl(APP_PATHS.settingsConnections(accountId));
+  }
+
+  navigateToMembers(accountId: number): void {
+    this.router.navigateByUrl(APP_PATHS.settingsUsers(accountId));
+  }
+
+  getLastSyncAt(connections: AccountConnection[]): string | null {
+    if (!connections.length) {
+      return null;
+    }
+    const timestamps = connections
+      .map((connection) => connection.lastSyncAt)
+      .filter((value): value is string => Boolean(value));
+    if (!timestamps.length) {
+      return null;
+    }
+    return timestamps.sort().at(-1) ?? null;
   }
 }

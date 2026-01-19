@@ -1,24 +1,24 @@
-<dp-dashboard-shell
-  [accountId]="accountId"
-  title="Sales / Orders Monitoring"
-  subtitle="Near-real-time мониторинг операций"
->
-  <ng-container *ngIf="state$ | async as state">
+<ng-container *ngIf="vm$ | async as vm">
+  <dp-dashboard-shell
+    [accountId]="vm.accountId"
+    title="Sales / Orders Monitoring"
+    subtitle="Near-real-time мониторинг операций"
+  >
     <div class="sales-refresh">
-      <span class="label">Last refresh</span>
-      <span class="value" *ngIf="state.state === 'READY'">—</span>
-      <span class="value muted" *ngIf="state.state !== 'READY'">Refresh unavailable</span>
+      <span class="label">Последнее обновление</span>
+      <span class="value" *ngIf="vm.state.state === 'READY'">—</span>
+      <span class="value muted" *ngIf="vm.state.state !== 'READY'">Недоступно</span>
     </div>
 
     <div class="quick-filters">
       <button type="button" [class.is-active]="quickFilter === 'today'" (click)="setQuickFilter('today')">
-        Today
+        Сегодня
       </button>
       <button type="button" [class.is-active]="quickFilter === '60m'" (click)="setQuickFilter('60m')">
-        Last 60 min
+        60 минут
       </button>
       <button type="button" [class.is-active]="quickFilter === '24h'" (click)="setQuickFilter('24h')">
-        Last 24h
+        24 часа
       </button>
     </div>
 
@@ -26,25 +26,25 @@
 
     <div class="tabs">
       <button type="button" [class.is-active]="activeTab === 'sales'" (click)="setTab('sales')">
-        Sales
+        Продажи
       </button>
       <button type="button" [class.is-active]="activeTab === 'orders'" (click)="setTab('orders')">
-        Orders
+        Заказы
       </button>
       <button type="button" [class.is-active]="activeTab === 'returns'" (click)="setTab('returns')">
-        Returns
+        Возвраты
       </button>
     </div>
 
     <dp-data-table-card
-      title="Live feed"
+      title="Лента операций"
       subtitle="Последние операции"
       [columns]="columns"
       [rows]="[]"
-      [state]="state.state"
-      [accountId]="accountId"
+      [state]="vm.state.state"
+      [accountId]="vm.accountId"
       [compact]="true"
       testId="sales-monitoring-table"
     ></dp-data-table-card>
-  </ng-container>
-</dp-dashboard-shell>
+  </dp-dashboard-shell>
+</ng-container>

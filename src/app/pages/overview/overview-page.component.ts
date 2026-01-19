@@ -1,13 +1,15 @@
-import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
-import {Observable} from "rxjs";
+import {combineLatest} from "rxjs";
+import {map, switchMap} from "rxjs/operators";
 
 import {DashboardShellComponent, FilterBarComponent, MetricTileGroupComponent, ChartCardComponent} from "../../shared/ui";
-import {DashboardStateQuery, DashboardStateResult} from "../../queries/dashboard-state.query";
+import {DashboardStateQuery} from "../../queries/dashboard-state.query";
 import {DATA_STATE} from "../../shared/models";
 import {FilterFieldVm} from "../../vm/filter-field.vm";
 import {MetricTileVm} from "../../vm/metric-tile.vm";
+import {accountIdFromRoute} from "../../core/routing/account-id.util";
 
 @Component({
   selector: "dp-overview-page",
@@ -23,9 +25,17 @@ import {MetricTileVm} from "../../vm/metric-tile.vm";
   styleUrl: "./overview-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class OverviewPageComponent implements OnInit {
-  accountId: number | null = null;
-  state$?: Observable<DashboardStateResult>;
+export class OverviewPageComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly dashboardState = inject(DashboardStateQuery);
+
+  private readonly accountId$ = accountIdFromRoute(this.route);
+  readonly vm$ = combineLatest({
+    accountId: this.accountId$,
+    state: this.accountId$.pipe(
+      switchMap((accountId) => this.dashboardState.getState(accountId, DATA_STATE.noData))
+    )
+  }).pipe(map(({accountId, state}) => ({accountId, state})));
 
   readonly filters: FilterFieldVm[] = [
     {id: "account", label: "Account", type: "select", options: [{label: "Все аккаунты", value: "all"}]},
@@ -51,14 +61,6 @@ export class OverviewPageComponent implements OnInit {
     {id: "returns", label: "Returns", value: "—"}
   ];
 
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly dashboardState: DashboardStateQuery
-  ) {}
+  constructor() {}
 
-  ngOnInit(): void {
-    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
-    this.accountId = Number.isFinite(accountId) ? accountId : null;
-    this.state$ = this.dashboardState.getState(this.accountId, DATA_STATE.noData);
-  }
 }

@@ -11,7 +11,7 @@ export class IamApiClient {
     return this.api.get<UserProfileResponse>("/api/iam");
   }
 
-  listAccounts(): Observable<AccountResponse[]> {
+  getAccessibleAccounts(): Observable<AccountResponse[]> {
     return this.api.get<AccountResponse[]>("/api/iam/accounts");
   }
 }
