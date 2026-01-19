@@ -60,6 +60,7 @@
 .profile-menu {
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .profile-trigger {
@@ -79,11 +80,15 @@
 }
 
 .profile-menu__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   min-width: 180px;
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+  z-index: 2;
 }
 
 .profile-menu__panel-content {
@@ -93,7 +98,10 @@
 }
 
 .profile-menu__backdrop {
+  position: fixed;
+  inset: 0;
   background: transparent;
+  z-index: 1;
 }
 
 .profile-menu__item {

@@ -5,7 +5,7 @@
   </a>
 
   <div class="app-header__profile" *ngIf="userProfile$ | async as profile; else loginTemplate">
-    <div class="profile-menu" cdkOverlayOrigin #menuTrigger="cdkOverlayOrigin">
+    <div class="profile-menu">
       <button
         type="button"
         class="profile-trigger"
@@ -25,20 +25,8 @@
       </button>
     </div>
 
-    <ng-template
-      cdkConnectedOverlay
-      [cdkConnectedOverlayOrigin]="menuTrigger"
-      [cdkConnectedOverlayOpen]="isMenuOpen"
-      [cdkConnectedOverlayHasBackdrop]="true"
-      cdkConnectedOverlayBackdropClass="profile-menu__backdrop"
-      [cdkConnectedOverlayPanelClass]="'profile-menu__panel'"
-      [cdkConnectedOverlayPositions]="[
-        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 8 }
-      ]"
-      (backdropClick)="closeMenu()"
-      (overlayKeydown)="onOverlayKeydown($event)"
-      (detach)="closeMenu()"
-    >
+    <div class="profile-menu__backdrop" *ngIf="isMenuOpen" (click)="closeMenu()"></div>
+    <div class="profile-menu__panel" *ngIf="isMenuOpen">
       <div class="profile-menu__panel-content">
         <a class="profile-menu__item" [routerLink]="workspacesPath" (click)="closeMenu()">
           Workspaces
@@ -52,7 +40,7 @@
           Выйти
         </button>
       </div>
-    </ng-template>
+    </div>
   </div>
   <ng-template #loginTemplate>
     <div class="app-header__profile">
