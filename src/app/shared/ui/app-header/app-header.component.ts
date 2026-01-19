@@ -1,7 +1,13 @@
-import {ChangeDetectionStrategy, Component, DestroyRef, inject} from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  inject
+} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {NavigationStart, Router, RouterModule} from "@angular/router";
-import {OverlayModule} from "@angular/cdk/overlay";
 import {filter} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
@@ -13,7 +19,7 @@ import {ButtonComponent} from "../button/button.component";
 @Component({
   selector: "dp-app-header",
   standalone: true,
-  imports: [CommonModule, RouterModule, OverlayModule, ButtonComponent],
+  imports: [CommonModule, RouterModule, ButtonComponent],
   templateUrl: "./app-header.component.html",
   styleUrl: "./app-header.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -25,6 +31,7 @@ export class AppHeaderComponent {
   private readonly accountContext = inject(AccountContextService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly elementRef = inject(ElementRef<HTMLElement>);
 
   readonly userProfile$ = this.authUser.userProfile$;
   isLoginRedirecting = false;
@@ -79,9 +86,23 @@ export class AppHeaderComponent {
     this.isMenuOpen = false;
   }
 
-  onOverlayKeydown(event: KeyboardEvent): void {
-    if (event.key === "Escape") {
-      this.closeMenu();
+  @HostListener("document:keydown", ["$event"])
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (event.key !== "Escape" || !this.isMenuOpen) {
+      return;
     }
+    this.closeMenu();
+  }
+
+  @HostListener("document:click", ["$event"])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.isMenuOpen) {
+      return;
+    }
+    const target = event.target as Node | null;
+    if (target && this.elementRef.nativeElement.contains(target)) {
+      return;
+    }
+    this.closeMenu();
   }
 }
