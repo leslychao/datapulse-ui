@@ -14,7 +14,7 @@
         {{ content.primaryLabel }}
       </dp-button>
       <a
-        *ngIf="!content.showRetry"
+        *ngIf="!content.showRetry && content.primaryLabel && content.primaryPath"
         class="data-state__link"
         [routerLink]="content.primaryPath"
       >

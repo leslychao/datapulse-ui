@@ -26,6 +26,7 @@ export class OrderPnlApiClient {
       dateTo: query.dateTo,
       isReturned: query.isReturned,
       hasPenalties: query.hasPenalties,
+      dateRangeValid: query.dateRangeValid,
       ...pageableParams
     };
     return this.api.get<PageResponse<OrderPnlResponse>>(

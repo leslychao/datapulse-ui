@@ -30,6 +30,7 @@ export class InventorySnapshotsApiClient {
       toDate: query.toDate,
       sourceProductId: query.sourceProductId,
       warehouseId: query.warehouseId,
+      dateRangeValid: query.dateRangeValid,
       ...pageableParams
     };
     return this.api.get<PageResponse<InventorySnapshotResponse>>(

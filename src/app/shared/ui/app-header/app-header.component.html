@@ -5,24 +5,31 @@
   </a>
 
   <div class="app-header__profile" *ngIf="userProfile$ | async as profile; else loginTemplate">
-    <div class="app-header__user">
-      <span class="app-header__name">
-        {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
-      </span>
+    <details class="profile-menu">
+      <summary>
+        <div class="app-header__user">
+          <span class="app-header__name">
+            {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
+          </span>
 
-      <span class="app-header__email" *ngIf="profile.email">
-        {{ profile.email }}
-      </span>
-    </div>
-
-    <dp-button
-      type="button"
-      variant="secondary"
-      (click)="logout()"
-      [disabled]="isLogoutRedirecting"
-    >
-      Выйти
-    </dp-button>
+          <span class="app-header__email" *ngIf="profile.email">
+            {{ profile.email }}
+          </span>
+        </div>
+        <span class="profile-menu__caret">▾</span>
+      </summary>
+      <div class="profile-menu__panel">
+        <a class="profile-menu__item" [routerLink]="workspacesPath">Workspaces</a>
+        <button
+          type="button"
+          class="profile-menu__item"
+          (click)="logout()"
+          [disabled]="isLogoutRedirecting"
+        >
+          Выйти
+        </button>
+      </div>
+    </details>
   </div>
   <ng-template #loginTemplate>
     <div class="app-header__profile">

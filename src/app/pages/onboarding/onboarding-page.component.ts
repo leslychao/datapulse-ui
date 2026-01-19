@@ -7,7 +7,12 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {AccountFormComponent} from "../../features/accounts";
 import {ConnectionFormComponent} from "../../features/connections";
 import {AccountsApiClient, AccountConnectionsApiClient, ApiError, EtlScenarioApi} from "../../core/api";
-import {AccountConnection, EtlScenarioEvent, EtlScenarioRequest} from "../../shared/models";
+import {
+  AccountConnection,
+  AccountConnectionSyncStatus,
+  EtlScenarioEvent,
+  EtlScenarioRequest
+} from "../../shared/models";
 import {
   AccountContextService,
   OnboardingState,
@@ -24,9 +29,8 @@ interface OnboardingStep {
   description: string;
 }
 
-const SYNC_SUCCESS = "SUCCESS";
-const SYNC_RUNNING = "RUNNING";
-const SYNC_QUEUED = "QUEUED";
+const SYNC_SUCCESS = AccountConnectionSyncStatus.Success;
+const SYNC_NEW = AccountConnectionSyncStatus.New;
 
 const DEFAULT_ETL_EVENTS: EtlScenarioEvent[] = [
   {event: "WAREHOUSE_DICT", dateMode: "LAST_DAYS", lastDays: 30},
@@ -511,7 +515,7 @@ export class OnboardingPageComponent implements OnInit {
     return connections.some(
       (connection) =>
         connection.active &&
-        (connection.lastSyncStatus === SYNC_RUNNING || connection.lastSyncStatus === SYNC_QUEUED)
+        connection.lastSyncStatus === SYNC_NEW
     );
   }
 

@@ -3,15 +3,23 @@ export enum Marketplace {
   Ozon = "OZON"
 }
 
+export enum AccountConnectionSyncStatus {
+  New = "NEW",
+  Success = "SUCCESS",
+  NoData = "NO_DATA",
+  Failed = "FAILED"
+}
+
 export interface AccountConnectionResponse {
   id: number;
   accountId: number;
   marketplace: Marketplace;
   active: boolean;
-  lastSyncAt: string | null;
-  lastSyncStatus: string | null;
+  lastSyncAt: string;
+  lastSyncStatus: AccountConnectionSyncStatus;
   createdAt: string;
   updatedAt: string;
+  maskedCredentials: string;
 }
 
 export type AccountConnection = AccountConnectionResponse;
@@ -30,24 +38,9 @@ export type AccountConnectionCredentials = WildberriesCredentials | OzonCredenti
 export interface AccountConnectionCreateRequest {
   marketplace: Marketplace;
   credentials: AccountConnectionCredentials;
-  active?: boolean;
 }
 
 export interface AccountConnectionUpdateRequest {
-  marketplace: Marketplace;
   credentials?: AccountConnectionCredentials;
-  active?: boolean | null;
-}
-
-export interface AccountConnectionSyncStatus {
-  status: AccountConnectionSyncStatusType;
-  message: string | null;
-  updatedAt: string;
-}
-
-export enum AccountConnectionSyncStatusType {
-  Queued = "QUEUED",
-  Running = "RUNNING",
-  Completed = "COMPLETED",
-  Failed = "FAILED"
+  active?: boolean;
 }

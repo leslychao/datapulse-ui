@@ -17,13 +17,12 @@ export interface AccountMemberResponse {
   status: AccountMemberStatus;
   role: AccountMemberRole;
   createdAt: string;
-  updatedAt: string | null;
+  updatedAt: string;
 }
 
 export type AccountMember = AccountMemberResponse;
 
 export interface AccountMemberCreateRequest {
-  userId?: number;
   role: AccountMemberRole;
   status: AccountMemberStatus;
 }

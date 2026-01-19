@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
-import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule} from "@angular/forms";
+import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {Subject, distinctUntilChanged, map, of, switchMap} from "rxjs";
 import {finalize, startWith, tap} from "rxjs/operators";
 
@@ -65,13 +65,11 @@ export class SettingsConnectionsPageComponent {
 
   readonly createForm: FormGroup<{
     marketplace: FormControl<Marketplace>;
-    active: FormControl<boolean>;
     token: FormControl<string>;
     clientId: FormControl<string>;
     apiKey: FormControl<string>;
   }> = this.fb.nonNullable.group({
-    marketplace: [Marketplace.Wildberries],
-    active: [true],
+    marketplace: [Marketplace.Wildberries, Validators.required],
     token: [""],
     clientId: [""],
     apiKey: [""]
@@ -127,6 +125,13 @@ export class SettingsConnectionsPageComponent {
     })
   );
 
+  constructor() {
+    this.applyCredentialValidators(this.createForm, Marketplace.Wildberries);
+    this.createForm.controls.marketplace.valueChanges.subscribe((value) => {
+      this.applyCredentialValidators(this.createForm, value);
+    });
+  }
+
   get createIsWildberries(): boolean {
     return this.createForm.controls.marketplace.value === Marketplace.Wildberries;
   }
@@ -135,14 +140,18 @@ export class SettingsConnectionsPageComponent {
     return (this.replacingConnection?.marketplace ?? Marketplace.Wildberries) === Marketplace.Wildberries;
   }
 
+  refresh(): void {
+    this.refresh$.next();
+  }
+
   openCreateModal(): void {
     this.createForm.reset({
       marketplace: Marketplace.Wildberries,
-      active: true,
       token: "",
       clientId: "",
       apiKey: ""
     });
+    this.applyCredentialValidators(this.createForm, Marketplace.Wildberries);
     this.createModalVisible = true;
     this.cdr.markForCheck();
   }
@@ -154,6 +163,7 @@ export class SettingsConnectionsPageComponent {
       clientId: "",
       apiKey: ""
     });
+    this.applyCredentialValidators(this.replaceForm, connection.marketplace);
     this.replaceModalVisible = true;
     this.cdr.markForCheck();
   }
@@ -162,7 +172,6 @@ export class SettingsConnectionsPageComponent {
     this.createModalVisible = false;
     this.createForm.reset({
       marketplace: Marketplace.Wildberries,
-      active: true,
       token: "",
       clientId: "",
       apiKey: ""
@@ -198,7 +207,11 @@ export class SettingsConnectionsPageComponent {
     if (accountId == null || this.saving) {
       return;
     }
-    const {marketplace, active, token, clientId, apiKey} = this.createForm.getRawValue();
+    if (this.createForm.invalid) {
+      this.createForm.markAllAsTouched();
+      return;
+    }
+    const {marketplace, token, clientId, apiKey} = this.createForm.getRawValue();
     const credentials = this.buildCredentials(marketplace, token, clientId, apiKey);
     if (!credentials) {
       this.toastService.error("Заполните данные доступа для подключения.");
@@ -206,8 +219,7 @@ export class SettingsConnectionsPageComponent {
     }
     const request: AccountConnectionCreateRequest = {
       marketplace,
-      credentials,
-      active
+      credentials
     };
     this.saving = true;
     this.connectionApi
@@ -240,6 +252,10 @@ export class SettingsConnectionsPageComponent {
     if (accountId == null || this.saving || !this.replacingConnection) {
       return;
     }
+    if (this.replaceForm.invalid) {
+      this.replaceForm.markAllAsTouched();
+      return;
+    }
     const {token, clientId, apiKey} = this.replaceForm.getRawValue();
     const credentials = this.buildCredentials(this.replacingConnection.marketplace, token, clientId, apiKey);
     if (!credentials) {
@@ -247,7 +263,6 @@ export class SettingsConnectionsPageComponent {
       return;
     }
     const update: AccountConnectionUpdateRequest = {
-      marketplace: this.replacingConnection.marketplace,
       credentials
     };
     this.saving = true;
@@ -278,6 +293,39 @@ export class SettingsConnectionsPageComponent {
 
   confirmDelete(connection: AccountConnection): void {
     this.openDeleteModal(connection);
+  }
+
+  toggleActive(connection: AccountConnection): void {
+    const accountId = this.getAccountId();
+    if (accountId == null || this.saving) {
+      return;
+    }
+    const update: AccountConnectionUpdateRequest = {
+      active: !connection.active
+    };
+    this.saving = true;
+    this.connectionApi
+      .update(accountId, connection.id, update)
+      .pipe(
+        finalize(() => {
+          this.saving = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.toastService.success("Статус подключения обновлён.");
+          this.refresh$.next();
+          this.cdr.markForCheck();
+        },
+        error: (error: ApiError) => {
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось обновить подключение."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+          this.cdr.markForCheck();
+        }
+      });
   }
 
   deleteConnection(): void {
@@ -336,6 +384,24 @@ export class SettingsConnectionsPageComponent {
       return null;
     }
     return {clientId, apiKey};
+  }
+
+  private applyCredentialValidators(
+    form: {controls: {token: FormControl<string>; clientId: FormControl<string>; apiKey: FormControl<string>}},
+    marketplace: Marketplace
+  ): void {
+    if (marketplace === Marketplace.Wildberries) {
+      form.controls.token.setValidators([Validators.required, Validators.minLength(1)]);
+      form.controls.clientId.clearValidators();
+      form.controls.apiKey.clearValidators();
+    } else {
+      form.controls.token.clearValidators();
+      form.controls.clientId.setValidators([Validators.required, Validators.minLength(1)]);
+      form.controls.apiKey.setValidators([Validators.required, Validators.minLength(1)]);
+    }
+    form.controls.token.updateValueAndValidity({emitEvent: false});
+    form.controls.clientId.updateValueAndValidity({emitEvent: false});
+    form.controls.apiKey.updateValueAndValidity({emitEvent: false});
   }
 
   private mapErrorMessage(error: ApiError, fallback: string): string {

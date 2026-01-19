@@ -3,34 +3,40 @@ import {CommonModule} from "@angular/common";
 import {
   AccountMember,
   AccountMemberRole,
-  AccountMemberStatus
+  AccountMemberStatus,
+  AccountMemberUpdateRequest
 } from "../../shared/models";
-import {ButtonComponent, TableComponent} from "../../shared/ui";
+import {TableComponent} from "../../shared/ui";
 
 @Component({
   selector: "dp-operators-table",
   standalone: true,
-  imports: [CommonModule, ButtonComponent, TableComponent],
+  imports: [CommonModule, TableComponent],
   templateUrl: "./operators-table.component.html",
   styleUrl: "./operators-table.component.css"
 })
 export class OperatorsTableComponent {
   @Input() operators: readonly AccountMember[] = [];
 
-  @Output() blockToggle = new EventEmitter<AccountMember>();
-  @Output() changeRole = new EventEmitter<{member: AccountMember; role: AccountMemberRole}>();
+  @Output() updateMember = new EventEmitter<{member: AccountMember; update: AccountMemberUpdateRequest}>();
   @Output() deleteMember = new EventEmitter<AccountMember>();
 
   readonly roles = Object.values(AccountMemberRole);
+  readonly statuses = Object.values(AccountMemberStatus);
 
-  isInactive(member: AccountMember): boolean {
-    return member.status === AccountMemberStatus.Inactive;
-  }
-
-  onRoleSelect(member: AccountMember, value: string): void {
-    const role = this.roles.find((item) => item === value);
-    if (role) {
-      this.changeRole.emit({member, role});
+  emitUpdate(
+    member: AccountMember,
+    role: string,
+    status: string,
+    menu?: HTMLDetailsElement
+  ): void {
+    const update: AccountMemberUpdateRequest = {
+      role: role as AccountMemberRole,
+      status: status as AccountMemberStatus
+    };
+    this.updateMember.emit({member, update});
+    if (menu) {
+      menu.open = false;
     }
   }
 }

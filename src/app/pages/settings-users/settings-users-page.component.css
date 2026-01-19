@@ -9,10 +9,10 @@
   padding: 8px 4px 24px;
 }
 
-.page-header {
+.controls-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
 }
 
@@ -32,10 +32,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
-}
-
-.invite-bar {
   margin-bottom: 16px;
 }
 

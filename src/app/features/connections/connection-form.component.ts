@@ -39,6 +39,10 @@ export class ConnectionFormComponent implements OnChanges {
       clientId: [""],
       apiKey: [""]
     });
+    this.applyMarketplaceValidators(this.form.controls.marketplace.value);
+    this.form.controls.marketplace.valueChanges.subscribe((value) => {
+      this.applyMarketplaceValidators(value);
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -75,8 +79,7 @@ export class ConnectionFormComponent implements OnChanges {
 
     return {
       marketplace,
-      credentials,
-      active: true
+      credentials
     };
   }
 
@@ -96,5 +99,25 @@ export class ConnectionFormComponent implements OnChanges {
       return null;
     }
     return {clientId, apiKey};
+  }
+
+  private applyMarketplaceValidators(marketplace: Marketplace): void {
+    const tokenControl = this.form.controls.token;
+    const clientIdControl = this.form.controls.clientId;
+    const apiKeyControl = this.form.controls.apiKey;
+
+    if (marketplace === Marketplace.Wildberries) {
+      tokenControl.setValidators([Validators.required, Validators.minLength(1)]);
+      clientIdControl.clearValidators();
+      apiKeyControl.clearValidators();
+    } else {
+      tokenControl.clearValidators();
+      clientIdControl.setValidators([Validators.required, Validators.minLength(1)]);
+      apiKeyControl.setValidators([Validators.required, Validators.minLength(1)]);
+    }
+
+    tokenControl.updateValueAndValidity({emitEvent: false});
+    clientIdControl.updateValueAndValidity({emitEvent: false});
+    apiKeyControl.updateValueAndValidity({emitEvent: false});
   }
 }

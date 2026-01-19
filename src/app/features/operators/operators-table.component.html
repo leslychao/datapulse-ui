@@ -2,34 +2,55 @@
   <table class="table">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Статус</th>
-        <th>Роль</th>
-        <th>Последний вход</th>
+        <th>User ID</th>
+        <th>Status</th>
+        <th>Role</th>
+        <th>Created</th>
+        <th>Updated</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let operator of operators">
-        <td>{{ operator.id }}</td>
+        <td>{{ operator.userId }}</td>
         <td>{{ operator.status }}</td>
-        <td>
-          <select #roleSelect [value]="operator.role" (change)="onRoleSelect(operator, roleSelect.value)">
-            <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
-          </select>
-        </td>
-        <td>—</td>
+        <td>{{ operator.role }}</td>
+        <td>{{ operator.createdAt }}</td>
+        <td>{{ operator.updatedAt }}</td>
         <td class="actions">
-          <dp-button type="button" (click)="blockToggle.emit(operator)">
-            {{ isInactive(operator) ? "Разблокировать" : "Заблокировать" }}
-          </dp-button>
-          <dp-button
-            type="button"
-            variant="danger"
-            (click)="deleteMember.emit(operator)"
-          >
-            Удалить
-          </dp-button>
+          <details class="action-menu" #menu>
+            <summary aria-label="Actions">⋯</summary>
+            <div class="action-menu__panel">
+              <div class="action-menu__group">
+                <label>
+                  Role
+                  <select #roleSelect [value]="operator.role">
+                    <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+                  </select>
+                </label>
+                <label>
+                  Status
+                  <select #statusSelect [value]="operator.status">
+                    <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  class="action-menu__item"
+                  (click)="emitUpdate(operator, roleSelect.value, statusSelect.value, menu)"
+                >
+                  Save changes
+                </button>
+              </div>
+              <button
+                type="button"
+                class="action-menu__item is-danger"
+                (click)="deleteMember.emit(operator); menu.open = false"
+              >
+                Delete
+              </button>
+            </div>
+          </details>
         </td>
       </tr>
     </tbody>

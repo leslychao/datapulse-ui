@@ -1,3 +1,5 @@
+import {Marketplace} from "./account-connection.model";
+
 export interface OrderPnlResponse {
   accountId: number;
   sourcePlatform: string;
@@ -20,9 +22,10 @@ export interface OrderPnlResponse {
 }
 
 export interface OrderPnlQueryRequest {
-  sourcePlatform?: string;
+  sourcePlatform?: Marketplace;
   dateFrom?: string;
   dateTo?: string;
   isReturned?: boolean;
   hasPenalties?: boolean;
+  dateRangeValid?: boolean;
 }

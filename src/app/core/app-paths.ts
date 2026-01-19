@@ -20,12 +20,14 @@ export const APP_ROUTE_SEGMENTS = {
   freshness: "freshness",
   settings: "settings",
   users: "users",
-  connections: "connections"
+  connections: "connections",
+  workspaces: "workspaces"
 } as const;
 
 export const APP_PATHS = {
   login: `/${APP_ROUTE_SEGMENTS.login}`,
   root: `/${APP_ROUTE_SEGMENTS.app}`,
+  workspaces: `/${APP_ROUTE_SEGMENTS.workspaces}`,
   home: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.home}`,
   selectAccount: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.selectAccount}`,
   onboarding: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.onboarding}`,

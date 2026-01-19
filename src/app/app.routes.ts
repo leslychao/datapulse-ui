@@ -22,6 +22,14 @@ export const appRoutes: Routes = [
       import("./pages/login/login-page.component").then((m) => m.LoginPageComponent)
   },
   {
+    path: APP_ROUTE_SEGMENTS.workspaces,
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import("./pages/workspaces/workspaces-page.component").then(
+        (m) => m.WorkspacesPageComponent
+      )
+  },
+  {
     path: APP_ROUTE_SEGMENTS.app,
     canMatch: [authGuard],
     canActivateChild: [accountGuard],

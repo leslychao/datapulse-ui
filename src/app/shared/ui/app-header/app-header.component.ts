@@ -34,6 +34,10 @@ export class AppHeaderComponent {
     return accountId != null ? APP_PATHS.homeSummary(accountId) : APP_PATHS.selectAccount;
   }
 
+  get workspacesPath(): string {
+    return APP_PATHS.workspaces;
+  }
+
   login(): void {
     if (this.isLoginRedirecting) {
       return;
