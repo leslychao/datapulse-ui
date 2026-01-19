@@ -1,9 +1,8 @@
-import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
-import {Observable, of} from "rxjs";
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {catchError, finalize, map} from "rxjs/operators";
+import {combineLatest, of} from "rxjs";
+import {map, switchMap} from "rxjs/operators";
 
 import {
   ChartCardComponent,
@@ -11,11 +10,13 @@ import {
   FilterBarComponent,
   MetricTileGroupComponent
 } from "../../shared/ui";
-import {DashboardStateQuery, DashboardStateResult} from "../../queries/dashboard-state.query";
+import {DashboardStateQuery} from "../../queries/dashboard-state.query";
 import {DATA_STATE, OrderPnlResponse, PageResponse} from "../../shared/models";
 import {FilterFieldVm} from "../../vm/filter-field.vm";
 import {MetricTileVm} from "../../vm/metric-tile.vm";
 import {OrderPnlApiClient} from "../../core/api";
+import {accountIdFromRoute} from "../../core/routing/account-id.util";
+import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
 
 @Component({
   selector: "dp-finance-pnl-page",
@@ -31,12 +32,34 @@ import {OrderPnlApiClient} from "../../core/api";
   styleUrl: "./finance-pnl-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FinancePnlPageComponent implements OnInit {
-  accountId: number | null = null;
-  state$?: Observable<DashboardStateResult>;
-  orderPnl: OrderPnlResponse[] = [];
-  isLoading = false;
-  loadError: string | null = null;
+export class FinancePnlPageComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly dashboardState = inject(DashboardStateQuery);
+  private readonly orderPnlApi = inject(OrderPnlApiClient);
+
+  private readonly accountId$ = accountIdFromRoute(this.route);
+  readonly vm$ = combineLatest({
+    accountId: this.accountId$,
+    state: this.accountId$.pipe(
+      switchMap((accountId) => this.dashboardState.getState(accountId, DATA_STATE.unavailable))
+    ),
+    orderPnlState: this.accountId$.pipe(
+      switchMap((accountId) => {
+        if (accountId == null) {
+          return of({
+            status: "error",
+            error: "Account is not selected."
+          } as LoadState<OrderPnlResponse[], string>);
+        }
+        return this.orderPnlApi
+          .list(accountId, {}, {page: 0, size: 20})
+          .pipe(
+            map((response: PageResponse<OrderPnlResponse>) => response.content ?? []),
+            toLoadState<OrderPnlResponse[], string>(() => "Не удалось загрузить данные по заказам.")
+          );
+      })
+    )
+  }).pipe(map(({accountId, state, orderPnlState}) => ({accountId, state, orderPnlState})));
 
   readonly filters: FilterFieldVm[] = [
     {id: "account", label: "Account", type: "select", options: [{label: "Все аккаунты", value: "all"}]},
@@ -66,44 +89,13 @@ export class FinancePnlPageComponent implements OnInit {
     {id: "profit", label: "Profit", value: "—", semantic: "profit"}
   ];
 
-  private readonly destroyRef = inject(DestroyRef);
+  constructor() {}
 
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly dashboardState: DashboardStateQuery,
-    private readonly orderPnlApi: OrderPnlApiClient
-  ) {}
-
-  ngOnInit(): void {
-    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
-    this.accountId = Number.isFinite(accountId) ? accountId : null;
-    if (this.accountId != null) {
-      this.fetchOrderPnl();
-    }
-    this.state$ = this.dashboardState.getState(this.accountId, DATA_STATE.unavailable);
+  getOrderPnlRows(state: LoadState<OrderPnlResponse[], string>): OrderPnlResponse[] {
+    return state.status === "ready" ? state.data : [];
   }
 
-  private fetchOrderPnl(): void {
-    if (this.accountId == null) {
-      return;
-    }
-    this.isLoading = true;
-    this.loadError = null;
-    this.orderPnlApi
-      .list(this.accountId, {}, {page: 0, size: 20})
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        map((response: PageResponse<OrderPnlResponse>) => response.content ?? []),
-        catchError(() => {
-          this.loadError = "Не удалось загрузить данные по заказам.";
-          return of([] as OrderPnlResponse[]);
-        }),
-        finalize(() => {
-          this.isLoading = false;
-        })
-      )
-      .subscribe((rows) => {
-        this.orderPnl = rows;
-      });
+  getOrderPnlError(state: LoadState<OrderPnlResponse[], string>): string | null {
+    return state.status === "error" ? state.error : null;
   }
 }

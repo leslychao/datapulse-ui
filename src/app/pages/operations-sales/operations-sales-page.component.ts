@@ -1,17 +1,19 @@
-import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
-import {Observable} from "rxjs";
+import {combineLatest} from "rxjs";
+import {map, switchMap} from "rxjs/operators";
 
 import {
   DashboardShellComponent,
   FilterBarComponent,
   DataTableCardComponent
 } from "../../shared/ui";
-import {DashboardStateQuery, DashboardStateResult} from "../../queries/dashboard-state.query";
+import {DashboardStateQuery} from "../../queries/dashboard-state.query";
 import {DATA_STATE} from "../../shared/models";
 import {FilterFieldVm} from "../../vm/filter-field.vm";
 import {TableColumnVm} from "../../vm/table-column.vm";
+import {accountIdFromRoute} from "../../core/routing/account-id.util";
 
 @Component({
   selector: "dp-operations-sales-page",
@@ -21,9 +23,17 @@ import {TableColumnVm} from "../../vm/table-column.vm";
   styleUrl: "./operations-sales-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class OperationsSalesPageComponent implements OnInit {
-  accountId: number | null = null;
-  state$?: Observable<DashboardStateResult>;
+export class OperationsSalesPageComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly dashboardState = inject(DashboardStateQuery);
+
+  private readonly accountId$ = accountIdFromRoute(this.route);
+  readonly vm$ = combineLatest({
+    accountId: this.accountId$,
+    state: this.accountId$.pipe(
+      switchMap((accountId) => this.dashboardState.getState(accountId, DATA_STATE.noData))
+    )
+  }).pipe(map(({accountId, state}) => ({accountId, state})));
   activeTab: "sales" | "orders" | "returns" = "sales";
   quickFilter: "today" | "60m" | "24h" = "today";
 
@@ -41,16 +51,7 @@ export class OperationsSalesPageComponent implements OnInit {
     {key: "updated", label: "Updated", sortable: true}
   ];
 
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly dashboardState: DashboardStateQuery
-  ) {}
-
-  ngOnInit(): void {
-    const accountId = Number(this.route.snapshot.paramMap.get("accountId"));
-    this.accountId = Number.isFinite(accountId) ? accountId : null;
-    this.state$ = this.dashboardState.getState(this.accountId, DATA_STATE.noData);
-  }
+  constructor() {}
 
   setTab(tab: "sales" | "orders" | "returns"): void {
     this.activeTab = tab;

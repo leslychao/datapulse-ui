@@ -44,3 +44,22 @@
   font-size: 12px;
   color: #7c8b98;
 }
+
+.login-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.login-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.login-loading {
+  margin: 0;
+  color: #52606d;
+  font-size: 14px;
+}

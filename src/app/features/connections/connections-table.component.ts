@@ -13,7 +13,6 @@ import {TableComponent} from "../../shared/ui";
 export class ConnectionsTableComponent {
   @Input() connections: readonly AccountConnection[] = [];
 
-  @Output() replaceCredentials = new EventEmitter<AccountConnection>();
-  @Output() toggleActive = new EventEmitter<AccountConnection>();
+  @Output() editConnection = new EventEmitter<AccountConnection>();
   @Output() deleteConnection = new EventEmitter<AccountConnection>();
 }

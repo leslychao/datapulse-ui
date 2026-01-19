@@ -1,24 +1,28 @@
-<dp-dashboard-shell
-  [accountId]="selectedAccountId"
-  title="Workspaces"
-  subtitle="Управление рабочими пространствами и доступом"
->
-  <ng-container topbar-actions>
-    <dp-button type="button" variant="primary" (click)="openCreateModal()">
-      Create workspace
-    </dp-button>
-  </ng-container>
-
-  <ng-container *ngIf="vm$ | async as vm">
+<ng-container *ngIf="vm$ | async as vm">
+  <dp-dashboard-shell
+    [accountId]="vm.selectedAccount?.id ?? null"
+    title="Workspaces"
+    subtitle="Управление рабочими пространствами и доступом"
+  >
     <div class="page">
       <div class="workspace-layout">
         <section class="workspace-list">
           <div class="section-header">
             <h3>Workspaces</h3>
             <dp-button type="button" variant="secondary" (click)="refreshAccounts()">
-              Refresh
+              Обновить
             </dp-button>
           </div>
+
+          <dp-input
+            [formControl]="searchControl"
+            placeholder="Поиск workspace"
+            maxlength="64"
+          ></dp-input>
+
+            <dp-button type="button" variant="primary" (click)="openCreateModal()">
+            Создать workspace
+          </dp-button>
 
           <div *ngIf="vm.accountsState.status === 'loading'">
             <dp-loader label="Загружаем рабочие пространства..."></dp-loader>
@@ -32,11 +36,14 @@
             <div class="empty-state" *ngIf="vm.accountsState.data.length === 0">
               <p class="muted">Рабочих пространств пока нет.</p>
             </div>
-            <ul class="workspace-items" *ngIf="vm.accountsState.data.length > 0">
+            <div class="empty-state" *ngIf="vm.accountsState.data.length > 0 && vm.filteredAccounts.length === 0">
+              <p class="muted">Ничего не найдено по запросу.</p>
+            </div>
+            <ul class="workspace-items" *ngIf="vm.filteredAccounts.length > 0">
               <li
-                *ngFor="let account of vm.accountsState.data"
+                *ngFor="let account of vm.filteredAccounts"
                 class="workspace-item"
-                [class.is-active]="account.id === selectedAccountId"
+                [class.is-active]="account.id === vm.selectedAccount?.id"
                 (click)="selectAccount(account.id)"
               >
                 <div>
@@ -46,31 +53,91 @@
                     [class.status-pill--active]="account.active"
                     [class.status-pill--inactive]="!account.active"
                   >
-                    {{ account.active ? "Active" : "Inactive" }}
+                    {{ account.active ? "Активно" : "Неактивно" }}
                   </span>
                 </div>
-                <div class="workspace-meta">Created {{ account.createdAt }}</div>
+                <div class="workspace-meta">Создан {{ account.createdAt | date: "short" }}</div>
               </li>
             </ul>
           </ng-container>
         </section>
 
         <section class="workspace-details">
-          <ng-container *ngIf="vm.selectedAccount as selected; else noSelection">
+          <ng-container *ngIf="vm.accountsState.status === 'ready' && vm.accountsState.data.length === 0">
+            <div class="empty-state empty-state--panel">
+              <p class="muted">Создайте первый workspace, чтобы начать работу.</p>
+              <dp-button type="button" variant="primary" (click)="openCreateModal()">
+                Создать workspace
+              </dp-button>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="vm.selectedAccount as selected">
             <div class="detail-header">
               <div>
                 <h3>{{ selected.name }}</h3>
-                <p class="muted">ID {{ selected.id }} · Updated {{ selected.updatedAt }}</p>
+                <p class="muted">
+                  {{ selected.active ? "Активно" : "Неактивно" }} · Обновлено {{ selected.updatedAt | date: "short" }}
+                </p>
               </div>
               <div class="detail-actions">
                 <dp-button type="button" variant="secondary" (click)="openRenameModal(selected)">
-                  Rename
+                  Переименовать
                 </dp-button>
                 <dp-button type="button" variant="secondary" (click)="toggleActive(selected)">
-                  {{ selected.active ? "Deactivate" : "Activate" }}
+                  {{ selected.active ? "Деактивировать" : "Активировать" }}
                 </dp-button>
                 <dp-button type="button" variant="danger" (click)="deleteWorkspace(selected)">
-                  Delete
+                  Удалить
+                </dp-button>
+              </div>
+            </div>
+
+            <div class="overview-card">
+              <div class="overview-metrics">
+                <div class="metric">
+              <div class="metric-label">Подключения</div>
+                  <div class="metric-value">
+                    {{
+                      vm.detailsState.status === "ready"
+                        ? vm.detailsState.data.connections.length
+                        : "—"
+                    }}
+                  </div>
+                </div>
+                <div class="metric">
+              <div class="metric-label">Участники</div>
+                  <div class="metric-value">
+                    {{
+                      vm.detailsState.status === "ready" ? vm.detailsState.data.members.length : "—"
+                    }}
+                  </div>
+                </div>
+                <div class="metric">
+              <div class="metric-label">Последняя синхронизация</div>
+                  <div class="metric-value">
+                    {{
+                      vm.detailsState.status === "ready"
+                        ? (getLastSyncAt(vm.detailsState.data.connections) || "—")
+                        : "—"
+                    }}
+                  </div>
+                </div>
+              </div>
+              <div class="overview-actions">
+                <dp-button
+                  type="button"
+                  variant="secondary"
+                  (click)="navigateToConnections(selected.id)"
+                >
+                  Добавить подключение
+                </dp-button>
+                <dp-button
+                  type="button"
+                  variant="secondary"
+                  (click)="navigateToMembers(selected.id)"
+                >
+                  Пригласить участника
                 </dp-button>
               </div>
             </div>
@@ -81,7 +148,9 @@
                   <h4>Connections</h4>
                   <p class="muted">Подключения marketplace текущего workspace.</p>
                 </div>
-                <dp-button type="button" variant="secondary" (click)="refreshDetails()">Refresh</dp-button>
+                <dp-button type="button" variant="secondary" (click)="refreshDetails()">
+                  Обновить
+                </dp-button>
               </div>
 
               <div *ngIf="vm.detailsState.status === 'loading'">
@@ -95,15 +164,22 @@
               <ng-container *ngIf="vm.detailsState.status === 'ready'">
                 <div class="empty-state" *ngIf="vm.detailsState.data.connections.length === 0">
                   <p class="muted">Подключений пока нет.</p>
+                  <dp-button
+                    type="button"
+                    variant="secondary"
+                    (click)="navigateToConnections(selected.id)"
+                  >
+                    Добавить подключение
+                  </dp-button>
                 </div>
                 <dp-table *ngIf="vm.detailsState.data.connections.length > 0">
                   <table class="table">
                     <thead>
                       <tr>
                         <th>Marketplace</th>
-                        <th>Status</th>
-                        <th>Last sync</th>
-                        <th>Masked credentials</th>
+                        <th>Статус</th>
+                        <th>Последняя синхронизация</th>
+                        <th>Маскированные данные</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -125,11 +201,25 @@
                   <h4>Members</h4>
                   <p class="muted">Участники и роли в workspace.</p>
                 </div>
+                <dp-button
+                  type="button"
+                  variant="secondary"
+                  (click)="navigateToMembers(selected.id)"
+                >
+                  Пригласить участника
+                </dp-button>
               </div>
 
               <ng-container *ngIf="vm.detailsState.status === 'ready'">
                 <div class="empty-state" *ngIf="vm.detailsState.data.members.length === 0">
                   <p class="muted">Участников пока нет.</p>
+                  <dp-button
+                    type="button"
+                    variant="secondary"
+                    (click)="navigateToMembers(selected.id)"
+                  >
+                    Пригласить участника
+                  </dp-button>
                 </div>
                 <dp-table *ngIf="vm.detailsState.data.members.length > 0">
                   <table class="table">
@@ -146,7 +236,7 @@
                         <td>{{ member.userId }}</td>
                         <td>{{ member.status }}</td>
                         <td>{{ member.role }}</td>
-                        <td>{{ member.createdAt }}</td>
+                        <td>{{ member.createdAt | date: "short" }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -154,53 +244,48 @@
               </ng-container>
             </div>
           </ng-container>
-          <ng-template #noSelection>
-            <div class="empty-state">
-              <p class="muted">Выберите workspace, чтобы увидеть детали.</p>
-            </div>
-          </ng-template>
         </section>
       </div>
     </div>
-  </ng-container>
 
-  <dp-modal [visible]="createModalVisible" (close)="closeCreateModal()">
+    <dp-modal [visible]="createModalVisible" (close)="closeCreateModal()">
     <div class="modal-content">
-      <h3>Create workspace</h3>
+      <h3>Создать workspace</h3>
       <form class="form" [formGroup]="createForm" (ngSubmit)="submitCreate()">
         <label>
-          Name
-          <dp-input formControlName="name" maxlength="32" placeholder="Workspace name"></dp-input>
+          Название
+          <dp-input formControlName="name" maxlength="32" placeholder="Название workspace"></dp-input>
         </label>
         <label class="checkbox">
           <input type="checkbox" formControlName="active" />
-          Active
+          Активно
         </label>
         <div class="modal-actions">
-          <dp-button type="button" variant="secondary" (click)="closeCreateModal()">Cancel</dp-button>
+          <dp-button type="button" variant="secondary" (click)="closeCreateModal()">Отмена</dp-button>
           <dp-button type="submit" variant="primary" [disabled]="saving">
-            {{ saving ? "Saving..." : "Save" }}
+            {{ saving ? "Сохраняем..." : "Сохранить" }}
           </dp-button>
         </div>
       </form>
     </div>
   </dp-modal>
 
-  <dp-modal [visible]="renameModalVisible" (close)="closeRenameModal()">
+    <dp-modal [visible]="renameModalVisible" (close)="closeRenameModal()">
     <div class="modal-content">
-      <h3>Rename workspace</h3>
+      <h3>Переименовать workspace</h3>
       <form class="form" [formGroup]="renameForm" (ngSubmit)="submitRename()">
         <label>
-          Name
-          <dp-input formControlName="name" maxlength="32" placeholder="Workspace name"></dp-input>
+          Название
+          <dp-input formControlName="name" maxlength="32" placeholder="Название workspace"></dp-input>
         </label>
         <div class="modal-actions">
-          <dp-button type="button" variant="secondary" (click)="closeRenameModal()">Cancel</dp-button>
+          <dp-button type="button" variant="secondary" (click)="closeRenameModal()">Отмена</dp-button>
           <dp-button type="submit" variant="primary" [disabled]="saving">
-            {{ saving ? "Saving..." : "Save" }}
+            {{ saving ? "Сохраняем..." : "Сохранить" }}
           </dp-button>
         </div>
       </form>
     </div>
-  </dp-modal>
-</dp-dashboard-shell>
+    </dp-modal>
+  </dp-dashboard-shell>
+</ng-container>

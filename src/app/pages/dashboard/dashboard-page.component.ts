@@ -6,6 +6,7 @@ import {OrderPnlApiClient} from "../../core/api";
 import {OrderPnlResponse, PageResponse} from "../../shared/models";
 import {DashboardShellComponent} from "../../shared/ui";
 import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
+import {accountIdFromRoute} from "../../core/routing/account-id.util";
 
 interface OrdersViewModel {
   accountId: number | null;
@@ -24,17 +25,7 @@ export class DashboardPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly orderPnlApi = inject(OrderPnlApiClient);
 
-  private readonly accountId$ = this.route.paramMap.pipe(
-    map((params) => {
-      const accountIdParam = params.get("accountId");
-      if (accountIdParam == null) {
-        return null;
-      }
-      const accountId = Number(accountIdParam);
-      return Number.isFinite(accountId) ? accountId : null;
-    }),
-    distinctUntilChanged()
-  );
+  private readonly accountId$ = accountIdFromRoute(this.route).pipe(distinctUntilChanged());
 
   readonly vm$ = this.accountId$.pipe(
     switchMap((accountId) => {

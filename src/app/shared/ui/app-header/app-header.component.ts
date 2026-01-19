@@ -1,6 +1,9 @@
-import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, DestroyRef, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
-import {RouterModule} from "@angular/router";
+import {NavigationStart, Router, RouterModule} from "@angular/router";
+import {OverlayModule} from "@angular/cdk/overlay";
+import {filter} from "rxjs/operators";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AuthRedirectService, AuthSessionService, AuthUserService} from "../../../core/auth";
 import {APP_PATHS} from "../../../core/app-paths";
@@ -10,7 +13,7 @@ import {ButtonComponent} from "../button/button.component";
 @Component({
   selector: "dp-app-header",
   standalone: true,
-  imports: [CommonModule, RouterModule, ButtonComponent],
+  imports: [CommonModule, RouterModule, OverlayModule, ButtonComponent],
   templateUrl: "./app-header.component.html",
   styleUrl: "./app-header.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -20,10 +23,13 @@ export class AppHeaderComponent {
   private readonly authSession = inject(AuthSessionService);
   private readonly authRedirect = inject(AuthRedirectService);
   private readonly accountContext = inject(AccountContextService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly userProfile$ = this.authUser.userProfile$;
   isLoginRedirecting = false;
   isLogoutRedirecting = false;
+  isMenuOpen = false;
 
   get homePath(): string {
     if (!this.authSession.snapshot().authenticated) {
@@ -38,14 +44,22 @@ export class AppHeaderComponent {
     return APP_PATHS.workspaces;
   }
 
+  constructor() {
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationStart),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.closeMenu();
+      });
+  }
+
   login(): void {
     if (this.isLoginRedirecting) {
       return;
     }
     this.isLoginRedirecting = true;
-    window.setTimeout(() => {
-      this.isLoginRedirecting = false;
-    }, 4000);
     this.authRedirect.login(window.location.pathname + window.location.search);
   }
 
@@ -54,9 +68,20 @@ export class AppHeaderComponent {
       return;
     }
     this.isLogoutRedirecting = true;
-    window.setTimeout(() => {
-      this.isLogoutRedirecting = false;
-    }, 4000);
     this.authRedirect.logout();
+  }
+
+  toggleMenu(): void {
+    this.isMenuOpen = !this.isMenuOpen;
+  }
+
+  closeMenu(): void {
+    this.isMenuOpen = false;
+  }
+
+  onOverlayKeydown(event: KeyboardEvent): void {
+    if (event.key === "Escape") {
+      this.closeMenu();
+    }
   }
 }

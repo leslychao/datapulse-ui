@@ -1,25 +1,25 @@
 <ng-container *ngIf="vm$ | async as vm">
   <dp-dashboard-shell
     [accountId]="vm.accountId"
-    title="Connections"
+    title="Подключения"
     subtitle="Управление подключениями marketplace в рабочем пространстве"
   >
     <ng-container topbar-actions>
       <dp-button type="button" variant="primary" (click)="openCreateModal()">
-        Add connection
+        Добавить подключение
       </dp-button>
     </ng-container>
 
     <div class="page">
       <div class="controls-row">
         <p class="muted">Список активных подключений marketplace.</p>
-        <dp-button type="button" variant="secondary" (click)="refresh()">Refresh</dp-button>
+        <dp-button type="button" variant="secondary" (click)="refresh()">Обновить</dp-button>
       </div>
 
       <section class="table-card">
         <div class="table-header">
           <div>
-            <h3>Connections</h3>
+            <h3>Подключения</h3>
             <p class="muted">Управляйте подключениями и синхронизацией.</p>
           </div>
         </div>
@@ -36,15 +36,14 @@
           <dp-connections-table
             *ngIf="vm.state.data.length > 0; else emptyState"
             [connections]="vm.state.data"
-            (replaceCredentials)="openReplaceModal($event)"
-            (toggleActive)="toggleActive($event)"
+            (editConnection)="openEditModal($event)"
             (deleteConnection)="confirmDelete($event)"
           ></dp-connections-table>
           <ng-template #emptyState>
             <div class="empty-state">
               <p class="muted">Подключений пока нет.</p>
               <dp-button type="button" variant="primary" (click)="openCreateModal()">
-                Add connection
+                Добавить подключение
               </dp-button>
             </div>
           </ng-template>
@@ -54,7 +53,7 @@
 
     <dp-modal [visible]="createModalVisible" (close)="closeCreateModal()">
       <div class="modal-content">
-        <h3>Add connection</h3>
+        <h3>Добавить подключение</h3>
         <form class="form" [formGroup]="createForm" (ngSubmit)="submitCreate()">
           <label>
             Marketplace
@@ -82,46 +81,66 @@
             </label>
           </ng-template>
 
+          <label class="checkbox">
+            <input type="checkbox" formControlName="active" />
+            Активно
+          </label>
+
           <div class="modal-actions">
-            <dp-button type="button" variant="secondary" (click)="closeCreateModal()">
-              Cancel
-            </dp-button>
-            <dp-button type="submit" variant="primary" [disabled]="saving">
-              {{ saving ? "Saving..." : "Save" }}
-            </dp-button>
+          <dp-button type="button" variant="secondary" (click)="closeCreateModal()">
+            Отмена
+          </dp-button>
+          <dp-button type="submit" variant="primary" [disabled]="saving">
+            {{ saving ? "Сохраняем..." : "Сохранить" }}
+          </dp-button>
           </div>
         </form>
       </div>
     </dp-modal>
 
-    <dp-modal [visible]="replaceModalVisible" (close)="closeReplaceModal()">
+    <dp-modal [visible]="editModalVisible" (close)="closeEditModal()">
       <div class="modal-content">
-        <h3>Replace credentials</h3>
-        <p class="muted">Введите новые credentials. Старые будут заменены.</p>
-        <form class="form" [formGroup]="replaceForm" (ngSubmit)="submitReplace()">
-          <ng-container *ngIf="replaceIsWildberries; else replaceOzonBlock">
+        <h3>Редактировать подключение</h3>
+        <p class="muted">
+          Marketplace: {{ editingConnection?.marketplace }}. Введите новые credentials, чтобы заменить.
+        </p>
+        <form class="form" [formGroup]="editForm" (ngSubmit)="submitEdit()">
+          <ng-container *ngIf="editIsWildberries; else editOzonBlock">
             <label>
               Token
-              <dp-input type="password" placeholder="Token" formControlName="token"></dp-input>
+              <dp-input
+                type="password"
+                placeholder="Введите новый token"
+                formControlName="token"
+              ></dp-input>
             </label>
           </ng-container>
-          <ng-template #replaceOzonBlock>
+          <ng-template #editOzonBlock>
             <label>
               Client ID
-              <dp-input placeholder="Client ID" formControlName="clientId"></dp-input>
+              <dp-input placeholder="Введите Client ID" formControlName="clientId"></dp-input>
             </label>
             <label>
               API Key
-              <dp-input type="password" placeholder="API Key" formControlName="apiKey"></dp-input>
+              <dp-input
+                type="password"
+                placeholder="Введите API Key"
+                formControlName="apiKey"
+              ></dp-input>
             </label>
           </ng-template>
 
+          <label class="checkbox">
+            <input type="checkbox" formControlName="active" />
+            Активно
+          </label>
+
           <div class="modal-actions">
-            <dp-button type="button" variant="secondary" (click)="closeReplaceModal()">
-              Cancel
+            <dp-button type="button" variant="secondary" (click)="closeEditModal()">
+              Отмена
             </dp-button>
             <dp-button type="submit" variant="primary" [disabled]="saving">
-              {{ saving ? "Replacing..." : "Replace" }}
+              {{ saving ? "Сохраняем..." : "Сохранить" }}
             </dp-button>
           </div>
         </form>
@@ -130,14 +149,14 @@
 
     <dp-modal [visible]="deleteModalVisible" (close)="closeDeleteModal()">
       <div class="modal-content">
-        <h3>Delete connection?</h3>
-        <p class="muted">This action cannot be undone.</p>
+        <h3>Удалить подключение?</h3>
+        <p class="muted">Это действие необратимо.</p>
         <div class="modal-actions">
           <dp-button type="button" variant="secondary" (click)="closeDeleteModal()">
-            Cancel
+            Отмена
           </dp-button>
           <dp-button type="button" variant="danger" [disabled]="saving" (click)="deleteConnection()">
-            {{ saving ? "Deleting..." : "Delete" }}
+            {{ saving ? "Удаляем..." : "Удалить" }}
           </dp-button>
         </div>
       </div>

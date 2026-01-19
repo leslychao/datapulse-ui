@@ -58,26 +58,18 @@
 }
 
 .profile-menu {
-  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.profile-menu summary {
-  list-style: none;
+.profile-trigger {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
   border-radius: 12px;
   padding: 6px 10px;
-  border: 1px solid transparent;
-}
-
-.profile-menu summary::-webkit-details-marker {
-  display: none;
-}
-
-.profile-menu[open] summary {
-  border-color: #e5e7eb;
+  border: 1px solid #e5e7eb;
   background: #fff;
 }
 
@@ -87,18 +79,21 @@
 }
 
 .profile-menu__panel {
-  position: absolute;
-  right: 0;
-  top: 42px;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
+  min-width: 180px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+}
+
+.profile-menu__panel-content {
   padding: 6px;
   display: flex;
   flex-direction: column;
-  min-width: 180px;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
-  z-index: 20;
+}
+
+.profile-menu__backdrop {
+  background: transparent;
 }
 
 .profile-menu__item {

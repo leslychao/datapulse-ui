@@ -1,14 +1,16 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
-import {Subject, distinctUntilChanged, forkJoin, map, of, switchMap} from "rxjs";
+import {Subject, forkJoin, map, of, switchMap} from "rxjs";
 import {finalize, startWith, tap} from "rxjs/operators";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountMembersApiClient, ApiError} from "../../core/api";
 import {AccountMember, AccountMemberUpdateRequest} from "../../shared/models";
 import {ButtonComponent, DashboardShellComponent, LoaderComponent, ToastService} from "../../shared/ui";
 import {OperatorsTableComponent} from "../../features/operators";
 import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
+import {accountIdFromRoute} from "../../core/routing/account-id.util";
 
 interface UsersData {
   members: AccountMember[];
@@ -32,19 +34,11 @@ export class SettingsUsersPageComponent {
   private readonly memberApi = inject(AccountMembersApiClient);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly refresh$ = new Subject<void>();
-  private readonly accountId$ = this.route.paramMap.pipe(
-    map((params) => {
-      const accountIdParam = params.get("accountId");
-      if (accountIdParam == null) {
-        return null;
-      }
-      const accountId = Number(accountIdParam);
-      return Number.isFinite(accountId) ? accountId : null;
-    }),
-    distinctUntilChanged()
-  );
+  private readonly accountId$ = accountIdFromRoute(this.route);
+  accountId: number | null = null;
 
   readonly vm$ = this.accountId$.pipe(
     switchMap((accountId) => {
@@ -76,6 +70,15 @@ export class SettingsUsersPageComponent {
       );
     })
   );
+
+  constructor() {
+    this.accountId$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((accountId) => {
+        this.accountId = accountId;
+        this.cdr.markForCheck();
+      });
+  }
 
   refresh(): void {
     this.refresh$.next();
@@ -146,12 +149,7 @@ export class SettingsUsersPageComponent {
   }
 
   private getAccountId(): number | null {
-    const accountIdParam = this.route.snapshot.paramMap.get("accountId");
-    if (accountIdParam == null) {
-      return null;
-    }
-    const accountId = Number(accountIdParam);
-    return Number.isFinite(accountId) ? accountId : null;
+    return this.accountId;
   }
 
   private mapErrorMessage(error: ApiError, fallback: string): string {
