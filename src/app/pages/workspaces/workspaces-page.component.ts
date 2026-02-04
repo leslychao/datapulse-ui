@@ -106,7 +106,6 @@ export class WorkspacesPageComponent {
         }
         if (state.data.length === 0) {
           this.accountContext.clear();
-          this.router.navigateByUrl(APP_PATHS.onboarding);
         }
       }
       if (state.status === "error") {

@@ -1,23 +1,16 @@
 select{
   width:100%;
-  min-height:var(--control-height);
-  padding:10px 36px 10px 12px;
-  border-radius:var(--control-radius);
-  border:1px solid var(--control-border);
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid transparent;
   background:var(--field-bg);
-  background-image:linear-gradient(45deg, transparent 50%, rgba(107,114,128,.8) 50%),
-    linear-gradient(135deg, rgba(107,114,128,.8) 50%, transparent 50%);
-  background-position:calc(100% - 18px) calc(50% + 1px), calc(100% - 12px) calc(50% + 1px);
-  background-size:6px 6px, 6px 6px;
-  background-repeat:no-repeat;
   color:var(--text);
   outline:none;
   transition:background .12s ease, box-shadow .12s ease, border-color .12s ease;
-  appearance:none;
 }
 
 select:focus{
   background:var(--field-bg-focus);
-  border-color:var(--control-border-active);
+  border-color:rgba(42,139,242,.35);
   box-shadow:var(--focus-ring);
 }
