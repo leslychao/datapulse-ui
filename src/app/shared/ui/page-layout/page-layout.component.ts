@@ -82,6 +82,26 @@ export class PageLayoutComponent {
         ]
       },
       {
+        label: "Users & Access",
+        items: [
+          {
+            label: "Users & Access",
+            path: APP_PATHS.users(accountId),
+            testId: "sidebar-users"
+          }
+        ]
+      },
+      {
+        label: "Settings",
+        items: [
+          {
+            label: "Workspace settings",
+            path: APP_PATHS.workspaceSettings(accountId),
+            testId: "sidebar-workspace-settings"
+          }
+        ]
+      },
+      {
         label: "Data & Dashboards",
         items: [
           {
@@ -114,36 +134,11 @@ export class PageLayoutComponent {
             label: "Marketing",
             path: APP_PATHS.marketingAds(accountId),
             testId: "sidebar-marketing-ads"
-          }
-        ]
-      },
-      {
-        label: "Monitoring",
-        items: [
+          },
           {
             label: "Data freshness",
             path: APP_PATHS.monitoring(accountId),
             testId: "sidebar-monitoring"
-          }
-        ]
-      },
-      {
-        label: "Users & Access",
-        items: [
-          {
-            label: "Users & Access",
-            path: APP_PATHS.users(accountId),
-            testId: "sidebar-users"
-          }
-        ]
-      },
-      {
-        label: "Settings",
-        items: [
-          {
-            label: "Workspace settings",
-            path: APP_PATHS.workspaceSettings(accountId),
-            testId: "sidebar-workspace-settings"
           }
         ]
       }

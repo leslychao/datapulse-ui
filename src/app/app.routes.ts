@@ -20,6 +20,12 @@ export const appRoutes: Routes = [
       import("./pages/login/login-page.component").then((m) => m.LoginPageComponent)
   },
   {
+    path: APP_ROUTE_SEGMENTS.profile,
+    canMatch: [authGuard, iamResolvedGuard],
+    loadComponent: () =>
+      import("./pages/profile/profile-page.component").then((m) => m.ProfilePageComponent)
+  },
+  {
     path: APP_ROUTE_SEGMENTS.workspaces,
     canMatch: [authGuard, iamResolvedGuard],
     loadComponent: () =>

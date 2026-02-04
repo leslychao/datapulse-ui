@@ -66,6 +66,10 @@ export class AppHeaderComponent {
     return APP_PATHS.workspaces;
   }
 
+  get profilePath(): string {
+    return APP_PATHS.profile;
+  }
+
   constructor() {
     this.router.events
       .pipe(
@@ -112,6 +116,11 @@ export class AppHeaderComponent {
 
   closeMenu(): void {
     this.isMenuOpen = false;
+  }
+
+  getInitial(profile: {fullName?: string | null; username?: string | null; email?: string | null}): string {
+    const source = profile.fullName || profile.username || profile.email || "U";
+    return source.trim().charAt(0).toUpperCase() || "U";
   }
 
   @HostListener("document:keydown", ["$event"])

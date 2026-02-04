@@ -1,0 +1,25 @@
+<ng-container *ngIf="profile$ | async as profile; else loading">
+  <dp-page-layout [accountId]="null">
+    <dp-page-header title="Profile" subtitle="Ваши данные аккаунта."></dp-page-header>
+
+    <section class="card">
+      <div class="profile-card">
+        <div class="profile-card__avatar">{{ getInitial(profile) }}</div>
+        <div class="profile-card__details">
+          <div class="profile-card__name">
+            {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
+          </div>
+          <div class="profile-card__email" *ngIf="profile.email">
+            {{ profile.email }}
+          </div>
+        </div>
+      </div>
+    </section>
+  </dp-page-layout>
+</ng-container>
+
+<ng-template #loading>
+  <dp-page-layout [accountId]="null">
+    <dp-loading-state label="Loading profile"></dp-loading-state>
+  </dp-page-layout>
+</ng-template>
