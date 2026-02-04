@@ -5,11 +5,12 @@ import {combineLatest} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 
 import {
-  DashboardShellComponent,
   FilterBarComponent,
   MetricTileGroupComponent,
   ChartCardComponent,
-  DataTableCardComponent
+  DataTableCardComponent,
+  PageHeaderComponent,
+  PageLayoutComponent
 } from "../../shared/ui";
 import {DashboardStateQuery} from "../../queries/dashboard-state.query";
 import {DATA_STATE} from "../../shared/models";
@@ -23,7 +24,8 @@ import {accountIdFromRoute} from "../../core/routing/account-id.util";
   standalone: true,
   imports: [
     CommonModule,
-    DashboardShellComponent,
+    PageLayoutComponent,
+    PageHeaderComponent,
     FilterBarComponent,
     MetricTileGroupComponent,
     ChartCardComponent,
@@ -46,7 +48,7 @@ export class MarketingAdsPageComponent {
   }).pipe(map(({accountId, state}) => ({accountId, state})));
 
   readonly filters: FilterFieldVm[] = [
-    {id: "account", label: "Account", type: "select", options: [{label: "Все аккаунты", value: "all"}]},
+    {id: "account", label: "Workspace", type: "select", options: [{label: "Все workspace", value: "all"}]},
     {id: "from", label: "Date from", type: "date"},
     {id: "to", label: "Date to", type: "date"},
     {id: "marketplace", label: "Marketplace", type: "select", options: [{label: "Все", value: "all"}]},

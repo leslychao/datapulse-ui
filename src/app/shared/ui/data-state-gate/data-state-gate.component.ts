@@ -36,14 +36,14 @@ export class DataStateGateComponent {
           title: "Источник данных не подключён",
           description: "Подключите аккаунт marketplace, чтобы видеть метрики.",
           primaryLabel: "Перейти к подключениям",
-          primaryPath: accountId != null ? APP_PATHS.settingsConnections(accountId) : APP_PATHS.selectAccount
+          primaryPath: accountId != null ? APP_PATHS.connections(accountId) : APP_PATHS.workspaces
         };
       case DATA_STATE.noData:
         return {
           title: "Недостаточно данных для построения отчёта",
           description: "Данные ещё не загружены или период пуст.",
-          primaryLabel: accountId != null ? "Перейти к подключениям" : "Выбрать аккаунт",
-          primaryPath: accountId != null ? APP_PATHS.settingsConnections(accountId) : APP_PATHS.selectAccount
+          primaryLabel: accountId != null ? "Перейти к подключениям" : "Выбрать workspace",
+          primaryPath: accountId != null ? APP_PATHS.connections(accountId) : APP_PATHS.workspaces
         };
       case DATA_STATE.unavailable:
         return {

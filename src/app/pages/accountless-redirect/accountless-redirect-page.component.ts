@@ -24,7 +24,7 @@ export class AccountlessRedirectPageComponent implements OnInit {
   ngOnInit(): void {
     const accountId = this.accountContext.snapshot;
     if (accountId == null) {
-      this.router.navigateByUrl(APP_PATHS.selectAccount, {replaceUrl: true});
+      this.router.navigateByUrl(APP_PATHS.workspaces, {replaceUrl: true});
       return;
     }
 

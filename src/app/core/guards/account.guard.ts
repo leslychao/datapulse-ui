@@ -22,7 +22,7 @@ export const accountGuard: CanActivateChildFn = (_route, state) => {
         accountContext.clear();
       }
       if (accounts.length > 0 && isOnboardingRoute) {
-        return router.parseUrl(APP_PATHS.selectAccount);
+        return router.parseUrl(APP_PATHS.workspaces);
       }
       return true;
     }),

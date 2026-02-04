@@ -1,0 +1,29 @@
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cell-title {
+  font-weight: 600;
+}
+
+.cell-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.status-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-title {
+  font-weight: 600;
+}
+
+.status-desc {
+  font-size: 12px;
+  color: var(--muted);
+}

@@ -38,7 +38,7 @@ describe("accountIdGuard", () => {
       firstValueFrom(accountIdGuard(route))
     );
 
-    expect(router.serializeUrl(result as any)).toBe(APP_PATHS.selectAccount);
+    expect(router.serializeUrl(result as any)).toBe(APP_PATHS.workspaces);
     expect(accountContext.clear).toHaveBeenCalled();
   });
 

@@ -19,7 +19,7 @@ export const accountIdGuard: CanActivateChildFn = (route) => {
   const accountId = readAccountId(route);
   if (accountId == null) {
     accountContext.clear();
-    return router.parseUrl(APP_PATHS.selectAccount);
+    return router.parseUrl(APP_PATHS.workspaces);
   }
 
   return accountCatalog.load().pipe(
@@ -32,7 +32,7 @@ export const accountIdGuard: CanActivateChildFn = (route) => {
       const hasMatch = accounts.some((account) => account.id === accountId);
       if (!hasMatch) {
         accountContext.clear();
-        return router.parseUrl(APP_PATHS.selectAccount);
+        return router.parseUrl(APP_PATHS.workspaces);
       }
       accountContext.setAccountId(accountId);
       return true;

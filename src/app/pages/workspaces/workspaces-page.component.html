@@ -1,291 +1,168 @@
 <ng-container *ngIf="vm$ | async as vm">
-  <dp-dashboard-shell
-    [accountId]="vm.selectedAccount?.id ?? null"
-    title="Workspaces"
-    subtitle="Управление рабочими пространствами и доступом"
-  >
-    <div class="page">
-      <div class="workspace-layout">
-        <section class="workspace-list">
-          <div class="section-header">
-            <h3>Workspaces</h3>
-            <dp-button type="button" variant="secondary" (click)="refreshAccounts()">
-              Обновить
-            </dp-button>
-          </div>
-
-          <dp-input
-            [formControl]="searchControl"
-            placeholder="Поиск workspace"
-            maxlength="64"
-          ></dp-input>
-
-            <dp-button type="button" variant="primary" (click)="openCreateModal()">
-            Создать workspace
-          </dp-button>
-
-          <div *ngIf="vm.accountsState.status === 'loading'">
-            <dp-loader label="Загружаем рабочие пространства..."></dp-loader>
-          </div>
-
-          <div class="error-text" *ngIf="vm.accountsState.status === 'error'">
-            {{ vm.accountsState.error.message }}
-          </div>
-
-          <ng-container *ngIf="vm.accountsState.status === 'ready'">
-            <div class="empty-state" *ngIf="vm.accountsState.data.length === 0">
-              <p class="muted">Рабочих пространств пока нет.</p>
-            </div>
-            <div class="empty-state" *ngIf="vm.accountsState.data.length > 0 && vm.filteredAccounts.length === 0">
-              <p class="muted">Ничего не найдено по запросу.</p>
-            </div>
-            <ul class="workspace-items" *ngIf="vm.filteredAccounts.length > 0">
-              <li
-                *ngFor="let account of vm.filteredAccounts"
-                class="workspace-item"
-                [class.is-active]="account.id === vm.selectedAccount?.id"
-                (click)="selectAccount(account.id)"
-              >
-                <div>
-                  <div class="workspace-name">{{ account.name }}</div>
-                  <span
-                    class="status-pill"
-                    [class.status-pill--active]="account.active"
-                    [class.status-pill--inactive]="!account.active"
-                  >
-                    {{ account.active ? "Активно" : "Неактивно" }}
-                  </span>
-                </div>
-                <div class="workspace-meta">Создан {{ account.createdAt | date: "short" }}</div>
-              </li>
-            </ul>
-          </ng-container>
-        </section>
-
-        <section class="workspace-details">
-          <ng-container *ngIf="vm.accountsState.status === 'ready' && vm.accountsState.data.length === 0">
-            <div class="empty-state empty-state--panel">
-              <p class="muted">Создайте первый workspace, чтобы начать работу.</p>
-              <dp-button type="button" variant="primary" (click)="openCreateModal()">
-                Создать workspace
-              </dp-button>
-            </div>
-          </ng-container>
-
-          <ng-container *ngIf="vm.selectedAccount as selected">
-            <div class="detail-header">
-              <div>
-                <h3>{{ selected.name }}</h3>
-                <p class="muted">
-                  {{ selected.active ? "Активно" : "Неактивно" }} · Обновлено {{ selected.updatedAt | date: "short" }}
-                </p>
-              </div>
-              <div class="detail-actions">
-                <dp-button type="button" variant="secondary" (click)="openRenameModal(selected)">
-                  Переименовать
-                </dp-button>
-                <dp-button type="button" variant="secondary" (click)="toggleActive(selected)">
-                  {{ selected.active ? "Деактивировать" : "Активировать" }}
-                </dp-button>
-                <dp-button type="button" variant="danger" (click)="deleteWorkspace(selected)">
-                  Удалить
-                </dp-button>
-              </div>
-            </div>
-
-            <div class="overview-card">
-              <div class="overview-metrics">
-                <div class="metric">
-              <div class="metric-label">Подключения</div>
-                  <div class="metric-value">
-                    {{
-                      vm.detailsState.status === "ready"
-                        ? vm.detailsState.data.connections.length
-                        : "—"
-                    }}
-                  </div>
-                </div>
-                <div class="metric">
-              <div class="metric-label">Участники</div>
-                  <div class="metric-value">
-                    {{
-                      vm.detailsState.status === "ready" ? vm.detailsState.data.members.length : "—"
-                    }}
-                  </div>
-                </div>
-                <div class="metric">
-              <div class="metric-label">Последняя синхронизация</div>
-                  <div class="metric-value">
-                    {{
-                      vm.detailsState.status === "ready"
-                        ? (getLastSyncAt(vm.detailsState.data.connections) || "—")
-                        : "—"
-                    }}
-                  </div>
-                </div>
-              </div>
-              <div class="overview-actions">
-                <dp-button
-                  type="button"
-                  variant="secondary"
-                  (click)="navigateToConnections(selected.id)"
-                >
-                  Добавить подключение
-                </dp-button>
-                <dp-button
-                  type="button"
-                  variant="secondary"
-                  (click)="navigateToMembers(selected.id)"
-                >
-                  Пригласить участника
-                </dp-button>
-              </div>
-            </div>
-
-            <div class="detail-card">
-              <div class="table-header">
-                <div>
-                  <h4>Connections</h4>
-                  <p class="muted">Подключения marketplace текущего workspace.</p>
-                </div>
-                <dp-button type="button" variant="secondary" (click)="refreshDetails()">
-                  Обновить
-                </dp-button>
-              </div>
-
-              <div *ngIf="vm.detailsState.status === 'loading'">
-                <dp-loader label="Загружаем подключения..."></dp-loader>
-              </div>
-
-              <div class="error-text" *ngIf="vm.detailsState.status === 'error'">
-                {{ vm.detailsState.error.message }}
-              </div>
-
-              <ng-container *ngIf="vm.detailsState.status === 'ready'">
-                <div class="empty-state" *ngIf="vm.detailsState.data.connections.length === 0">
-                  <p class="muted">Подключений пока нет.</p>
-                  <dp-button
-                    type="button"
-                    variant="secondary"
-                    (click)="navigateToConnections(selected.id)"
-                  >
-                    Добавить подключение
-                  </dp-button>
-                </div>
-                <dp-table *ngIf="vm.detailsState.data.connections.length > 0">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>Marketplace</th>
-                        <th>Статус</th>
-                        <th>Последняя синхронизация</th>
-                        <th>Маскированные данные</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let connection of vm.detailsState.data.connections">
-                        <td>{{ connection.marketplace }}</td>
-                        <td>{{ connection.lastSyncStatus }}</td>
-                        <td>{{ connection.lastSyncAt || "—" }}</td>
-                        <td>{{ connection.maskedCredentials || "—" }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </dp-table>
-              </ng-container>
-            </div>
-
-            <div class="detail-card">
-              <div class="table-header">
-                <div>
-                  <h4>Members</h4>
-                  <p class="muted">Участники и роли в workspace.</p>
-                </div>
-                <dp-button
-                  type="button"
-                  variant="secondary"
-                  (click)="navigateToMembers(selected.id)"
-                >
-                  Пригласить участника
-                </dp-button>
-              </div>
-
-              <ng-container *ngIf="vm.detailsState.status === 'ready'">
-                <div class="empty-state" *ngIf="vm.detailsState.data.members.length === 0">
-                  <p class="muted">Участников пока нет.</p>
-                  <dp-button
-                    type="button"
-                    variant="secondary"
-                    (click)="navigateToMembers(selected.id)"
-                  >
-                    Пригласить участника
-                  </dp-button>
-                </div>
-                <dp-table *ngIf="vm.detailsState.data.members.length > 0">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>User ID</th>
-                        <th>Status</th>
-                        <th>Role</th>
-                        <th>Created</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let member of vm.detailsState.data.members">
-                        <td>{{ member.userId }}</td>
-                        <td>{{ member.status }}</td>
-                        <td>{{ member.role }}</td>
-                        <td>{{ member.createdAt | date: "short" }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </dp-table>
-              </ng-container>
-            </div>
-          </ng-container>
-        </section>
+  <dp-page-layout [accountId]="vm.selectedAccount?.id ?? null">
+    <dp-page-header title="Workspaces" subtitle="Выберите рабочее пространство или создайте новое.">
+      <div primary-action>
+        <dp-button variant="primary" (click)="goToCreateWorkspace()">
+          Create workspace
+        </dp-button>
       </div>
-    </div>
+      <div secondary-actions>
+        <dp-button variant="secondary" (click)="refreshAccounts()">Refresh</dp-button>
+      </div>
+    </dp-page-header>
 
-    <dp-modal [visible]="createModalVisible" (close)="closeCreateModal()">
-    <div class="modal-content">
-      <h3>Создать workspace</h3>
-      <form class="form" [formGroup]="createForm" (ngSubmit)="submitCreate()">
-        <label>
-          Название
-          <dp-input formControlName="name" maxlength="32" placeholder="Название workspace"></dp-input>
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" formControlName="active" />
-          Активно
-        </label>
-        <div class="modal-actions">
-          <dp-button type="button" variant="secondary" (click)="closeCreateModal()">Отмена</dp-button>
-          <dp-button type="submit" variant="primary" [disabled]="saving">
-            {{ saving ? "Сохраняем..." : "Сохранить" }}
+    <section class="card">
+      <dp-table-toolbar>
+        <div filters>
+          <dp-form-field label="Search">
+            <dp-input placeholder="Workspace name" [formControl]="searchControl"></dp-input>
+          </dp-form-field>
+        </div>
+      </dp-table-toolbar>
+
+      <ng-container *ngIf="vm.accountsState.status === 'loading'">
+        <dp-loading-state label="Loading workspaces"></dp-loading-state>
+      </ng-container>
+
+      <ng-container *ngIf="vm.accountsState.status === 'error'">
+        <dp-error-state
+          title="Не удалось загрузить рабочие пространства"
+          [description]="vm.accountsState.error.message"
+        >
+          <dp-button variant="secondary" (click)="refreshAccounts()">Retry</dp-button>
+        </dp-error-state>
+      </ng-container>
+
+      <ng-container *ngIf="vm.accountsState.status === 'ready'">
+        <dp-table *ngIf="vm.filteredAccounts.length; else emptyState">
+          <table>
+            <thead>
+              <tr>
+                <th>Workspace</th>
+                <th>Status</th>
+                <th>Connections</th>
+                <th>Users</th>
+                <th>Last sync</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let account of vm.filteredAccounts">
+                <td>
+                  <div class="cell-title">{{ account.name }}</div>
+                  <div class="cell-subtitle">ID: {{ account.id }}</div>
+                </td>
+                <td>
+                  <span class="status-pill" [class.is-disabled]="!account.active">
+                    {{ account.active ? "Active" : "Archived" }}
+                  </span>
+                </td>
+                <td>{{ vm.detailsState.status === 'ready' && vm.selectedAccount?.id === account.id ? vm.detailsState.data.connections.length : "—" }}</td>
+                <td>{{ vm.detailsState.status === 'ready' && vm.selectedAccount?.id === account.id ? vm.detailsState.data.members.length : "—" }}</td>
+                <td>
+                  {{
+                    vm.detailsState.status === 'ready' && vm.selectedAccount?.id === account.id
+                      ? (getLastSyncAt(vm.detailsState.data.connections) | date: 'short') || '—'
+                      : '—'
+                  }}
+                </td>
+                <td>
+                  <div class="actions">
+                    <dp-button size="sm" variant="primary" (click)="goToWorkspace(account.id)">
+                      Open
+                    </dp-button>
+                    <dp-button size="sm" variant="secondary" (click)="goToSettings(account.id)">
+                      Settings
+                    </dp-button>
+                    <dp-button
+                      size="sm"
+                      variant="secondary"
+                      (click)="openArchiveDialog(account)"
+                      [disabled]="!account.active"
+                    >
+                      Archive
+                    </dp-button>
+                    <dp-button
+                      size="sm"
+                      variant="danger"
+                      (click)="openDeleteDialog(account)"
+                      [disabled]="!canDelete(vm.filteredAccounts.length)"
+                    >
+                      Delete
+                    </dp-button>
+                  </div>
+                  <div class="hint" *ngIf="!canDelete(vm.filteredAccounts.length)">
+                    Нельзя удалить последний workspace.
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </dp-table>
+        <ng-template #emptyState>
+          <dp-empty-state
+            title="Workspaces отсутствуют"
+            description="Создайте workspace, чтобы подключить данные и начать работу."
+          >
+            <dp-button variant="primary" (click)="goToCreateWorkspace()">
+              Create workspace
+            </dp-button>
+          </dp-empty-state>
+        </ng-template>
+      </ng-container>
+    </section>
+
+    <section class="card" *ngIf="vm.selectedAccount as selected">
+      <div class="section-header">
+        <div>
+          <h3>What’s next</h3>
+          <p class="muted">Следующие шаги после выбора workspace.</p>
+        </div>
+      </div>
+      <div class="next-steps">
+        <div class="next-step">
+          <div class="next-step__title">Connect a data source</div>
+          <div class="next-step__desc">Добавьте подключение к маркетплейсу.</div>
+          <dp-button size="sm" variant="primary" (click)="goToConnections(selected.id)">
+            Create connection
           </dp-button>
         </div>
-      </form>
-    </div>
-  </dp-modal>
-
-    <dp-modal [visible]="renameModalVisible" (close)="closeRenameModal()">
-    <div class="modal-content">
-      <h3>Переименовать workspace</h3>
-      <form class="form" [formGroup]="renameForm" (ngSubmit)="submitRename()">
-        <label>
-          Название
-          <dp-input formControlName="name" maxlength="32" placeholder="Название workspace"></dp-input>
-        </label>
-        <div class="modal-actions">
-          <dp-button type="button" variant="secondary" (click)="closeRenameModal()">Отмена</dp-button>
-          <dp-button type="submit" variant="primary" [disabled]="saving">
-            {{ saving ? "Сохраняем..." : "Сохранить" }}
+        <div class="next-step">
+          <div class="next-step__title">Invite your team</div>
+          <div class="next-step__desc">Добавьте пользователей и роли.</div>
+          <dp-button size="sm" variant="secondary" (click)="goToUsers(selected.id)">
+            Invite users
           </dp-button>
         </div>
-      </form>
-    </div>
-    </dp-modal>
-  </dp-dashboard-shell>
+        <div class="next-step">
+          <div class="next-step__title">Open dashboards</div>
+          <div class="next-step__desc">Перейдите к аналитике и метрикам.</div>
+          <dp-button size="sm" variant="secondary" (click)="goToWorkspace(selected.id)">
+            View analytics
+          </dp-button>
+        </div>
+      </div>
+    </section>
+
+    <dp-confirm-dialog
+      [visible]="archiveDialogVisible"
+      title="Archive workspace?"
+      description="Workspace станет недоступен для синхронизаций и пользователей."
+      confirmLabel="Archive"
+      [loading]="saving"
+      (confirm)="archiveWorkspace()"
+      (cancel)="closeArchiveDialog()"
+    ></dp-confirm-dialog>
+
+    <dp-confirm-dialog
+      [visible]="deleteDialogVisible"
+      title="Delete workspace?"
+      description="Удаление необратимо и затронет подключения и пользователей."
+      confirmLabel="Delete"
+      [danger]="true"
+      [loading]="saving"
+      (confirm)="deleteWorkspace()"
+      (cancel)="closeDeleteDialog()"
+    ></dp-confirm-dialog>
+  </dp-page-layout>
 </ng-container>

@@ -1,9 +1,10 @@
 <ng-container *ngIf="vm$ | async as vm">
-  <dp-dashboard-shell
-    [accountId]="vm.accountId"
-    title="Home / Summary"
-    subtitle="Ключевые показатели по выбранному аккаунту"
-  >
+  <dp-page-layout [accountId]="vm.accountId">
+    <dp-page-header
+      title="Analytics overview"
+      subtitle="Ключевые показатели по выбранному workspace"
+    ></dp-page-header>
+
     <dp-filter-bar [fields]="filters"></dp-filter-bar>
     <dp-metric-tile-group [tiles]="tiles" [state]="vm.state.state"></dp-metric-tile-group>
 
@@ -21,5 +22,5 @@
         [accountId]="vm.accountId"
       ></dp-chart-card>
     </div>
-  </dp-dashboard-shell>
+  </dp-page-layout>
 </ng-container>

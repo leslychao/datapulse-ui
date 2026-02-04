@@ -7,12 +7,12 @@ import {
   OzonCredentials,
   WildberriesCredentials
 } from "../../shared/models";
-import {InputComponent} from "../../shared/ui";
+import {FormFieldComponent, InputComponent, SelectComponent} from "../../shared/ui";
 
 @Component({
   selector: "dp-connection-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, InputComponent],
+  imports: [CommonModule, ReactiveFormsModule, InputComponent, FormFieldComponent, SelectComponent],
   templateUrl: "./connection-form.component.html",
   styleUrl: "./connection-form.component.css"
 })

@@ -1,0 +1,268 @@
+<ng-container *ngIf="vm$ | async as vm">
+  <dp-page-layout [accountId]="vm.accountId">
+    <dp-page-header
+      title="Connections"
+      subtitle="Управляйте подключениями и синхронизациями данных."
+    >
+      <div secondary-actions>
+        <dp-button variant="secondary" (click)="refresh()">Refresh</dp-button>
+      </div>
+      <div primary-action>
+        <dp-button variant="primary" (click)="openWizard()">Create connection</dp-button>
+      </div>
+    </dp-page-header>
+
+    <section class="card">
+      <dp-table-toolbar>
+        <div filters>
+          <dp-form-field label="Marketplace">
+            <dp-select [formControl]="marketplaceFilterControl">
+              <option value="">All marketplaces</option>
+              <option *ngFor="let marketplace of marketplaceOptions" [value]="marketplace">
+                {{ marketplace }}
+              </option>
+            </dp-select>
+          </dp-form-field>
+        </div>
+      </dp-table-toolbar>
+
+      <ng-container *ngIf="vm.state.status === 'loading'">
+        <dp-loading-state label="Loading connections"></dp-loading-state>
+      </ng-container>
+
+      <ng-container *ngIf="vm.state.status === 'error'">
+        <dp-error-state
+          title="Не удалось загрузить подключения"
+          [description]="vm.state.error.message"
+        >
+          <dp-button variant="secondary" (click)="refresh()">Retry</dp-button>
+        </dp-error-state>
+      </ng-container>
+
+      <ng-container *ngIf="vm.state.status === 'ready'">
+        <dp-table *ngIf="filteredConnections(vm.state.data).length; else emptyState">
+          <table>
+            <thead>
+              <tr>
+                <th>Connection</th>
+                <th>Status</th>
+                <th>Last sync</th>
+                <th>Freshness</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let connection of filteredConnections(vm.state.data)">
+                <td>
+                  <div class="cell-title">{{ connection.marketplace }}</div>
+                  <div class="cell-subtitle">ID: {{ connection.id }}</div>
+                </td>
+                <td>
+                  <span [class]="getStatusClass(connection)">{{ getStatusLabel(connection) }}</span>
+                </td>
+                <td>{{ connection.lastSyncAt ? (connection.lastSyncAt | date: 'short') : '—' }}</td>
+                <td>{{ getFreshness(connection) }}</td>
+                <td>
+                  <div class="actions">
+                    <dp-button
+                      size="sm"
+                      variant="primary"
+                      (click)="runSync(connection)"
+                      [disabled]="!connection.active"
+                    >
+                      Run sync
+                    </dp-button>
+                    <dp-button size="sm" variant="secondary" (click)="openDetails(connection)">
+                      View details
+                    </dp-button>
+                    <dp-button size="sm" variant="secondary" (click)="openEditModal(connection)">
+                      Edit
+                    </dp-button>
+                    <dp-button
+                      size="sm"
+                      variant="secondary"
+                      (click)="requestDisable(connection)"
+                      [disabled]="!connection.active"
+                    >
+                      Disable
+                    </dp-button>
+                    <dp-button size="sm" variant="danger" (click)="requestDelete(connection)">
+                      Delete
+                    </dp-button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </dp-table>
+        <ng-template #emptyState>
+          <dp-empty-state
+            title="Нет подключений"
+            description="Подключите маркетплейс, чтобы начать синхронизацию."
+          >
+            <dp-button variant="primary" (click)="openWizard()">Create connection</dp-button>
+          </dp-empty-state>
+        </ng-template>
+      </ng-container>
+    </section>
+
+    <dp-modal [visible]="wizardVisible" (close)="closeWizard()">
+      <div class="modal-content">
+        <div class="wizard-header">
+          <h3>Create connection</h3>
+          <p class="muted">Step: {{ wizardStepLabel }}</p>
+        </div>
+
+        <form [formGroup]="wizardForm" class="wizard-form">
+          <div *ngIf="wizardStep === 'marketplace'">
+            <dp-form-field label="Marketplace" [required]="true">
+              <dp-select formControlName="marketplace">
+                <option *ngFor="let marketplace of marketplaceOptions" [value]="marketplace">
+                  {{ marketplace }}
+                </option>
+              </dp-select>
+            </dp-form-field>
+          </div>
+
+          <div *ngIf="wizardStep === 'credentials'" class="wizard-step">
+            <p class="muted">Введите credentials. Мы проверим доступ перед запуском.</p>
+            <ng-container *ngIf="wizardIsWildberries; else ozonCredentials">
+              <dp-form-field label="Token" [required]="true" hint="Где взять: WB seller → API access.">
+                <dp-input type="password" formControlName="token"></dp-input>
+              </dp-form-field>
+            </ng-container>
+            <ng-template #ozonCredentials>
+              <dp-form-field label="Client ID" [required]="true" hint="Ozon → API keys.">
+                <dp-input formControlName="clientId"></dp-input>
+              </dp-form-field>
+              <dp-form-field label="API Key" [required]="true">
+                <dp-input type="password" formControlName="apiKey"></dp-input>
+              </dp-form-field>
+            </ng-template>
+          </div>
+        </form>
+
+        <div *ngIf="wizardStep === 'validate'">
+          <dp-loading-state label="Checking credentials"></dp-loading-state>
+          <p class="error-text" *ngIf="wizardError">{{ wizardError }}</p>
+          <dp-button variant="secondary" *ngIf="wizardError" (click)="validateCredentials()">
+            Retry validation
+          </dp-button>
+        </div>
+
+        <div *ngIf="wizardStep === 'sync'" class="wizard-step">
+          <h4>Initial sync started</h4>
+          <p class="muted">Мы запускаем первую синхронизацию. Это может занять несколько минут.</p>
+          <dp-loading-state label="Sync in progress"></dp-loading-state>
+        </div>
+
+        <div *ngIf="wizardStep === 'success'" class="wizard-step">
+          <h4>Connection ready</h4>
+          <p class="muted">Подключение создано и синхронизация запущена.</p>
+          <dp-button variant="primary" (click)="finishWizard()">Go to connections</dp-button>
+        </div>
+
+        <div class="modal-actions">
+          <dp-button variant="secondary" (click)="closeWizard()">Cancel</dp-button>
+          <dp-button
+            variant="primary"
+            *ngIf="wizardStep === 'marketplace' || wizardStep === 'credentials'"
+            (click)="nextWizardStep()"
+          >
+            Next
+          </dp-button>
+          <dp-button
+            variant="primary"
+            *ngIf="wizardStep === 'sync'"
+            (click)="nextWizardStep()"
+          >
+            Continue
+          </dp-button>
+        </div>
+      </div>
+    </dp-modal>
+
+    <dp-modal [visible]="editVisible" (close)="closeEditModal()">
+      <div class="modal-content">
+        <h3>Edit connection</h3>
+        <p class="muted">Введите новые credentials для обновления подключения.</p>
+        <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="form">
+          <ng-container *ngIf="editIsWildberries; else editOzon">
+            <dp-form-field label="Token" [required]="true">
+              <dp-input type="password" formControlName="token"></dp-input>
+            </dp-form-field>
+          </ng-container>
+          <ng-template #editOzon>
+            <dp-form-field label="Client ID" [required]="true">
+              <dp-input formControlName="clientId"></dp-input>
+            </dp-form-field>
+            <dp-form-field label="API Key" [required]="true">
+              <dp-input type="password" formControlName="apiKey"></dp-input>
+            </dp-form-field>
+          </ng-template>
+          <div class="modal-actions">
+            <dp-button variant="secondary" type="button" (click)="closeEditModal()">
+              Cancel
+            </dp-button>
+            <dp-button variant="primary" type="submit" [loading]="saving">Save</dp-button>
+          </div>
+        </form>
+      </div>
+    </dp-modal>
+
+    <dp-modal [visible]="detailsVisible" (close)="closeDetails()">
+      <div class="modal-content" *ngIf="detailsConnection as connection">
+        <h3>Connection details</h3>
+        <div class="details-grid">
+          <div>
+            <div class="detail-label">Marketplace</div>
+            <div>{{ connection.marketplace }}</div>
+          </div>
+          <div>
+            <div class="detail-label">Status</div>
+            <div>{{ getStatusLabel(connection) }}</div>
+          </div>
+          <div>
+            <div class="detail-label">Last sync</div>
+            <div>{{ connection.lastSyncAt ? (connection.lastSyncAt | date: 'short') : '—' }}</div>
+          </div>
+        </div>
+        <div class="diagnostic" *ngIf="connection.lastSyncStatus === syncStatus.Failed">
+          <h4>Needs attention</h4>
+          <p class="muted">Проверьте credentials и повторите синхронизацию.</p>
+          <dp-button variant="secondary" (click)="openEditModal(connection)">
+            Re-check credentials
+          </dp-button>
+          <dp-button variant="primary" (click)="runSync(connection)">Retry sync</dp-button>
+        </div>
+        <div class="details-toggle">
+          <dp-button variant="link" (click)="toggleDetails()">
+            {{ detailsExpanded ? "Hide details" : "Details" }}
+          </dp-button>
+        </div>
+        <pre class="details-meta" *ngIf="detailsExpanded">{{ connection | json }}</pre>
+      </div>
+    </dp-modal>
+
+    <dp-confirm-dialog
+      [visible]="deleteDialogVisible"
+      title="Delete connection?"
+      description="Удаление разорвет синхронизацию и удалит данные подключения."
+      confirmLabel="Delete"
+      [danger]="true"
+      (confirm)="deleteConnection()"
+      (cancel)="closeDeleteDialog()"
+      [loading]="saving"
+    ></dp-confirm-dialog>
+
+    <dp-confirm-dialog
+      [visible]="disableDialogVisible"
+      title="Disable connection?"
+      description="Синхронизация остановится до повторного включения."
+      confirmLabel="Disable"
+      (confirm)="disableConnection()"
+      (cancel)="closeDisableDialog()"
+      [loading]="saving"
+    ></dp-confirm-dialog>
+  </dp-page-layout>
+</ng-container>

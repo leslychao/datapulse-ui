@@ -1,0 +1,7 @@
+<div class="empty-state">
+  <div class="empty-state__title">{{ title }}</div>
+  <div class="empty-state__description" *ngIf="description">{{ description }}</div>
+  <div class="empty-state__actions">
+    <ng-content></ng-content>
+  </div>
+</div>

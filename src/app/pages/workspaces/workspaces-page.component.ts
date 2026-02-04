@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
-import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {FormBuilder, ReactiveFormsModule} from "@angular/forms";
 import {ActivatedRoute, Router} from "@angular/router";
 import {combineLatest, forkJoin, of, Subject, switchMap} from "rxjs";
 import {finalize, map, shareReplay, startWith, tap} from "rxjs/operators";
@@ -13,22 +13,22 @@ import {
   ApiError,
   IamApiClient
 } from "../../core/api";
-import {
-  AccountConnection,
-  AccountMember,
-  AccountResponse,
-  AccountUpdateRequest
-} from "../../shared/models";
+import {AccountConnection, AccountMember, AccountResponse, AccountUpdateRequest} from "../../shared/models";
 import {AccountContextService} from "../../core/state";
 import {accountIdFromRoute} from "../../core/routing/account-id.util";
 import {APP_PATHS} from "../../core/app-paths";
 import {
   ButtonComponent,
-  DashboardShellComponent,
+  ConfirmDialogComponent,
+  EmptyStateComponent,
+  ErrorStateComponent,
+  FormFieldComponent,
   InputComponent,
-  LoaderComponent,
-  ModalComponent,
+  LoadingStateComponent,
+  PageHeaderComponent,
+  PageLayoutComponent,
   TableComponent,
+  TableToolbarComponent,
   ToastService
 } from "../../shared/ui";
 import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
@@ -52,12 +52,17 @@ interface WorkspacesViewModel {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    DashboardShellComponent,
+    PageLayoutComponent,
+    PageHeaderComponent,
     ButtonComponent,
     InputComponent,
-    LoaderComponent,
-    ModalComponent,
-    TableComponent
+    FormFieldComponent,
+    TableComponent,
+    TableToolbarComponent,
+    EmptyStateComponent,
+    LoadingStateComponent,
+    ErrorStateComponent,
+    ConfirmDialogComponent
   ],
   templateUrl: "./workspaces-page.component.html",
   styleUrl: "./workspaces-page.component.css",
@@ -77,27 +82,13 @@ export class WorkspacesPageComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   saving = false;
-  createModalVisible = false;
-  renameModalVisible = false;
-  renamingAccount: AccountResponse | null = null;
+  deleteDialogVisible = false;
+  archiveDialogVisible = false;
+  selectedActionWorkspace: AccountResponse | null = null;
 
   private readonly refreshAccounts$ = new Subject<void>();
   private readonly refreshDetails$ = new Subject<void>();
   private readonly routeAccountId$ = accountIdFromRoute(this.route);
-
-  readonly createForm: FormGroup<{
-    name: FormControl<string>;
-    active: FormControl<boolean>;
-  }> = this.fb.nonNullable.group({
-    name: ["", [Validators.required, Validators.maxLength(32)]],
-    active: [true]
-  });
-
-  readonly renameForm: FormGroup<{
-    name: FormControl<string>;
-  }> = this.fb.nonNullable.group({
-    name: ["", [Validators.required, Validators.maxLength(32)]]
-  });
 
   readonly searchControl = this.fb.nonNullable.control("");
 
@@ -209,125 +200,51 @@ export class WorkspacesPageComponent {
     search: this.searchControl.valueChanges.pipe(startWith(""))
   });
 
-  constructor() {}
-
-  selectAccount(accountId: number): void {
-    if (accountId === this.accountContext.snapshot) {
-      return;
-    }
-    this.accountContext.setAccountId(accountId);
-    this.refreshDetails$.next();
-    this.router.navigate([APP_PATHS.workspaces, accountId]);
+  constructor() {
+    this.accountContext.accountId$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.cdr.markForCheck();
+      });
   }
 
   refreshAccounts(): void {
     this.refreshAccounts$.next();
-  }
-
-  refreshDetails(): void {
     this.refreshDetails$.next();
   }
 
-  openCreateModal(): void {
-    this.createForm.reset({name: "", active: true});
-    this.createModalVisible = true;
+  goToCreateWorkspace(): void {
+    this.router.navigateByUrl(APP_PATHS.workspacesCreate);
   }
 
-  closeCreateModal(): void {
-    this.createModalVisible = false;
-    this.createForm.reset({name: "", active: true});
+  openArchiveDialog(account: AccountResponse): void {
+    this.selectedActionWorkspace = account;
+    this.archiveDialogVisible = true;
   }
 
-  openRenameModal(account: AccountResponse): void {
-    this.renamingAccount = account;
-    this.renameForm.reset({name: account.name});
-    this.renameModalVisible = true;
+  closeArchiveDialog(): void {
+    this.archiveDialogVisible = false;
+    this.selectedActionWorkspace = null;
   }
 
-  closeRenameModal(): void {
-    this.renameModalVisible = false;
-    this.renamingAccount = null;
-    this.renameForm.reset({name: ""});
+  openDeleteDialog(account: AccountResponse): void {
+    this.selectedActionWorkspace = account;
+    this.deleteDialogVisible = true;
   }
 
-  submitCreate(): void {
-    if (this.createForm.invalid || this.saving) {
-      this.createForm.markAllAsTouched();
+  closeDeleteDialog(): void {
+    this.deleteDialogVisible = false;
+    this.selectedActionWorkspace = null;
+  }
+
+  archiveWorkspace(): void {
+    if (!this.selectedActionWorkspace || this.saving) {
       return;
     }
-    const {name, active} = this.createForm.getRawValue();
-    this.saving = true;
-    this.accountsApi
-      .create({name: name.trim(), active})
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap((account) => {
-          this.toastService.success("Workspace создан.");
-          this.accountContext.setAccountId(account.id);
-          this.refreshAccounts$.next();
-          this.refreshDetails$.next();
-          this.closeCreateModal();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error("Не удалось создать workspace.", {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
-  }
-
-  submitRename(): void {
-    if (this.renameForm.invalid || this.saving || !this.renamingAccount) {
-      this.renameForm.markAllAsTouched();
-      return;
-    }
-    const {name} = this.renameForm.getRawValue();
-    const update: AccountUpdateRequest = {
-      name: name.trim(),
-      active: this.renamingAccount.active
-    };
-    this.saving = true;
-    this.accountsApi
-      .update(this.renamingAccount.id, update)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Workspace обновлён.");
-          this.refreshAccounts$.next();
-          this.refreshDetails$.next();
-          this.closeRenameModal();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error("Не удалось обновить workspace.", {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
-  }
-
-  toggleActive(account: AccountResponse): void {
-    if (this.saving) {
-      return;
-    }
+    const account = this.selectedActionWorkspace;
     const update: AccountUpdateRequest = {
       name: account.name,
-      active: !account.active
+      active: false
     };
     this.saving = true;
     this.accountsApi
@@ -335,12 +252,14 @@ export class WorkspacesPageComponent {
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         tap(() => {
-          this.toastService.success("Статус workspace обновлён.");
+          this.toastService.success("Workspace архивирован.");
           this.refreshAccounts$.next();
+          this.refreshDetails$.next();
+          this.closeArchiveDialog();
         }),
         tap({
           error: (error: ApiError) => {
-            this.toastService.error("Не удалось обновить workspace.", {
+            this.toastService.error("Не удалось архивировать workspace.", {
               details: error.details,
               correlationId: error.correlationId
             });
@@ -354,14 +273,11 @@ export class WorkspacesPageComponent {
       .subscribe();
   }
 
-  deleteWorkspace(account: AccountResponse): void {
-    if (this.saving) {
+  deleteWorkspace(): void {
+    if (!this.selectedActionWorkspace || this.saving) {
       return;
     }
-    const confirmed = window.confirm("Удалить workspace? Это действие необратимо.");
-    if (!confirmed) {
-      return;
-    }
+    const account = this.selectedActionWorkspace;
     this.saving = true;
     this.accountsApi
       .remove(account.id)
@@ -374,6 +290,7 @@ export class WorkspacesPageComponent {
           }
           this.refreshAccounts$.next();
           this.refreshDetails$.next();
+          this.closeDeleteDialog();
         }),
         tap({
           error: (error: ApiError) => {
@@ -391,12 +308,21 @@ export class WorkspacesPageComponent {
       .subscribe();
   }
 
-  navigateToConnections(accountId: number): void {
-    this.router.navigateByUrl(APP_PATHS.settingsConnections(accountId));
+  goToWorkspace(accountId: number): void {
+    this.accountContext.setAccountId(accountId);
+    this.router.navigateByUrl(APP_PATHS.overview(accountId));
   }
 
-  navigateToMembers(accountId: number): void {
-    this.router.navigateByUrl(APP_PATHS.settingsUsers(accountId));
+  goToSettings(accountId: number): void {
+    this.router.navigateByUrl(APP_PATHS.workspaceSettings(accountId));
+  }
+
+  goToConnections(accountId: number): void {
+    this.router.navigateByUrl(APP_PATHS.connections(accountId));
+  }
+
+  goToUsers(accountId: number): void {
+    this.router.navigateByUrl(APP_PATHS.users(accountId));
   }
 
   getLastSyncAt(connections: AccountConnection[]): string | null {
@@ -410,5 +336,9 @@ export class WorkspacesPageComponent {
       return null;
     }
     return timestamps.sort().at(-1) ?? null;
+  }
+
+  canDelete(count: number): boolean {
+    return count > 1;
   }
 }

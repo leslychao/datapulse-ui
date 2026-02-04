@@ -5,9 +5,10 @@ import {combineLatest} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 
 import {
-  DashboardShellComponent,
   FilterBarComponent,
-  DataTableCardComponent
+  DataTableCardComponent,
+  PageHeaderComponent,
+  PageLayoutComponent
 } from "../../shared/ui";
 import {DashboardStateQuery} from "../../queries/dashboard-state.query";
 import {DATA_STATE} from "../../shared/models";
@@ -18,7 +19,7 @@ import {accountIdFromRoute} from "../../core/routing/account-id.util";
 @Component({
   selector: "dp-operations-sales-page",
   standalone: true,
-  imports: [CommonModule, DashboardShellComponent, FilterBarComponent, DataTableCardComponent],
+  imports: [CommonModule, PageLayoutComponent, PageHeaderComponent, FilterBarComponent, DataTableCardComponent],
   templateUrl: "./operations-sales-page.component.html",
   styleUrl: "./operations-sales-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -38,7 +39,7 @@ export class OperationsSalesPageComponent {
   quickFilter: "today" | "60m" | "24h" = "today";
 
   readonly filters: FilterFieldVm[] = [
-    {id: "account", label: "Account", type: "select", options: [{label: "Все аккаунты", value: "all"}]},
+    {id: "account", label: "Workspace", type: "select", options: [{label: "Все workspace", value: "all"}]},
     {id: "marketplace", label: "Marketplace", type: "select", options: [{label: "Все", value: "all"}]},
     {id: "search", label: "Search", type: "search", placeholder: "ID заказа или SKU"}
   ];

@@ -1,0 +1,22 @@
+<div class="page-layout" data-testid="page-layout">
+  <aside class="page-layout__sidebar">
+    <div class="sidebar-section" *ngFor="let section of sections; trackBy: trackBySection">
+      <div class="sidebar-section__label">{{ section.label }}</div>
+      <a
+        class="sidebar-item"
+        *ngFor="let item of section.items; trackBy: trackByItem"
+        [routerLink]="item.path"
+        routerLinkActive="is-active"
+        [attr.data-testid]="item.testId"
+      >
+        {{ item.label }}
+      </a>
+    </div>
+  </aside>
+
+  <main class="page-layout__main">
+    <div class="page-layout__content">
+      <ng-content></ng-content>
+    </div>
+  </main>
+</div>

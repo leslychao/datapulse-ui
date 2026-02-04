@@ -2,16 +2,17 @@ import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from "
 import {CommonModule} from "@angular/common";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {AccountCreateRequest} from "../../shared/models";
-import {InputComponent} from "../../shared/ui";
+import {FormFieldComponent, InputComponent} from "../../shared/ui";
 
 type AccountFormGroup = FormGroup<{
   name: FormControl<string>;
+  description: FormControl<string>;
 }>;
 
 @Component({
   selector: "dp-account-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, InputComponent],
+  imports: [CommonModule, ReactiveFormsModule, InputComponent, FormFieldComponent],
   templateUrl: "./account-form.component.html",
   styleUrl: "./account-form.component.css"
 })
@@ -24,7 +25,8 @@ export class AccountFormComponent implements OnChanges {
 
   constructor(private readonly fb: FormBuilder) {
     this.form = this.fb.nonNullable.group({
-      name: ["", [Validators.required, Validators.maxLength(32)]]
+      name: ["", [Validators.required, Validators.maxLength(32)]],
+      description: [""]
     });
   }
 
@@ -46,8 +48,8 @@ export class AccountFormComponent implements OnChanges {
       this.form.markAllAsTouched();
       return null;
     }
-    const {name} = this.form.getRawValue();
-    return {name: name.trim(), active: true};
+    const {name, description} = this.form.getRawValue();
+    return {name: name.trim(), description: description.trim() || null, active: true};
   }
 
   getCurrentName(): string {

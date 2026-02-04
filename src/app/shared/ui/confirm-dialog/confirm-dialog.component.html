@@ -1,0 +1,18 @@
+<dp-modal [visible]="visible" (close)="close()">
+  <div class="confirm-dialog">
+    <div class="confirm-dialog__title">{{ title }}</div>
+    <div class="confirm-dialog__description" *ngIf="description">{{ description }}</div>
+    <div class="confirm-dialog__actions">
+      <dp-button variant="secondary" (click)="close()" [disabled]="loading">
+        {{ cancelLabel }}
+      </dp-button>
+      <dp-button
+        [variant]="danger ? 'danger' : 'primary'"
+        (click)="submit()"
+        [disabled]="loading"
+      >
+        {{ confirmLabel }}
+      </dp-button>
+    </div>
+  </div>
+</dp-modal>

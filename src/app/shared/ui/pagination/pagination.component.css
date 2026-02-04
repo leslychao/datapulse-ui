@@ -1,0 +1,17 @@
+.pagination{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:8px 0;
+}
+
+.pagination__info{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.pagination__actions{
+  display:flex;
+  gap:8px;
+}

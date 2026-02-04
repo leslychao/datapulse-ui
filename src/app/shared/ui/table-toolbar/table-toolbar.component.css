@@ -1,0 +1,16 @@
+.table-toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:16px;
+  flex-wrap:wrap;
+  padding:12px 0;
+}
+
+.table-toolbar__left,
+.table-toolbar__right{
+  display:flex;
+  gap:12px;
+  align-items:flex-end;
+  flex-wrap:wrap;
+}

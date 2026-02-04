@@ -1,0 +1,16 @@
+select{
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid transparent;
+  background:var(--field-bg);
+  color:var(--text);
+  outline:none;
+  transition:background .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+
+select:focus{
+  background:var(--field-bg-focus);
+  border-color:rgba(42,139,242,.35);
+  box-shadow:var(--focus-ring);
+}

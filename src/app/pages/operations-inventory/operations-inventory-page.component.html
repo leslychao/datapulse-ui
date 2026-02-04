@@ -1,48 +1,26 @@
 <ng-container *ngIf="vm$ | async as vm">
-  <dp-dashboard-shell
-    [accountId]="vm.accountId"
-    title="Inventory & DoC"
-    subtitle="Запасы, дни покрытия и складская динамика"
-  >
+  <dp-page-layout [accountId]="vm.accountId">
+    <dp-page-header
+      title="Inventory"
+      subtitle="Остатки, оборачиваемость и уровни запасов"
+    ></dp-page-header>
+
     <dp-filter-bar [fields]="filters"></dp-filter-bar>
     <dp-metric-tile-group [tiles]="alerts" [state]="vm.state.state"></dp-metric-tile-group>
 
-    <div class="tabs">
-      <button type="button" [class.is-active]="activeTab === 'warehouse'" (click)="setTab('warehouse')">
-        По складам
-      </button>
-      <button type="button" [class.is-active]="activeTab === 'sku'" (click)="setTab('sku')">
-        По SKU
-      </button>
+    <div class="inventory-grid">
+      <dp-chart-card
+        title="Stock trend"
+        subtitle="Динамика запасов"
+        [state]="vm.state.state"
+        [accountId]="vm.accountId"
+      ></dp-chart-card>
+      <dp-data-table-card
+        title="Inventory by warehouse"
+        subtitle="Складские остатки"
+        [columns]="columnsByWarehouse"
+        [state]="vm.state.state"
+      ></dp-data-table-card>
     </div>
-
-    <dp-data-table-card
-      *ngIf="activeTab === 'warehouse'"
-      title="Запасы по складам"
-      subtitle="Сводка по складам"
-      [columns]="columnsByWarehouse"
-      [rows]="[]"
-      [state]="vm.state.state"
-      [accountId]="vm.accountId"
-      testId="inventory-warehouse-table"
-    ></dp-data-table-card>
-
-    <dp-data-table-card
-      *ngIf="activeTab === 'sku'"
-      title="Запасы по SKU"
-      subtitle="Сводка по SKU"
-      [columns]="columnsBySku"
-      [rows]="[]"
-      [state]="vm.state.state"
-      [accountId]="vm.accountId"
-      testId="inventory-sku-table"
-    ></dp-data-table-card>
-
-    <dp-chart-card
-      title="Recommendations"
-      subtitle="Панель рекомендаций"
-      [state]="vm.state.state"
-      [accountId]="vm.accountId"
-    ></dp-chart-card>
-  </dp-dashboard-shell>
+  </dp-page-layout>
 </ng-container>

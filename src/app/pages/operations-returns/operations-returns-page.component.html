@@ -1,27 +1,26 @@
 <ng-container *ngIf="vm$ | async as vm">
-  <dp-dashboard-shell
-    [accountId]="vm.accountId"
-    title="Returns & Buyout"
-    subtitle="Возвраты, выкупы и влияние на P&L"
-  >
+  <dp-page-layout [accountId]="vm.accountId">
+    <dp-page-header
+      title="Returns & buyout"
+      subtitle="Возвраты, выкупы и их влияние на P&L"
+    ></dp-page-header>
+
     <dp-filter-bar [fields]="filters"></dp-filter-bar>
     <dp-metric-tile-group [tiles]="tiles" [state]="vm.state.state"></dp-metric-tile-group>
 
-    <dp-chart-card
-      title="Динамика"
-      subtitle="Динамика возвратов"
-      [state]="vm.state.state"
-      [accountId]="vm.accountId"
-    ></dp-chart-card>
-
-    <dp-data-table-card
-      title="Проблемные зоны"
-      subtitle="Причины и влияние"
-      [columns]="problemColumns"
-      [rows]="[]"
-      [state]="vm.state.state"
-      [accountId]="vm.accountId"
-      testId="returns-problems-table"
-    ></dp-data-table-card>
-  </dp-dashboard-shell>
+    <div class="returns-grid">
+      <dp-chart-card
+        title="Returns trend"
+        subtitle="Динамика возвратов"
+        [state]="vm.state.state"
+        [accountId]="vm.accountId"
+      ></dp-chart-card>
+      <dp-data-table-card
+        title="Return reasons"
+        subtitle="Топ причин возвратов"
+        [columns]="problemColumns"
+        [state]="vm.state.state"
+      ></dp-data-table-card>
+    </div>
+  </dp-page-layout>
 </ng-container>

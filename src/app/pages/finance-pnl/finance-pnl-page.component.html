@@ -1,71 +1,26 @@
 <ng-container *ngIf="vm$ | async as vm">
-  <dp-dashboard-shell
-    [accountId]="vm.accountId"
-    title="P&L (Account-level)"
-    subtitle="Прибыль и убытки по аккаунту"
-  >
+  <dp-page-layout [accountId]="vm.accountId">
+    <dp-page-header
+      title="Profit & Loss"
+      subtitle="Финансовая сводка по заказам и маржинальности"
+    ></dp-page-header>
+
     <dp-filter-bar [fields]="filters"></dp-filter-bar>
     <dp-metric-tile-group [tiles]="tiles" [state]="vm.state.state"></dp-metric-tile-group>
 
-    <dp-chart-card
-      title="Динамика по периоду"
-      subtitle="P&L во времени"
-      [state]="vm.state.state"
-      [accountId]="vm.accountId"
-    ></dp-chart-card>
-
-    <dp-chart-card
-      title="Composition / Waterfall"
-      subtitle="Структура влияния на прибыль"
-      [state]="vm.state.state"
-      [accountId]="vm.accountId"
-    ></dp-chart-card>
-
-    <section class="orders-card">
-      <div class="table-header">
-        <div>
-          <h3>Order P&L</h3>
-          <p class="muted">Детализация по заказам за выбранный период.</p>
-        </div>
-      </div>
-
-      <ng-container [ngSwitch]="vm.orderPnlState.status">
-        <p class="muted" *ngSwitchCase="'loading'">Загрузка данных...</p>
-        <p class="muted" *ngSwitchCase="'error'">
-          {{ getOrderPnlError(vm.orderPnlState) }}
-        </p>
-        <ng-container *ngSwitchCase="'ready'">
-          <p class="muted" *ngIf="getOrderPnlRows(vm.orderPnlState).length === 0">
-            Данные по заказам пока не получены.
-          </p>
-          <div class="table-wrapper" *ngIf="getOrderPnlRows(vm.orderPnlState).length">
-            <table>
-              <thead>
-                <tr>
-                  <th>Marketplace</th>
-                  <th>Order ID</th>
-                  <th>P&L</th>
-                  <th>Net payout</th>
-                  <th>Revenue</th>
-                  <th>Items</th>
-                  <th>Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let item of getOrderPnlRows(vm.orderPnlState)">
-                  <td>{{ item.sourcePlatform }}</td>
-                  <td>{{ item.orderId }}</td>
-                  <td>{{ item.pnlAmount || "—" }} {{ item.currency }}</td>
-                  <td>{{ item.netPayout || "—" }} {{ item.currency }}</td>
-                  <td>{{ item.revenueGross || "—" }} {{ item.currency }}</td>
-                  <td>{{ item.itemsSoldCount }}</td>
-                  <td>{{ item.updatedAt | date: "short" }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </ng-container>
-      </ng-container>
-    </section>
-  </dp-dashboard-shell>
+    <div class="pnl-grid">
+      <dp-chart-card
+        title="Revenue"
+        subtitle="Динамика выручки"
+        [state]="vm.state.state"
+        [accountId]="vm.accountId"
+      ></dp-chart-card>
+      <dp-chart-card
+        title="Margins"
+        subtitle="Сравнение маржинальности"
+        [state]="vm.state.state"
+        [accountId]="vm.accountId"
+      ></dp-chart-card>
+    </div>
+  </dp-page-layout>
 </ng-container>
