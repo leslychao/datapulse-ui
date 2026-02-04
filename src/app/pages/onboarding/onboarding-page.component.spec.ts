@@ -82,7 +82,7 @@ describe("OnboardingPageComponent", () => {
 
     component.startSync();
 
-    expect(router.navigateByUrl).toHaveBeenCalledWith(APP_PATHS.homeSummary(11), {replaceUrl: true});
+    expect(router.navigateByUrl).toHaveBeenCalledWith(APP_PATHS.overview(11), {replaceUrl: true});
   });
 
   it("redirects to summary after sync start returns 201", () => {
@@ -108,6 +108,6 @@ describe("OnboardingPageComponent", () => {
 
     component.startSync();
 
-    expect(router.navigateByUrl).toHaveBeenCalledWith(APP_PATHS.homeSummary(12), {replaceUrl: true});
+    expect(router.navigateByUrl).toHaveBeenCalledWith(APP_PATHS.overview(12), {replaceUrl: true});
   });
 });

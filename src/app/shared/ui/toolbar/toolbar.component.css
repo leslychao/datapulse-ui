@@ -1,0 +1,20 @@
+.toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:16px;
+  flex-wrap:wrap;
+}
+
+.toolbar__filters{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:flex-end;
+}
+
+.toolbar__actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}

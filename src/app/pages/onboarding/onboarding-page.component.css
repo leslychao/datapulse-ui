@@ -1,19 +1,3 @@
-.page {
-  padding: clamp(24px, 3vw, 40px);
-  max-width: 1120px;
-  margin: 0 auto;
-}
-
-.page-header {
-  margin-bottom: 28px;
-}
-
-.page-header h1 {
-  font-size: clamp(26px, 3vw, 34px);
-  line-height: 1.2;
-  margin: 0 0 10px;
-}
-
 .muted {
   color: var(--muted);
   font-size: 14px;
@@ -27,7 +11,7 @@
   margin-bottom: 24px;
 }
 
-.stepper__item {
+.stepper__item .dp-button {
   display: flex;
   align-items: flex-start;
   gap: 14px;
@@ -41,24 +25,24 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease;
 }
 
-.stepper__item:disabled {
+.stepper__item .dp-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.stepper__item:not(:disabled):hover {
+.stepper__item .dp-button:not(:disabled):hover {
   border-color: rgba(42, 139, 242, 0.35);
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
   transform: translateY(-1px);
 }
 
-.stepper__item.is-current {
+.stepper__item.is-current .dp-button {
   border-color: var(--accent);
   box-shadow: 0 16px 32px rgba(42, 139, 242, 0.2);
   background: linear-gradient(180deg, rgba(42, 139, 242, 0.08), rgba(42, 139, 242, 0.02));
 }
 
-.stepper__item.is-complete {
+.stepper__item.is-complete .dp-button {
   border-color: rgba(34, 197, 94, 0.45);
   background: linear-gradient(180deg, rgba(34, 197, 94, 0.08), rgba(34, 197, 94, 0.02));
 }

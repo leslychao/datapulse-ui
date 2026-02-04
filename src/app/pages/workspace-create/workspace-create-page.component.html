@@ -1,0 +1,34 @@
+<dp-page-layout [accountId]="null">
+  <dp-page-header
+    title="Create workspace"
+    subtitle="Название и краткое описание помогут команде понимать контекст."
+  >
+    <div secondary-actions>
+      <dp-button variant="secondary" (click)="goToWorkspaces()">Back</dp-button>
+    </div>
+    <div primary-action>
+      <dp-button variant="primary" (click)="submit()" [loading]="saving">Create</dp-button>
+    </div>
+  </dp-page-header>
+
+  <section class="card">
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+      <dp-form-field label="Workspace name" [required]="true">
+        <dp-input placeholder="e.g. North Star Marketplace" formControlName="name"></dp-input>
+      </dp-form-field>
+      <dp-form-field
+        label="Description (optional)"
+        hint="Visible to team members in the workspace header."
+      >
+        <dp-input placeholder="Short description" formControlName="description"></dp-input>
+      </dp-form-field>
+
+      <div class="form-actions">
+        <dp-button variant="secondary" type="button" (click)="goToWorkspaces()">
+          Cancel
+        </dp-button>
+        <dp-button variant="primary" type="submit" [loading]="saving">Create workspace</dp-button>
+      </div>
+    </form>
+  </section>
+</dp-page-layout>

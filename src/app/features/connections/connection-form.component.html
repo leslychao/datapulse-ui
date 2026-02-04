@@ -1,32 +1,25 @@
 <form class="form" [formGroup]="form">
-  <label>
-    Маркетплейс
-    <select formControlName="marketplace">
+  <dp-form-field label="Marketplace" [required]="true">
+    <dp-select formControlName="marketplace">
       <option *ngFor="let marketplace of marketplaces" [value]="marketplace">
         {{ marketplace }}
       </option>
-    </select>
-  </label>
+    </dp-select>
+  </dp-form-field>
 
   <div class="credentials" *ngIf="form.value.marketplace === marketplaceWildberries">
-    <label>
-      API токен
+    <dp-form-field label="API token" [required]="true" hint="WB seller → API access">
       <dp-input type="password" formControlName="token" autocomplete="new-password"></dp-input>
-    </label>
-    <div class="helper">
-      Токен используется только для подключения и хранится безопасно.
-    </div>
+    </dp-form-field>
   </div>
 
   <div class="credentials" *ngIf="form.value.marketplace === marketplaceOzon">
-    <label>
-      Client ID
+    <dp-form-field label="Client ID" [required]="true">
       <dp-input type="text" formControlName="clientId"></dp-input>
-    </label>
-    <label>
-      API Key
+    </dp-form-field>
+    <dp-form-field label="API Key" [required]="true">
       <dp-input type="password" formControlName="apiKey" autocomplete="new-password"></dp-input>
-    </label>
+    </dp-form-field>
   </div>
 
   <div class="error" *ngIf="errorMessage">{{ errorMessage }}</div>

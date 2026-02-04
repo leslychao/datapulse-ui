@@ -40,6 +40,22 @@
   gap: 16px;
 }
 
+.app-header__workspace {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.app-header__workspace-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.app-header__workspace-select {
+  min-width: 200px;
+}
+
 .app-header__user {
   display: flex;
   flex-direction: column;

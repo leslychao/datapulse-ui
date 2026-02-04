@@ -5,11 +5,12 @@ import {combineLatest} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 
 import {
-  DashboardShellComponent,
   FilterBarComponent,
   MetricTileGroupComponent,
   DataTableCardComponent,
-  ChartCardComponent
+  ChartCardComponent,
+  PageHeaderComponent,
+  PageLayoutComponent
 } from "../../shared/ui";
 import {DashboardStateQuery} from "../../queries/dashboard-state.query";
 import {DATA_STATE} from "../../shared/models";
@@ -23,7 +24,8 @@ import {accountIdFromRoute} from "../../core/routing/account-id.util";
   standalone: true,
   imports: [
     CommonModule,
-    DashboardShellComponent,
+    PageLayoutComponent,
+    PageHeaderComponent,
     FilterBarComponent,
     MetricTileGroupComponent,
     DataTableCardComponent,
@@ -47,7 +49,7 @@ export class OperationsInventoryPageComponent {
   activeTab: "warehouse" | "sku" = "warehouse";
 
   readonly filters: FilterFieldVm[] = [
-    {id: "account", label: "Account", type: "select", options: [{label: "Все аккаунты", value: "all"}]},
+    {id: "account", label: "Workspace", type: "select", options: [{label: "Все workspace", value: "all"}]},
     {id: "marketplace", label: "Marketplace", type: "select", options: [{label: "Все", value: "all"}]},
     {id: "asOf", label: "As of", type: "date"},
     {id: "warehouse", label: "Warehouse", type: "select", options: [{label: "Все", value: "all"}]}

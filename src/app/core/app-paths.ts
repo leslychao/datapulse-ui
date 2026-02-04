@@ -1,11 +1,7 @@
 export const APP_ROUTE_SEGMENTS = {
   login: "login",
   app: "app",
-  home: "home",
-  summary: "summary",
-  selectAccount: "select-account",
   onboarding: "onboarding",
-  dashboard: "dashboard",
   overview: "overview",
   finance: "finance",
   pnl: "pnl",
@@ -16,12 +12,12 @@ export const APP_ROUTE_SEGMENTS = {
   salesMonitoring: "sales-monitoring",
   marketing: "marketing",
   ads: "ads",
-  dataHealth: "data-health",
-  freshness: "freshness",
-  settings: "settings",
+  monitoring: "monitoring",
   users: "users",
   connections: "connections",
-  workspaces: "workspaces"
+  workspaces: "workspaces",
+  workspacesCreate: "create",
+  workspaceSettings: "workspace-settings"
 } as const;
 
 export const APP_PATHS = {
@@ -29,13 +25,8 @@ export const APP_PATHS = {
   root: `/${APP_ROUTE_SEGMENTS.app}`,
   workspaces: `/${APP_ROUTE_SEGMENTS.workspaces}`,
   workspacesAccount: (accountId: number) => `/${APP_ROUTE_SEGMENTS.workspaces}/${accountId}`,
-  home: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.home}`,
-  selectAccount: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.selectAccount}`,
+  workspacesCreate: `/${APP_ROUTE_SEGMENTS.workspaces}/${APP_ROUTE_SEGMENTS.workspacesCreate}`,
   onboarding: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.onboarding}`,
-  homeSummary: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.home}/${APP_ROUTE_SEGMENTS.summary}`,
-  dashboard: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.dashboard}`,
   overview: (accountId: number) =>
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.overview}`,
   financePnl: (accountId: number) =>
@@ -50,10 +41,12 @@ export const APP_PATHS = {
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.operations}/${APP_ROUTE_SEGMENTS.salesMonitoring}`,
   marketingAds: (accountId: number) =>
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.marketing}/${APP_ROUTE_SEGMENTS.ads}`,
-  dataHealthFreshness: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.dataHealth}/${APP_ROUTE_SEGMENTS.freshness}`,
-  settingsConnections: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.connections}`,
-  settingsUsers: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.users}`
+  monitoring: (accountId: number) =>
+    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.monitoring}`,
+  connections: (accountId: number) =>
+    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.connections}`,
+  users: (accountId: number) =>
+    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.users}`,
+  workspaceSettings: (accountId: number) =>
+    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.workspaceSettings}`
 } as const;

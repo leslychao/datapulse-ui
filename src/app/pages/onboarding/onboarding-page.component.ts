@@ -4,7 +4,7 @@ import {Router} from "@angular/router";
 import {catchError, finalize, of, tap} from "rxjs";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
-import {AccountFormComponent} from "../../features/accounts";
+import {AccountFormComponent} from "../../features/accounts/account-form.component";
 import {ConnectionFormComponent} from "../../features/connections";
 import {AccountsApiClient, AccountConnectionsApiClient, ApiError, EtlScenarioApi} from "../../core/api";
 import {
@@ -21,7 +21,7 @@ import {
   AccountCatalogService
 } from "../../core/state";
 import {APP_PATHS} from "../../core/app-paths";
-import {ButtonComponent} from "../../shared/ui";
+import {ButtonComponent, PageHeaderComponent, PageLayoutComponent} from "../../shared/ui";
 
 interface OnboardingStep {
   id: "account" | "connection" | "sync";
@@ -49,7 +49,9 @@ const DEFAULT_ETL_EVENTS: EtlScenarioEvent[] = [
     CommonModule,
     AccountFormComponent,
     ConnectionFormComponent,
-    ButtonComponent
+    ButtonComponent,
+    PageLayoutComponent,
+    PageHeaderComponent
   ],
   templateUrl: "./onboarding-page.component.html",
   styleUrl: "./onboarding-page.component.css",
@@ -421,7 +423,7 @@ export class OnboardingPageComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
         tap((response) => {
           if (response.status === 200 || response.status === 201) {
-            this.router.navigateByUrl(APP_PATHS.homeSummary(this.accountId!), {replaceUrl: true});
+            this.router.navigateByUrl(APP_PATHS.overview(this.accountId!), {replaceUrl: true});
             return;
           }
           this.setStatusState("error", "Не удалось запустить синхронизацию.");
@@ -477,7 +479,7 @@ export class OnboardingPageComponent implements OnInit {
         tap((connections) => {
           this.connections = connections;
           if (this.hasSuccessfulSync(connections)) {
-            this.router.navigateByUrl(APP_PATHS.homeSummary(accountId), {replaceUrl: true});
+            this.router.navigateByUrl(APP_PATHS.overview(accountId), {replaceUrl: true});
             return;
           }
           if (allowAutoAdvance) {

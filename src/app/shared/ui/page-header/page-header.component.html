@@ -1,0 +1,10 @@
+<header class="page-header">
+  <div class="page-header__titles">
+    <h1 class="page-header__title">{{ title }}</h1>
+    <p class="page-header__subtitle" *ngIf="subtitle">{{ subtitle }}</p>
+  </div>
+  <div class="page-header__actions">
+    <ng-content select="[secondary-actions]"></ng-content>
+    <ng-content select="[primary-action]"></ng-content>
+  </div>
+</header>

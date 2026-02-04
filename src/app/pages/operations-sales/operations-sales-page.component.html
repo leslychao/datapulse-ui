@@ -1,50 +1,16 @@
 <ng-container *ngIf="vm$ | async as vm">
-  <dp-dashboard-shell
-    [accountId]="vm.accountId"
-    title="Sales / Orders Monitoring"
-    subtitle="Near-real-time мониторинг операций"
-  >
-    <div class="sales-refresh">
-      <span class="label">Последнее обновление</span>
-      <span class="value" *ngIf="vm.state.state === 'READY'">—</span>
-      <span class="value muted" *ngIf="vm.state.state !== 'READY'">Недоступно</span>
-    </div>
-
-    <div class="quick-filters">
-      <button type="button" [class.is-active]="quickFilter === 'today'" (click)="setQuickFilter('today')">
-        Сегодня
-      </button>
-      <button type="button" [class.is-active]="quickFilter === '60m'" (click)="setQuickFilter('60m')">
-        60 минут
-      </button>
-      <button type="button" [class.is-active]="quickFilter === '24h'" (click)="setQuickFilter('24h')">
-        24 часа
-      </button>
-    </div>
+  <dp-page-layout [accountId]="vm.accountId">
+    <dp-page-header
+      title="Sales monitoring"
+      subtitle="Операционные показатели и статусы заказов"
+    ></dp-page-header>
 
     <dp-filter-bar [fields]="filters"></dp-filter-bar>
-
-    <div class="tabs">
-      <button type="button" [class.is-active]="activeTab === 'sales'" (click)="setTab('sales')">
-        Продажи
-      </button>
-      <button type="button" [class.is-active]="activeTab === 'orders'" (click)="setTab('orders')">
-        Заказы
-      </button>
-      <button type="button" [class.is-active]="activeTab === 'returns'" (click)="setTab('returns')">
-        Возвраты
-      </button>
-    </div>
-
     <dp-data-table-card
-      title="Лента операций"
-      subtitle="Последние операции"
+      title="Orders monitoring"
+      subtitle="Список заказов"
       [columns]="columns"
-      [rows]="[]"
       [state]="vm.state.state"
-      [accountId]="vm.accountId"
-      [compact]="true"
-      testId="sales-monitoring-table"
     ></dp-data-table-card>
-  </dp-dashboard-shell>
+  </dp-page-layout>
 </ng-container>

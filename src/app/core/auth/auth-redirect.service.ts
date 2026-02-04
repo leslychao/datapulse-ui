@@ -14,7 +14,7 @@ export class AuthRedirectService {
     private readonly accountCatalog: AccountCatalogService
   ) {}
 
-  login(returnUrl: string = APP_PATHS.selectAccount): void {
+  login(returnUrl: string = APP_PATHS.workspaces): void {
     const normalizedReturnUrl = this.normalizeReturnUrl(returnUrl);
     const url = `${environment.auth.loginPath}?rd=${encodeURIComponent(normalizedReturnUrl)}`;
     window.location.assign(url);
@@ -44,11 +44,11 @@ export class AuthRedirectService {
     const trimmed = returnUrl.trim();
 
     if (!trimmed || trimmed === "/" || trimmed === "/logged-out") {
-      return APP_PATHS.selectAccount;
+      return APP_PATHS.workspaces;
     }
 
     if (trimmed.startsWith("/oauth2")) {
-      return APP_PATHS.selectAccount;
+      return APP_PATHS.workspaces;
     }
 
     return trimmed;

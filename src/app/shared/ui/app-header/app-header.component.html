@@ -4,6 +4,29 @@
     <span class="brand">Datapulse</span>
   </a>
 
+  <ng-container *ngIf="workspacesState$ | async as workspacesState">
+    <div class="app-header__workspace" *ngIf="workspacesState.status === 'ready'">
+      <ng-container *ngIf="workspacesState.data.length; else noWorkspaces">
+        <label class="app-header__workspace-label">Workspace</label>
+        <dp-select
+          class="app-header__workspace-select"
+          [value]="(activeWorkspace$ | async)?.toString() ?? ''"
+          (change)="selectWorkspace($any($event.target).value)"
+        >
+          <option value="" disabled>Select workspace</option>
+          <option *ngFor="let workspace of workspacesState.data" [value]="workspace.id">
+            {{ workspace.name }}
+          </option>
+        </dp-select>
+      </ng-container>
+      <ng-template #noWorkspaces>
+        <dp-button variant="primary" (click)="goToCreateWorkspace()">
+          Create workspace
+        </dp-button>
+      </ng-template>
+    </div>
+  </ng-container>
+
   <div class="app-header__profile" *ngIf="userProfile$ | async as profile; else loginTemplate">
     <div class="profile-menu">
       <button

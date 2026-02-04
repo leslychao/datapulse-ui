@@ -1,0 +1,11 @@
+<div class="pagination">
+  <span class="pagination__info">Page {{ page }} of {{ totalPages }}</span>
+  <div class="pagination__actions">
+    <dp-button variant="secondary" [disabled]="!canGoPrev" (click)="goPrev()">
+      Previous
+    </dp-button>
+    <dp-button variant="secondary" [disabled]="!canGoNext" (click)="goNext()">
+      Next
+    </dp-button>
+  </div>
+</div>

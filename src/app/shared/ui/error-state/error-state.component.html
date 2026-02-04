@@ -1,0 +1,16 @@
+<div class="error-state">
+  <div class="error-state__title">{{ title }}</div>
+  <div class="error-state__description" *ngIf="description">{{ description }}</div>
+  <div class="error-state__actions">
+    <ng-content></ng-content>
+    <button
+      type="button"
+      class="error-state__details"
+      *ngIf="details"
+      (click)="toggleDetails()"
+    >
+      {{ showDetails ? "Hide details" : "Details" }}
+    </button>
+  </div>
+  <pre class="error-state__meta" *ngIf="details && showDetails">{{ details }}</pre>
+</div>

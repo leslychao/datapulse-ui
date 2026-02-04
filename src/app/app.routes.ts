@@ -28,6 +28,14 @@ export const appRoutes: Routes = [
       )
   },
   {
+    path: `${APP_ROUTE_SEGMENTS.workspaces}/${APP_ROUTE_SEGMENTS.workspacesCreate}`,
+    canMatch: [authGuard, iamResolvedGuard],
+    loadComponent: () =>
+      import("./pages/workspace-create/workspace-create-page.component").then(
+        (m) => m.WorkspaceCreatePageComponent
+      )
+  },
+  {
     path: `${APP_ROUTE_SEGMENTS.workspaces}/:accountId`,
     canMatch: [authGuard, iamResolvedGuard],
     loadComponent: () =>
@@ -43,21 +51,7 @@ export const appRoutes: Routes = [
       {
         path: "",
         pathMatch: "full",
-        redirectTo: APP_ROUTE_SEGMENTS.home
-      },
-      {
-        path: APP_ROUTE_SEGMENTS.home,
-        loadComponent: () =>
-          import("./pages/home/home-redirect-page.component").then(
-            (m) => m.HomeRedirectPageComponent
-          )
-      },
-      {
-        path: APP_ROUTE_SEGMENTS.selectAccount,
-        loadComponent: () =>
-          import("./pages/account-select/account-select-page.component").then(
-            (m) => m.AccountSelectPageComponent
-          )
+        redirectTo: "/workspaces"
       },
       {
         path: APP_ROUTE_SEGMENTS.onboarding,
@@ -77,28 +71,6 @@ export const appRoutes: Routes = [
         path: ":accountId",
         canActivateChild: [accountIdGuard],
         children: [
-          {
-            path: APP_ROUTE_SEGMENTS.home,
-            children: [
-              {
-                path: "",
-                pathMatch: "full",
-                redirectTo: APP_ROUTE_SEGMENTS.summary
-              },
-              {
-                path: APP_ROUTE_SEGMENTS.summary,
-                loadComponent: () =>
-                  import("./pages/dashboard/dashboard-page.component").then(
-                    (m) => m.DashboardPageComponent
-                  )
-              }
-            ]
-          },
-          {
-            path: APP_ROUTE_SEGMENTS.dashboard,
-            redirectTo: `${APP_ROUTE_SEGMENTS.home}/${APP_ROUTE_SEGMENTS.summary}`,
-            pathMatch: "full"
-          },
           {
             path: APP_ROUTE_SEGMENTS.overview,
             loadComponent: () =>
@@ -164,35 +136,32 @@ export const appRoutes: Routes = [
             ]
           },
           {
-            path: APP_ROUTE_SEGMENTS.dataHealth,
-            children: [
-              {
-                path: APP_ROUTE_SEGMENTS.freshness,
-                loadComponent: () =>
-                  import("./pages/data-freshness/data-freshness-page.component").then(
-                    (m) => m.DataFreshnessPageComponent
-                  )
-              }
-            ]
+            path: APP_ROUTE_SEGMENTS.monitoring,
+            loadComponent: () =>
+              import("./pages/monitoring/monitoring-page.component").then(
+                (m) => m.MonitoringPageComponent
+              )
           },
           {
-            path: APP_ROUTE_SEGMENTS.settings,
-            children: [
-              {
-                path: APP_ROUTE_SEGMENTS.connections,
-                loadComponent: () =>
-                  import(
-                    "./pages/settings-connections/settings-connections-page.component"
-                  ).then((m) => m.SettingsConnectionsPageComponent)
-              },
-              {
-                path: APP_ROUTE_SEGMENTS.users,
-                loadComponent: () =>
-                  import("./pages/settings-users/settings-users-page.component").then(
-                    (m) => m.SettingsUsersPageComponent
-                  )
-              }
-            ]
+            path: APP_ROUTE_SEGMENTS.connections,
+            loadComponent: () =>
+              import("./pages/connections/connections-page.component").then(
+                (m) => m.ConnectionsPageComponent
+              )
+          },
+          {
+            path: APP_ROUTE_SEGMENTS.users,
+            loadComponent: () =>
+              import("./pages/users-access/users-access-page.component").then(
+                (m) => m.UsersAccessPageComponent
+              )
+          },
+          {
+            path: APP_ROUTE_SEGMENTS.workspaceSettings,
+            loadComponent: () =>
+              import("./pages/workspace-settings/workspace-settings-page.component").then(
+                (m) => m.WorkspaceSettingsPageComponent
+              )
           }
         ]
       }

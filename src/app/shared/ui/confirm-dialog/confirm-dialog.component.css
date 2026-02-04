@@ -1,0 +1,21 @@
+.confirm-dialog{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:24px;
+}
+
+.confirm-dialog__title{
+  font-size:16px;
+  font-weight:600;
+}
+
+.confirm-dialog__description{
+  color:var(--muted);
+}
+
+.confirm-dialog__actions{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+}

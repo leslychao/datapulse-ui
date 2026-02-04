@@ -1,27 +1,26 @@
 <ng-container *ngIf="vm$ | async as vm">
-  <dp-dashboard-shell
-    [accountId]="vm.accountId"
-    title="Ads / Marketing"
-    subtitle="Эффективность рекламных кампаний"
-  >
+  <dp-page-layout [accountId]="vm.accountId">
+    <dp-page-header
+      title="Marketing"
+      subtitle="Реклама и маркетинговые кампании"
+    ></dp-page-header>
+
     <dp-filter-bar [fields]="filters"></dp-filter-bar>
     <dp-metric-tile-group [tiles]="tiles" [state]="vm.state.state"></dp-metric-tile-group>
 
-    <dp-data-table-card
-      title="Campaigns"
-      subtitle="Сводка по кампаниям"
-      [columns]="campaignColumns"
-      [rows]="[]"
-      [state]="vm.state.state"
-      [accountId]="vm.accountId"
-      testId="marketing-campaigns-table"
-    ></dp-data-table-card>
-
-    <dp-chart-card
-      title="Correlation"
-      subtitle="Влияние маркетинга на продажи"
-      [state]="vm.state.state"
-      [accountId]="vm.accountId"
-    ></dp-chart-card>
-  </dp-dashboard-shell>
+    <div class="ads-grid">
+      <dp-chart-card
+        title="Spend trend"
+        subtitle="Динамика расходов"
+        [state]="vm.state.state"
+        [accountId]="vm.accountId"
+      ></dp-chart-card>
+      <dp-data-table-card
+        title="Campaign performance"
+        subtitle="Эффективность кампаний"
+        [columns]="campaignColumns"
+        [state]="vm.state.state"
+      ></dp-data-table-card>
+    </div>
+  </dp-page-layout>
 </ng-container>

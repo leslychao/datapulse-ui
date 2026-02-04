@@ -1,12 +1,13 @@
-<div class="page">
-  <header class="page-header">
-    <h1>Подключение рабочего пространства</h1>
-    <p class="muted">Добавьте аккаунт и подключите маркетплейс, чтобы начать сбор данных.</p>
-  </header>
+<dp-page-layout [accountId]="null">
+  <dp-page-header
+    title="Подключение рабочего пространства"
+    subtitle="Добавьте аккаунт и подключите маркетплейс, чтобы начать сбор данных."
+  ></dp-page-header>
 
   <div class="stepper" role="list">
-    <button
+    <dp-button
       type="button"
+      variant="secondary"
       class="stepper__item"
       role="listitem"
       *ngFor="let step of steps; let i = index"
@@ -20,7 +21,7 @@
         <span class="stepper__label">{{ step.label }}</span>
         <span class="stepper__description">{{ step.description }}</span>
       </span>
-    </button>
+    </dp-button>
   </div>
 
   <div
@@ -99,4 +100,4 @@
       </ng-container>
     </ng-container>
   </div>
-</div>
+</dp-page-layout>

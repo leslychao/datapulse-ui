@@ -6,9 +6,10 @@ import {map, switchMap} from "rxjs/operators";
 
 import {
   ChartCardComponent,
-  DashboardShellComponent,
   FilterBarComponent,
-  MetricTileGroupComponent
+  MetricTileGroupComponent,
+  PageHeaderComponent,
+  PageLayoutComponent
 } from "../../shared/ui";
 import {DashboardStateQuery} from "../../queries/dashboard-state.query";
 import {DATA_STATE, OrderPnlResponse, PageResponse} from "../../shared/models";
@@ -23,7 +24,8 @@ import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
   standalone: true,
   imports: [
     CommonModule,
-    DashboardShellComponent,
+    PageLayoutComponent,
+    PageHeaderComponent,
     FilterBarComponent,
     MetricTileGroupComponent,
     ChartCardComponent
@@ -62,7 +64,7 @@ export class FinancePnlPageComponent {
   }).pipe(map(({accountId, state, orderPnlState}) => ({accountId, state, orderPnlState})));
 
   readonly filters: FilterFieldVm[] = [
-    {id: "account", label: "Account", type: "select", options: [{label: "Все аккаунты", value: "all"}]},
+    {id: "account", label: "Workspace", type: "select", options: [{label: "Все workspace", value: "all"}]},
     {id: "from", label: "Date from", type: "date"},
     {id: "to", label: "Date to", type: "date"},
     {

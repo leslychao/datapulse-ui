@@ -1,0 +1,98 @@
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cell-title {
+  font-weight: 600;
+}
+
+.cell-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(42, 139, 242, 0.12);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pill.is-error {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+}
+
+.status-pill.is-disabled {
+  background: rgba(107, 114, 128, 0.12);
+  color: var(--muted);
+}
+
+.status-pill.is-syncing {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+.modal-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.wizard-step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.diagnostic {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error-text {
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.details-toggle {
+  margin-top: 8px;
+}
+
+.details-meta {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+}

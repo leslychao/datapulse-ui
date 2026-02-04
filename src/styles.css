@@ -32,6 +32,11 @@ body{
   line-height:1.5;
 }
 
+.muted{
+  color:var(--muted);
+  font-size:12px;
+}
+
 .shell{max-width:960px;margin:0 auto;padding:16px}
 
 /* Top bar */
