@@ -4,20 +4,11 @@
   gap: 16px;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.hint {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 6px;
-}
-
 .cell-title {
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .cell-subtitle {
@@ -41,35 +32,201 @@
   color: var(--muted);
 }
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
+.current-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f766e;
+  background: rgba(20, 184, 166, 0.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.data-sources {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  position: relative;
+}
+
+.data-sources__chip {
+  display: inline-flex;
   align-items: center;
-  gap: 16px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(148, 163, 184, 0.14);
+  color: var(--muted);
 }
 
-.next-steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-top: 12px;
+.data-sources__chip.is-ok {
+  background: rgba(16, 185, 129, 0.12);
+  color: #0f766e;
 }
 
-.next-step {
+.data-sources__chip.is-warning {
+  background: rgba(251, 191, 36, 0.18);
+  color: #92400e;
+}
+
+.data-sources__chip.is-error {
+  background: rgba(248, 113, 113, 0.16);
+  color: #b91c1c;
+}
+
+.data-sources__chip.is-muted {
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--muted);
+}
+
+.data-sources__popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: #fff;
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: var(--panel);
+  padding: 8px 10px;
+  min-width: 160px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease;
+  z-index: 3;
 }
 
-.next-step__title {
-  font-weight: 600;
+.data-sources:hover .data-sources__popover {
+  opacity: 1;
+  visibility: visible;
 }
 
-.next-step__desc {
-  color: var(--muted);
+.data-sources__popover-item {
   font-size: 12px;
+  color: var(--text);
+  padding: 4px 0;
+}
+
+.members {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.members__popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 10px;
+  min-width: 180px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease;
+  z-index: 3;
+}
+
+.members:hover .members__popover {
+  opacity: 1;
+  visibility: visible;
+}
+
+.members__popover-item {
+  font-size: 12px;
+  color: var(--text);
+  padding: 4px 0;
+}
+
+.last-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.dot {
+  color: var(--muted);
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row-menu {
+  position: relative;
+}
+
+.row-menu__trigger {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text);
+}
+
+.row-menu__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  min-width: 160px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+  z-index: 4;
+  padding: 6px;
+}
+
+.row-menu__item {
+  display: block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.row-menu__item:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.row-menu__item[disabled] {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.row-menu__item--danger {
+  color: #b91c1c;
+}
+
+.row-menu__hint {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 6px 10px;
+}
+
+.row-menu__backdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  z-index: 3;
+}
+
+.empty-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }

@@ -31,29 +31,3 @@
   align-items: center;
   gap: 16px;
 }
-
-.next-steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-top: 12px;
-}
-
-.next-step {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: var(--panel);
-}
-
-.next-step__title {
-  font-weight: 600;
-}
-
-.next-step__desc {
-  color: var(--muted);
-  font-size: 12px;
-}

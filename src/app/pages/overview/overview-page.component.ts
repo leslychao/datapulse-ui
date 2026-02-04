@@ -1,10 +1,11 @@
 import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {combineLatest} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 
 import {
+  ButtonComponent,
   PageHeaderComponent,
   PageLayoutComponent,
   FilterBarComponent,
@@ -16,6 +17,7 @@ import {DATA_STATE} from "../../shared/models";
 import {FilterFieldVm} from "../../vm/filter-field.vm";
 import {MetricTileVm} from "../../vm/metric-tile.vm";
 import {accountIdFromRoute} from "../../core/routing/account-id.util";
+import {APP_PATHS} from "../../core/app-paths";
 
 @Component({
   selector: "dp-overview-page",
@@ -26,7 +28,8 @@ import {accountIdFromRoute} from "../../core/routing/account-id.util";
     PageHeaderComponent,
     FilterBarComponent,
     MetricTileGroupComponent,
-    ChartCardComponent
+    ChartCardComponent,
+    ButtonComponent
   ],
   templateUrl: "./overview-page.component.html",
   styleUrl: "./overview-page.component.css",
@@ -34,6 +37,7 @@ import {accountIdFromRoute} from "../../core/routing/account-id.util";
 })
 export class OverviewPageComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly dashboardState = inject(DashboardStateQuery);
 
   private readonly accountId$ = accountIdFromRoute(this.route);
@@ -43,6 +47,8 @@ export class OverviewPageComponent {
       switchMap((accountId) => this.dashboardState.getState(accountId, DATA_STATE.noData))
     )
   }).pipe(map(({accountId, state}) => ({accountId, state})));
+
+  readonly dataState = DATA_STATE;
 
   readonly filters: FilterFieldVm[] = [
     {id: "account", label: "Workspace", type: "select", options: [{label: "Все workspace", value: "all"}]},
@@ -67,6 +73,20 @@ export class OverviewPageComponent {
     {id: "margin", label: "Margin", value: "—", semantic: "profit"},
     {id: "returns", label: "Returns", value: "—"}
   ];
+
+  goToConnections(accountId: number | null): void {
+    if (accountId == null) {
+      return;
+    }
+    this.router.navigateByUrl(APP_PATHS.connections(accountId));
+  }
+
+  goToUsers(accountId: number | null): void {
+    if (accountId == null) {
+      return;
+    }
+    this.router.navigateByUrl(APP_PATHS.users(accountId));
+  }
 
   constructor() {}
 
