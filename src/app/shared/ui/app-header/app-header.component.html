@@ -35,15 +35,10 @@
         (click)="toggleMenu()"
         [attr.aria-expanded]="isMenuOpen"
       >
-        <div class="app-header__user">
-          <span class="app-header__name">
-            {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
-          </span>
-
-          <span class="app-header__email" *ngIf="profile.email">
-            {{ profile.email }}
-          </span>
-        </div>
+        <span class="profile-avatar">{{ getInitial(profile) }}</span>
+        <span class="profile-trigger__name">
+          {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
+        </span>
         <span class="profile-menu__caret">▾</span>
       </button>
     </div>
@@ -51,16 +46,27 @@
     <div class="profile-menu__backdrop" *ngIf="isMenuOpen" (click)="closeMenu()"></div>
     <div class="profile-menu__panel" *ngIf="isMenuOpen">
       <div class="profile-menu__panel-content">
+        <div class="profile-menu__meta">
+          <div class="profile-menu__name">
+            {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
+          </div>
+          <div class="profile-menu__email" *ngIf="profile.email">
+            {{ profile.email }}
+          </div>
+        </div>
+        <a class="profile-menu__item" [routerLink]="profilePath" (click)="closeMenu()">
+          Profile
+        </a>
         <a class="profile-menu__item" [routerLink]="workspacesPath" (click)="closeMenu()">
-          Workspaces
+          Switch workspace
         </a>
         <button
           type="button"
-          class="profile-menu__item"
+          class="profile-menu__item profile-menu__item--danger"
           (click)="logout(); closeMenu()"
           [disabled]="isLogoutRedirecting"
         >
-          Выйти
+          Logout
         </button>
       </div>
     </div>

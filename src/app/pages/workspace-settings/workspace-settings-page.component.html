@@ -56,38 +56,6 @@
       </div>
     </section>
 
-    <section class="card" *ngIf="vm.accountState.status === 'ready' && vm.accountState.data as account">
-      <div class="section-header">
-        <div>
-          <h3>What’s next</h3>
-          <p class="muted">Следующие шаги после создания workspace.</p>
-        </div>
-      </div>
-      <div class="next-steps">
-        <div class="next-step">
-          <div class="next-step__title">Create connection</div>
-          <div class="next-step__desc">Подключите маркетплейс.</div>
-          <dp-button size="sm" variant="primary" (click)="goToConnections(account.id)">
-            Create connection
-          </dp-button>
-        </div>
-        <div class="next-step">
-          <div class="next-step__title">Run first sync</div>
-          <div class="next-step__desc">Запустите первичную синхронизацию.</div>
-          <dp-button size="sm" variant="secondary" (click)="goToConnections(account.id)">
-            Run sync
-          </dp-button>
-        </div>
-        <div class="next-step">
-          <div class="next-step__title">Open dashboards</div>
-          <div class="next-step__desc">Перейдите к аналитике.</div>
-          <dp-button size="sm" variant="secondary" (click)="goToOverview(account.id)">
-            Open dashboards
-          </dp-button>
-        </div>
-      </div>
-    </section>
-
     <ng-template #settingsState>
       <ng-container *ngIf="vm.accountState.status === 'loading'">
         <dp-loading-state label="Loading workspace"></dp-loading-state>
