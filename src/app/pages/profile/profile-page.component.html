@@ -1,5 +1,5 @@
 <ng-container *ngIf="profile$ | async as profile; else loading">
-  <dp-page-layout [accountId]="null">
+  <dp-page-layout [accountId]="(accountId$ | async) ?? null">
     <dp-page-header title="Profile" subtitle="Ваши данные аккаунта."></dp-page-header>
 
     <section class="card">
@@ -19,7 +19,7 @@
 </ng-container>
 
 <ng-template #loading>
-  <dp-page-layout [accountId]="null">
+  <dp-page-layout [accountId]="(accountId$ | async) ?? null">
     <dp-loading-state label="Loading profile"></dp-loading-state>
   </dp-page-layout>
 </ng-template>

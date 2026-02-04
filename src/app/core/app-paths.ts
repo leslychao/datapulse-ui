@@ -17,7 +17,7 @@ export const APP_ROUTE_SEGMENTS = {
   connections: "connections",
   workspaces: "workspaces",
   workspacesCreate: "create",
-  workspaceSettings: "workspace-settings",
+  settings: "settings",
   profile: "profile"
 } as const;
 
@@ -28,7 +28,8 @@ export const APP_PATHS = {
   workspacesAccount: (accountId: number) => `/${APP_ROUTE_SEGMENTS.workspaces}/${accountId}`,
   workspacesCreate: `/${APP_ROUTE_SEGMENTS.workspaces}/${APP_ROUTE_SEGMENTS.workspacesCreate}`,
   onboarding: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.onboarding}`,
-  profile: `/${APP_ROUTE_SEGMENTS.profile}`,
+  settingsProfile: (accountId: number) =>
+    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.profile}`,
   overview: (accountId: number) =>
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.overview}`,
   financePnl: (accountId: number) =>
@@ -50,5 +51,5 @@ export const APP_PATHS = {
   users: (accountId: number) =>
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.users}`,
   workspaceSettings: (accountId: number) =>
-    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.workspaceSettings}`
+    `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}`
 } as const;

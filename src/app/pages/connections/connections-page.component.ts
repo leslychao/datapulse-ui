@@ -77,6 +77,7 @@ export class ConnectionsPageComponent {
   detailsExpanded = false;
   deleteDialogVisible = false;
   disableDialogVisible = false;
+  openActionMenuId: number | null = null;
 
   editingConnection: AccountConnection | null = null;
   detailsConnection: AccountConnection | null = null;
@@ -185,6 +186,17 @@ export class ConnectionsPageComponent {
 
   refresh(): void {
     this.refresh$.next();
+  }
+
+  toggleActionMenu(connectionId: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openActionMenuId = this.openActionMenuId === connectionId ? null : connectionId;
+    this.cdr.markForCheck();
+  }
+
+  closeActionMenu(): void {
+    this.openActionMenuId = null;
+    this.cdr.markForCheck();
   }
 
   openWizard(): void {

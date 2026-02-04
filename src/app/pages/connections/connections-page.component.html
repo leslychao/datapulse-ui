@@ -78,17 +78,41 @@
                     <dp-button size="sm" variant="secondary" (click)="openEditModal(connection)">
                       Edit
                     </dp-button>
-                    <dp-button
-                      size="sm"
-                      variant="secondary"
-                      (click)="requestDisable(connection)"
-                      [disabled]="!connection.active"
-                    >
-                      Disable
-                    </dp-button>
-                    <dp-button size="sm" variant="danger" (click)="requestDelete(connection)">
-                      Delete
-                    </dp-button>
+                    <div class="row-menu">
+                      <button
+                        type="button"
+                        class="row-menu__trigger"
+                        aria-label="More actions"
+                        (click)="toggleActionMenu(connection.id, $event)"
+                      >
+                        ⋯
+                      </button>
+                      <div
+                        class="row-menu__backdrop"
+                        *ngIf="openActionMenuId === connection.id"
+                        (click)="closeActionMenu()"
+                      ></div>
+                      <div
+                        class="row-menu__panel"
+                        *ngIf="openActionMenuId === connection.id"
+                      >
+                        <button
+                          type="button"
+                          class="row-menu__item"
+                          (click)="requestDisable(connection); closeActionMenu()"
+                          [disabled]="!connection.active"
+                        >
+                          Disable
+                        </button>
+                        <button
+                          type="button"
+                          class="row-menu__item row-menu__item--danger"
+                          (click)="requestDelete(connection); closeActionMenu()"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </td>
               </tr>

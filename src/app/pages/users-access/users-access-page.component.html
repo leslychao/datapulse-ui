@@ -57,6 +57,7 @@
                   </td>
                   <td>
                     <dp-select
+                      class="role-select"
                       [value]="member.role"
                       (change)="openRoleConfirm(member, $any($event.target).value)"
                       [disabled]="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null) || isLastOwner(member, vm.state.data)"
@@ -117,7 +118,7 @@
                       Недостаточно прав для управления пользователями.
                     </div>
                     <div class="hint" *ngIf="isLastOwner(member, vm.state.data)">
-                      Нельзя изменить или удалить последнего OWNER.
+                      You cannot remove or change role of the last OWNER.
                     </div>
                   </td>
                 </tr>

@@ -65,37 +65,22 @@ export class PageLayoutComponent {
         label: "Workspace",
         items: [
           {
-            label: "My workspaces",
-            path: APP_PATHS.workspaces,
-            testId: "sidebar-workspaces"
-          }
-        ]
-      },
-      {
-        label: "Connections",
-        items: [
+            label: "Overview",
+            path: APP_PATHS.overview(accountId),
+            testId: "sidebar-overview"
+          },
           {
             label: "Connections",
             path: APP_PATHS.connections(accountId),
             testId: "sidebar-connections"
-          }
-        ]
-      },
-      {
-        label: "Users & Access",
-        items: [
+          },
           {
             label: "Users & Access",
             path: APP_PATHS.users(accountId),
             testId: "sidebar-users"
-          }
-        ]
-      },
-      {
-        label: "Settings",
-        items: [
+          },
           {
-            label: "Workspace settings",
+            label: "Settings",
             path: APP_PATHS.workspaceSettings(accountId),
             testId: "sidebar-workspace-settings"
           }
@@ -107,7 +92,7 @@ export class PageLayoutComponent {
           {
             label: "Analytics overview",
             path: APP_PATHS.overview(accountId),
-            testId: "sidebar-overview"
+            testId: "sidebar-data-overview"
           },
           {label: "P&L", path: APP_PATHS.financePnl(accountId), testId: "sidebar-finance-pnl"},
           {
