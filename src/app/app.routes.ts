@@ -61,6 +61,13 @@ export const appRoutes: Routes = [
           )
       },
       {
+        path: APP_ROUTE_SEGMENTS.profile,
+        loadComponent: () =>
+          import("./pages/profile/profile-page.component").then(
+            (m) => m.ProfilePageComponent
+          )
+      },
+      {
         matcher: accountlessRouteMatcher,
         loadComponent: () =>
           import("./pages/accountless-redirect/accountless-redirect-page.component").then(

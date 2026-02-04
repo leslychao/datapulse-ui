@@ -3,8 +3,9 @@
 }
 
 .dp-button{
+  min-height:var(--control-height);
   padding:10px 12px;
-  border-radius:10px;
+  border-radius:var(--control-radius);
   border:1px solid transparent;
   background:transparent;
   color:var(--text);
@@ -18,6 +19,7 @@
 }
 
 .dp-button.sm{
+  min-height:var(--control-height-sm);
   padding:6px 10px;
   font-size:12px;
 }
@@ -29,6 +31,10 @@
 
 .dp-button:hover{background:rgba(17,24,39,.04)}
 .dp-button:active{transform:translateY(1px)}
+.dp-button:focus-visible{
+  outline:none;
+  box-shadow:var(--focus-ring);
+}
 
 .dp-button.primary{
   background:rgba(42,139,242,.12);
