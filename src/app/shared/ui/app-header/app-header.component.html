@@ -3,30 +3,6 @@
     <img class="brand-icon" src="assets/logo.svg" alt="" />
     <span class="brand">Datapulse</span>
   </a>
-
-  <ng-container *ngIf="workspacesState$ | async as workspacesState">
-    <div class="app-header__workspace" *ngIf="workspacesState.status === 'ready'">
-      <ng-container *ngIf="workspacesState.data.length; else noWorkspaces">
-        <label class="app-header__workspace-label">Workspace</label>
-        <dp-select
-          class="app-header__workspace-select"
-          [value]="(activeWorkspace$ | async)?.toString() ?? ''"
-          (change)="selectWorkspace($any($event.target).value)"
-        >
-          <option value="" disabled>Select workspace</option>
-          <option *ngFor="let workspace of workspacesState.data" [value]="workspace.id">
-            {{ workspace.name }}
-          </option>
-        </dp-select>
-      </ng-container>
-      <ng-template #noWorkspaces>
-        <dp-button variant="primary" (click)="goToCreateWorkspace()">
-          Create workspace
-        </dp-button>
-      </ng-template>
-    </div>
-  </ng-container>
-
   <div class="app-header__profile" *ngIf="userProfile$ | async as profile; else loginTemplate">
     <div class="profile-menu">
       <button
@@ -41,33 +17,30 @@
         </span>
         <span class="profile-menu__caret">▾</span>
       </button>
-    </div>
 
-    <div class="profile-menu__backdrop" *ngIf="isMenuOpen" (click)="closeMenu()"></div>
-    <div class="profile-menu__panel" *ngIf="isMenuOpen">
-      <div class="profile-menu__panel-content">
-        <div class="profile-menu__meta">
-          <div class="profile-menu__name">
-            {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
+      <div class="profile-menu__backdrop" *ngIf="isMenuOpen" (click)="closeMenu()"></div>
+      <div class="profile-menu__panel" *ngIf="isMenuOpen">
+        <div class="profile-menu__panel-content">
+          <div class="profile-menu__meta">
+            <div class="profile-menu__name">
+              {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
+            </div>
+            <div class="profile-menu__email" *ngIf="profile.email">
+              {{ profile.email }}
+            </div>
           </div>
-          <div class="profile-menu__email" *ngIf="profile.email">
-            {{ profile.email }}
-          </div>
+          <a class="profile-menu__item" [routerLink]="profilePath" (click)="closeMenu()">
+            Profile
+          </a>
+          <button
+            type="button"
+            class="profile-menu__item profile-menu__item--danger"
+            (click)="logout(); closeMenu()"
+            [disabled]="isLogoutRedirecting"
+          >
+            Logout
+          </button>
         </div>
-        <a class="profile-menu__item" [routerLink]="profilePath" (click)="closeMenu()">
-          Profile
-        </a>
-        <a class="profile-menu__item" [routerLink]="workspacesPath" (click)="closeMenu()">
-          Switch workspace
-        </a>
-        <button
-          type="button"
-          class="profile-menu__item profile-menu__item--danger"
-          (click)="logout(); closeMenu()"
-          [disabled]="isLogoutRedirecting"
-        >
-          Logout
-        </button>
       </div>
     </div>
   </div>

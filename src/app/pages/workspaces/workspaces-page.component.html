@@ -37,7 +37,11 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let account of vm.accountsState.data">
+              <tr
+                *ngFor="let account of vm.accountsState.data"
+                class="workspace-row"
+                (click)="goToWorkspace(account.id)"
+              >
                 <td>
                   <div class="cell-title">
                     {{ account.name }}
@@ -78,7 +82,11 @@
                     <ng-template #noSources>
                       <div class="empty-inline">
                         <span class="muted">No data sources</span>
-                        <dp-button size="sm" variant="secondary" (click)="goToConnections(account.id)">
+                        <dp-button
+                          size="sm"
+                          variant="secondary"
+                          (click)="goToConnections(account.id); $event.stopPropagation()"
+                        >
                           Add
                         </dp-button>
                       </div>
@@ -134,27 +142,36 @@
                 </td>
                 <td>
                   <div class="row-actions">
-                    <dp-button size="sm" variant="primary" (click)="goToWorkspace(account.id)">
-                      Open
-                    </dp-button>
                     <div class="row-menu">
                       <button
                         type="button"
                         class="row-menu__trigger"
                         aria-label="More actions"
-                        (click)="toggleActionMenu(account.id, $event)"
+                        (click)="toggleActionMenu(account.id, $event); $event.stopPropagation()"
                       >
                         ⋯
                       </button>
-                      <div class="row-menu__backdrop" *ngIf="openActionMenuId === account.id" (click)="closeActionMenu()"></div>
-                      <div class="row-menu__panel" *ngIf="openActionMenuId === account.id">
-                        <button type="button" class="row-menu__item" (click)="goToSettings(account.id); closeActionMenu()">
+                      <div
+                        class="row-menu__backdrop"
+                        *ngIf="openActionMenuId === account.id"
+                        (click)="closeActionMenu()"
+                      ></div>
+                      <div
+                        class="row-menu__panel"
+                        *ngIf="openActionMenuId === account.id"
+                        (click)="$event.stopPropagation()"
+                      >
+                        <button
+                          type="button"
+                          class="row-menu__item"
+                          (click)="goToSettings(account.id); closeActionMenu(); $event.stopPropagation()"
+                        >
                           Settings
                         </button>
                         <button
                           type="button"
                           class="row-menu__item"
-                          (click)="openArchiveDialog(account); closeActionMenu()"
+                          (click)="openArchiveDialog(account); closeActionMenu(); $event.stopPropagation()"
                           [disabled]="!account.active"
                         >
                           Archive
@@ -162,7 +179,7 @@
                         <button
                           type="button"
                           class="row-menu__item row-menu__item--danger"
-                          (click)="openDeleteDialog(account); closeActionMenu()"
+                          (click)="openDeleteDialog(account); closeActionMenu(); $event.stopPropagation()"
                           [disabled]="!canDelete(vm.accountsState.data.length)"
                         >
                           Delete
