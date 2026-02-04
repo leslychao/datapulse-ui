@@ -23,3 +23,4 @@ export {MetricTileGroupComponent} from "./metric-tile-group/metric-tile-group.co
 export {ChartCardComponent} from "./chart-card/chart-card.component";
 export {DataTableCardComponent} from "./data-table-card/data-table-card.component";
 export {DataStateGateComponent} from "./data-state-gate/data-state-gate.component";
+export {AccountSwitcherComponent} from "./account-switcher/account-switcher.component";
