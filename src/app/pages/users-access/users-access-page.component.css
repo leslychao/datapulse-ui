@@ -1,130 +1,148 @@
-.actions{
-  display:flex;
-  justify-content:flex-end;
-  align-items:center;
-  gap:8px;
-  position:relative;
+/* Variant A: compact Telegram-like table density (page-scoped) */
+
+.users-access-card {
+  padding: 12px;
 }
 
-.cell-title{
-  font-weight:600;
+/* Make toolbar compact, one line */
+dp-table-toolbar {
+  display: block;
 }
 
-.cell-subtitle{
-  font-size:12px;
-  color:var(--muted);
+dp-table-toolbar [filters] {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.role-select{
-  min-width:160px;
+dp-table-toolbar [actions] {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-.status-pill{
-  display:inline-flex;
-  align-items:center;
-  padding:4px 10px;
-  border-radius:999px;
-  background:rgba(42, 139, 242, 0.12);
-  color:var(--accent);
-  font-size:12px;
-  font-weight:600;
+/* Status fixed width, Search flex */
+dp-table-toolbar [filters] dp-form-field:first-child {
+  width: 180px;
 }
 
-.hint{
-  font-size:12px;
-  color:var(--muted);
-  margin-top:6px;
+dp-table-toolbar [filters] dp-form-field:last-child {
+  flex: 1 1 320px;
+  min-width: 240px;
 }
 
-.modal-content{
-  padding:24px;
-  display:flex;
-  flex-direction:column;
-  gap:16px;
+/* Summary compact */
+.summary {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
 }
 
-.modal-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:8px;
+.summary strong {
+  font-weight: 600;
+  color: #111827;
 }
 
-.form{
-  display:flex;
-  flex-direction:column;
-  gap:16px;
+.summary-sep {
+  margin: 0 6px;
+  opacity: 0.5;
 }
 
-/* summary line */
-.summary{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin:6px 0 12px;
-  color:var(--muted);
-  font-size:13px;
+/* Summary row with inline invite button */
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.summary strong{
-  color:var(--text, #111827);
-  font-weight:600;
+.summary-row .summary {
+  margin: 10px 0 8px;
+  flex: 1 1 auto;
 }
 
-.summary-sep{
-  opacity:0.5;
+/* Invite icon button: no background, Telegram-like */
+:host ::ng-deep dp-icon-button.invite-button button {
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+}
+:host ::ng-deep dp-icon-button.invite-button button:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
 }
 
-/* overflow menu */
-.menu{
-  position:absolute;
-  top:34px;
-  right:0;
-  min-width:220px;
-  background:#fff;
-  border:1px solid #e1e5ea;
-  border-radius:12px;
-  box-shadow:0 12px 28px rgba(16, 24, 40, 0.14);
-  padding:6px;
-  z-index:30;
+:host ::ng-deep dp-icon-button.invite-button button:active {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
 }
 
-.menu-item{
-  width:100%;
-  text-align:left;
-  padding:10px 10px;
-  border-radius:10px;
-  cursor:pointer;
-  user-select:none;
-  color:var(--text, #111827);
-  font-size:13px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  background:transparent;
-  border:0;
+/* Table density */
+dp-table table th,
+dp-table table td {
+  padding: 8px 10px;
+  vertical-align: middle;
 }
 
-.menu-item:hover{
-  background:#f3f5f7;
+dp-table table th {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
 }
 
-.menu-item:disabled{
-  opacity:0.5;
-  cursor:not-allowed;
+.row-content {
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 
-.menu-danger{
-  color:#b42318;
+.cell-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
-.menu-hint{
-  font-size:12px;
-  color:var(--muted);
-  margin-top:6px;
-  padding:0 4px 4px;
+.cell-subtitle {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #6b7280;
+  margin-top: 2px;
 }
 
-.row-content{
-  cursor:default;
+.hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* Status pill smaller */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  font-size: 11px;
+  border-radius: 999px;
+}
+
+/* Actions compact */
+.actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Menu compact */
+.menu {
+  min-width: 200px;
+}
+
+.menu-item {
+  padding: 8px 10px;
+  font-size: 13px;
 }

@@ -1,4 +1,5 @@
 export {ButtonComponent} from "./button/button.component";
+export {IconButtonComponent} from "./icon-button/icon-button.component";
 export {AppHeaderComponent} from "./app-header/app-header.component";
 export {InputComponent} from "./input/input.component";
 export {SelectComponent} from "./select/select.component";
