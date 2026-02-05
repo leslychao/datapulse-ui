@@ -15,11 +15,11 @@ export interface AccountConnectionResponse {
   accountId: number;
   marketplace: Marketplace;
   active: boolean;
-  lastSyncAt: string | null;
+  lastSyncAt: string;
   lastSyncStatus: AccountConnectionSyncStatus;
   createdAt: string;
   updatedAt: string;
-  maskedCredentials: string | null;
+  maskedCredentials: string;
 }
 
 export type AccountConnection = AccountConnectionResponse;
@@ -38,7 +38,6 @@ export type AccountConnectionCredentials = WildberriesCredentials | OzonCredenti
 export interface AccountConnectionCreateRequest {
   marketplace: Marketplace;
   credentials: AccountConnectionCredentials;
-  active?: boolean;
 }
 
 export interface AccountConnectionUpdateRequest {

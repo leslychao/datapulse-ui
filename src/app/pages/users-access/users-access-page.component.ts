@@ -6,9 +6,9 @@ import {
   HostListener,
   inject
 } from "@angular/core";
-import {CommonModule, DatePipe} from "@angular/common";
+import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
-import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {FormBuilder, FormControl, ReactiveFormsModule} from "@angular/forms";
 import {Observable, Subject, combineLatest, map, of, switchMap} from "rxjs";
 import {finalize, startWith, tap} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
@@ -17,7 +17,6 @@ import {AccountMembersApiClient, ApiError} from "../../core/api";
 import {AuthUserService} from "../../core/auth";
 import {
   AccountMember,
-  AccountMemberCreateRequest,
   AccountMemberRole,
   AccountMemberStatus
 } from "../../shared/models";
@@ -30,7 +29,6 @@ import {
   FormFieldComponent,
   InputComponent,
   LoadingStateComponent,
-  ModalComponent,
   PageHeaderComponent,
   PageLayoutComponent,
   SelectComponent,
@@ -38,7 +36,6 @@ import {
   TableToolbarComponent,
   ToastService
 } from "../../shared/ui";
-import {IconButtonComponent} from "../../shared/ui/icon-button/icon-button.component";
 
 import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
 
@@ -51,8 +48,7 @@ interface UsersViewModel {
 type UiSummary = {
   total: number;
   active: number;
-  invited: number;
-  blocked: number;
+  inactive: number;
 };
 
 type UsersAccessUi = {
@@ -78,17 +74,14 @@ const EMPTY_MEMBERS: readonly AccountMember[] = [];
     TableComponent,
     TableToolbarComponent,
     ButtonComponent,
-    IconButtonComponent,
     InputComponent,
     SelectComponent,
     FormFieldComponent,
     EmptyStateComponent,
     LoadingStateComponent,
     ErrorStateComponent,
-    ModalComponent,
     ConfirmDialogComponent
   ],
-  providers: [DatePipe],
   templateUrl: "./users-access-page.component.html",
   styleUrl: "./users-access-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -103,35 +96,20 @@ export class UsersAccessPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly datePipe = inject(DatePipe);
 
-  inviteVisible = false;
-  inviteSuccessVisible = false;
   saving = false;
-  lastInvitedMember: AccountMember | null = null;
 
   confirmDialogVisible = false;
-  confirmAction: "role" | "remove" | "block" | "unblock" | "cancel" | null = null;
+  confirmAction: "role" | "remove" | "activate" | "deactivate" | null = null;
   selectedMember: AccountMember | null = null;
   pendingRole: AccountMemberRole | null = null;
 
   readonly statusOptions: readonly StatusOption[] = [
     {label: "Active", value: AccountMemberStatus.Active},
-    {label: "Invited", value: AccountMemberStatus.Invited},
-    {label: "Blocked", value: AccountMemberStatus.Blocked}
+    {label: "Inactive", value: AccountMemberStatus.Inactive}
   ];
 
   readonly roleOptions: readonly AccountMemberRole[] = Object.values(AccountMemberRole);
-
-  readonly inviteForm: FormGroup<{
-    email: FormControl<string>;
-    role: FormControl<AccountMemberRole>;
-    message: FormControl<string>;
-  }> = this.fb.nonNullable.group({
-    email: ["", [Validators.required, Validators.email]],
-    role: [AccountMemberRole.Viewer, Validators.required],
-    message: [""]
-  });
 
   readonly filterStatusControl = this.fb.nonNullable.control<string>("");
   readonly searchControl = this.fb.nonNullable.control<string>("");
@@ -187,7 +165,7 @@ export class UsersAccessPageComponent {
   // ===== TrackBy =====
 
   trackByMemberId(_: number, member: AccountMember): number {
-    return member.id;
+    return member.id ?? 0;
   }
 
   trackByRoleValue(_: number, role: AccountMemberRole): AccountMemberRole {
@@ -201,19 +179,7 @@ export class UsersAccessPageComponent {
   // ===== Display helpers =====
 
   displayName(member: AccountMember): string {
-    return member.fullName || member.email || `User #${member.userId}`;
-  }
-
-  displayEmail(member: AccountMember): string {
-    return member.email || "No email on file";
-  }
-
-  lastActiveLabel(lastActiveAt: string | null | undefined): string {
-    const value = lastActiveAt ?? null;
-    if (!value) {
-      return "Never";
-    }
-    return this.datePipe.transform(value, "short") ?? "Never";
+    return member.userId != null ? `User #${member.userId}` : "User";
   }
 
   // ===== LoadState helpers =====
@@ -244,8 +210,7 @@ export class UsersAccessPageComponent {
     const summary: UiSummary = {
       total: members.length,
       active: this.countByStatus(members, AccountMemberStatus.Active),
-      invited: this.countByStatus(members, AccountMemberStatus.Invited),
-      blocked: this.countByStatus(members, AccountMemberStatus.Blocked)
+      inactive: this.countByStatus(members, AccountMemberStatus.Inactive)
     };
 
     const ui: UsersAccessUi = {
@@ -287,107 +252,6 @@ export class UsersAccessPageComponent {
     this.refresh$.next();
   }
 
-  openInvite(): void {
-    this.inviteForm.reset({email: "", role: AccountMemberRole.Viewer, message: ""});
-    this.inviteVisible = true;
-    this.cdr.markForCheck();
-  }
-
-  closeInvite(): void {
-    if (this.saving) {
-      return;
-    }
-    this.inviteVisible = false;
-    this.cdr.markForCheck();
-  }
-
-  submitInvite(accountId: number | null): void {
-    const members = this.latestMembersSnapshot();
-
-    if (accountId == null || this.inviteForm.invalid || this.saving) {
-      this.inviteForm.markAllAsTouched();
-      return;
-    }
-
-    const {email, role, message} = this.inviteForm.getRawValue();
-    const normalizedEmail = email.trim().toLowerCase();
-
-    if (members.some((member) => (member.email ?? "").toLowerCase() === normalizedEmail)) {
-      this.inviteForm.controls.email.setErrors({duplicate: true});
-      return;
-    }
-
-    const request: AccountMemberCreateRequest = {
-      email: email.trim(),
-      message: message.trim() || null,
-      role,
-      status: AccountMemberStatus.Invited
-    };
-
-    this.saving = true;
-    this.membersApi
-      .create(accountId, request)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap((member) => {
-          this.refresh$.next();
-          this.inviteVisible = false;
-          this.inviteSuccessVisible = true;
-          this.lastInvitedMember = member;
-          this.toastService.success("Invite sent.");
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error(this.mapErrorMessage(error, "Не удалось отправить приглашение."), {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
-  }
-
-  closeInviteSuccess(): void {
-    this.inviteSuccessVisible = false;
-    this.lastInvitedMember = null;
-    this.cdr.markForCheck();
-  }
-
-  resendInvite(accountId: number | null, member: AccountMember): void {
-    if (accountId == null || this.saving) {
-      return;
-    }
-
-    this.saving = true;
-    this.membersApi
-      .update(accountId, member.id, {role: member.role, status: AccountMemberStatus.Invited})
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Invite resent.");
-          this.refresh$.next();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error(this.mapErrorMessage(error, "Не удалось отправить приглашение."), {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
-  }
-
   // ===== Filtering / permissions / invariants =====
 
   filteredMembers(members: readonly AccountMember[]): AccountMember[] {
@@ -402,7 +266,7 @@ export class UsersAccessPageComponent {
       if (!search) {
         return true;
       }
-      const haystack = `${member.fullName ?? ""} ${member.email ?? ""} ${member.userId}`.toLowerCase();
+      const haystack = `${member.userId ?? ""}`.toLowerCase();
       return haystack.includes(search);
     });
   }
@@ -479,7 +343,7 @@ export class UsersAccessPageComponent {
   }
 
   openRoleConfirm(member: AccountMember, role: AccountMemberRole): void {
-    if (role === member.role) {
+    if (role === member.role || member.role == null || member.status == null) {
       return;
     }
     if (this.isLastOwner(member, this.latestMembersSnapshot())) {
@@ -495,6 +359,9 @@ export class UsersAccessPageComponent {
 
   confirmRoleChange(accountId: number | null): void {
     if (!this.selectedMember || !this.pendingRole || accountId == null) {
+      return;
+    }
+    if (this.selectedMember.status == null) {
       return;
     }
     this.updateMember(accountId, this.selectedMember, {role: this.pendingRole, status: this.selectedMember.status});
@@ -514,50 +381,52 @@ export class UsersAccessPageComponent {
     this.cdr.markForCheck();
   }
 
-  requestBlock(member: AccountMember): void {
+  requestDeactivate(member: AccountMember): void {
     if (this.isLastOwner(member, this.latestMembersSnapshot())) {
-      this.toastService.error("Нельзя заблокировать последнего OWNER.");
+      this.toastService.error("Нельзя деактивировать последнего OWNER.");
       return;
     }
     this.selectedMember = member;
-    this.confirmAction = "block";
+    this.confirmAction = "deactivate";
     this.confirmDialogVisible = true;
     this.cdr.markForCheck();
   }
 
-  requestUnblock(member: AccountMember): void {
+  requestActivate(member: AccountMember): void {
     this.selectedMember = member;
-    this.confirmAction = "unblock";
+    this.confirmAction = "activate";
     this.confirmDialogVisible = true;
     this.cdr.markForCheck();
   }
 
-  requestCancelInvite(member: AccountMember): void {
-    this.selectedMember = member;
-    this.confirmAction = "cancel";
-    this.confirmDialogVisible = true;
-    this.cdr.markForCheck();
-  }
-
-  blockDisabled(member: AccountMember, members: readonly AccountMember[], currentUserId: number | null): boolean {
+  deactivateDisabled(member: AccountMember, members: readonly AccountMember[], currentUserId: number | null): boolean {
     if (!this.canManageUsers(this.currentMember(members, currentUserId)?.role ?? null)) {
       return true;
     }
-    if (member.status === AccountMemberStatus.Blocked) {
+    if (member.status == null) {
+      return true;
+    }
+    if (member.status === AccountMemberStatus.Inactive) {
       return true;
     }
     return this.isLastOwner(member, members);
   }
 
-  unblockDisabled(member: AccountMember, currentUserId: number | null, members: readonly AccountMember[]): boolean {
+  activateDisabled(member: AccountMember, currentUserId: number | null, members: readonly AccountMember[]): boolean {
     if (!this.canManageUsers(this.currentMember(members, currentUserId)?.role ?? null)) {
       return true;
     }
-    return member.status !== AccountMemberStatus.Blocked;
+    if (member.status == null) {
+      return true;
+    }
+    return member.status !== AccountMemberStatus.Inactive;
   }
 
   removeDisabled(member: AccountMember, members: readonly AccountMember[], currentUserId: number | null): boolean {
     if (!this.canManageUsers(this.currentMember(members, currentUserId)?.role ?? null)) {
+      return true;
+    }
+    if (member.role == null || member.status == null) {
       return true;
     }
     return this.isLastOwner(member, members);
@@ -573,32 +442,20 @@ export class UsersAccessPageComponent {
     return null;
   }
 
-  onMenuBlock(member: AccountMember, accountId: number | null, members: readonly AccountMember[], currentUserId: number | null): void {
-    if (accountId == null || this.blockDisabled(member, members, currentUserId)) {
+  onMenuDeactivate(member: AccountMember, accountId: number | null, members: readonly AccountMember[], currentUserId: number | null): void {
+    if (accountId == null || this.deactivateDisabled(member, members, currentUserId)) {
       return;
     }
     this.openMenuMemberId = null;
-    this.requestBlock(member);
+    this.requestDeactivate(member);
   }
 
-  onMenuUnblock(member: AccountMember, accountId: number | null, members: readonly AccountMember[], currentUserId: number | null): void {
-    if (accountId == null || this.unblockDisabled(member, currentUserId, members)) {
+  onMenuActivate(member: AccountMember, accountId: number | null, members: readonly AccountMember[], currentUserId: number | null): void {
+    if (accountId == null || this.activateDisabled(member, currentUserId, members)) {
       return;
     }
     this.openMenuMemberId = null;
-    this.requestUnblock(member);
-  }
-
-  onMenuCancelInvite(member: AccountMember, accountId: number | null, currentUserId: number | null): void {
-    if (accountId == null) {
-      return;
-    }
-    const canManage = this.canManageUsers(this.currentMember(this.latestMembersSnapshot(), currentUserId)?.role ?? null);
-    if (!canManage) {
-      return;
-    }
-    this.openMenuMemberId = null;
-    this.requestCancelInvite(member);
+    this.requestActivate(member);
   }
 
   onMenuRemove(member: AccountMember, accountId: number | null, members: readonly AccountMember[], currentUserId: number | null): void {
@@ -624,18 +481,24 @@ export class UsersAccessPageComponent {
       return;
     }
 
-    if (this.confirmAction === "remove" || this.confirmAction === "cancel") {
+    if (this.confirmAction === "remove") {
       this.removeMember(accountId, this.selectedMember);
     }
 
-    if (this.confirmAction === "block") {
+    if (this.confirmAction === "deactivate") {
+      if (this.selectedMember.role == null) {
+        return;
+      }
       this.updateMember(accountId, this.selectedMember, {
         role: this.selectedMember.role,
-        status: AccountMemberStatus.Blocked
+        status: AccountMemberStatus.Inactive
       });
     }
 
-    if (this.confirmAction === "unblock") {
+    if (this.confirmAction === "activate") {
+      if (this.selectedMember.role == null) {
+        return;
+      }
       this.updateMember(accountId, this.selectedMember, {
         role: this.selectedMember.role,
         status: AccountMemberStatus.Active
@@ -652,7 +515,7 @@ export class UsersAccessPageComponent {
   }
 
   updateMember(accountId: number, member: AccountMember, update: {role: AccountMemberRole; status: AccountMemberStatus}): void {
-    if (this.saving) {
+    if (this.saving || member.id == null) {
       return;
     }
     this.saving = true;
@@ -680,7 +543,7 @@ export class UsersAccessPageComponent {
   }
 
   removeMember(accountId: number, member: AccountMember): void {
-    if (this.saving) {
+    if (this.saving || member.id == null) {
       return;
     }
     this.saving = true;
@@ -713,9 +576,8 @@ export class UsersAccessPageComponent {
   confirmTitle(): string {
     if (this.confirmAction === "role") return "Change role?";
     if (this.confirmAction === "remove") return "Remove user?";
-    if (this.confirmAction === "block") return "Block user?";
-    if (this.confirmAction === "unblock") return "Unblock user?";
-    if (this.confirmAction === "cancel") return "Cancel invite?";
+    if (this.confirmAction === "deactivate") return "Deactivate user?";
+    if (this.confirmAction === "activate") return "Activate user?";
     return "Confirm action";
   }
 
@@ -725,9 +587,8 @@ export class UsersAccessPageComponent {
         ? "Вы потеряете доступ к workspace."
         : "Пользователь потеряет доступ к workspace.";
     }
-    if (this.confirmAction === "block") return "Доступ будет временно ограничен.";
-    if (this.confirmAction === "unblock") return "Доступ будет восстановлен.";
-    if (this.confirmAction === "cancel") return "Приглашение будет отменено.";
+    if (this.confirmAction === "deactivate") return "Доступ пользователя будет отключен.";
+    if (this.confirmAction === "activate") return "Доступ пользователя будет восстановлен.";
     if (this.confirmAction === "role") return "Роль пользователя будет изменена.";
     return "";
   }
@@ -736,16 +597,10 @@ export class UsersAccessPageComponent {
     return error.message || fallback;
   }
 
-  statusLabel(status: AccountMemberStatus): string {
+  statusLabel(status: AccountMemberStatus | undefined): string {
     switch (status) {
       case AccountMemberStatus.Active:
         return "Active";
-      case AccountMemberStatus.Invited:
-        return "Invited";
-      case AccountMemberStatus.Blocked:
-        return "Blocked";
-      case AccountMemberStatus.Removed:
-        return "Removed";
       case AccountMemberStatus.Inactive:
         return "Inactive";
       default:

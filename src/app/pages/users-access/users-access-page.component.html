@@ -21,7 +21,7 @@
             </dp-form-field>
 
             <dp-form-field label="Search">
-              <dp-input placeholder="Email or name" [formControl]="searchControl"></dp-input>
+              <dp-input placeholder="User ID" [formControl]="searchControl"></dp-input>
             </dp-form-field>
           </div>
         </dp-table-toolbar>
@@ -46,20 +46,8 @@
                 <span class="summary-sep">·</span>
                 <span>Active: <strong>{{ ui.summary.active }}</strong></span>
                 <span class="summary-sep">·</span>
-                <span>Invited: <strong>{{ ui.summary.invited }}</strong></span>
-                <span class="summary-sep">·</span>
-                <span>Blocked: <strong>{{ ui.summary.blocked }}</strong></span>
+                <span>Inactive: <strong>{{ ui.summary.inactive }}</strong></span>
                 </div>
-
-                <dp-icon-button
-                  class="invite-button"
-                  icon="user-plus"
-                  variant="secondary"
-                  ariaLabel="Invite user"
-                  title="Invite user"
-                  (click)="openInvite()"
-                  [disabled]="!ui.canManage"
-                ></dp-icon-button>
               </div>
 
               <ng-container *ngIf="ui.filtered.length; else emptyState">
@@ -70,7 +58,6 @@
                       <th>User</th>
                       <th>Role</th>
                       <th>Status</th>
-                      <th>Last active</th>
                       <th style="text-align:right;">Actions</th>
                     </tr>
                     </thead>
@@ -79,7 +66,7 @@
                     <tr *ngFor="let member of ui.filtered; trackBy: trackByMemberId">
                       <td class="row-content">
                         <div class="cell-title">{{ displayName(member) }}</div>
-                        <div class="cell-subtitle">{{ displayEmail(member) }}</div>
+                        <div class="cell-subtitle">ID: {{ member.userId }}</div>
                       </td>
 
                       <td class="row-content">
@@ -87,7 +74,7 @@
                           class="role-select"
                           [value]="member.role"
                           (change)="onRoleSelectChange(member, $event)"
-                          [disabled]="!ui.canManage || isLastOwner(member, ui.members)"
+                          [disabled]="!ui.canManage || isLastOwner(member, ui.members) || !member.role || !member.status"
                         >
                           <option *ngFor="let role of roleOptions; trackBy: trackByRoleValue" [value]="role">
                             {{ role }}
@@ -103,22 +90,8 @@
                         <span class="status-pill">{{ statusLabel(member.status) }}</span>
                       </td>
 
-                      <td class="row-content">
-                        {{ lastActiveLabel(member.lastActiveAt) }}
-                      </td>
-
                       <td>
                         <div class="actions" (click)="$event.stopPropagation()">
-                          <dp-button
-                            size="sm"
-                            variant="secondary"
-                            *ngIf="member.status === statusEnum.Invited"
-                            (click)="resendInvite(vm.accountId, member)"
-                            [disabled]="!ui.canManage"
-                          >
-                            Resend
-                          </dp-button>
-
                           <dp-button
                             size="sm"
                             variant="secondary"
@@ -132,29 +105,21 @@
                             <button
                               type="button"
                               class="menu-item"
-                              (click)="onMenuBlock(member, vm.accountId, ui.members, vm.currentUserId)"
-                              [disabled]="blockDisabled(member, ui.members, vm.currentUserId)"
+                              *ngIf="member.status === statusEnum.Active"
+                              (click)="onMenuDeactivate(member, vm.accountId, ui.members, vm.currentUserId)"
+                              [disabled]="deactivateDisabled(member, ui.members, vm.currentUserId)"
                             >
-                              Block
+                              Deactivate
                             </button>
 
                             <button
                               type="button"
                               class="menu-item"
-                              (click)="onMenuUnblock(member, vm.accountId, ui.members, vm.currentUserId)"
-                              [disabled]="unblockDisabled(member, vm.currentUserId, ui.members)"
+                              *ngIf="member.status === statusEnum.Inactive"
+                              (click)="onMenuActivate(member, vm.accountId, ui.members, vm.currentUserId)"
+                              [disabled]="activateDisabled(member, vm.currentUserId, ui.members)"
                             >
-                              Unblock
-                            </button>
-
-                            <button
-                              type="button"
-                              class="menu-item"
-                              *ngIf="member.status === statusEnum.Invited"
-                              (click)="onMenuCancelInvite(member, vm.accountId, vm.currentUserId)"
-                              [disabled]="!ui.canManage"
-                            >
-                              Cancel invite
+                              Activate
                             </button>
 
                             <button
@@ -185,79 +150,15 @@
               <ng-template #emptyState>
                 <dp-empty-state
                   title="Нет пользователей"
-                  description="Пригласите коллег, чтобы работать вместе."
+                  description="Добавьте участников, чтобы делегировать доступ."
                 >
-                  <dp-button variant="primary" (click)="openInvite()" [disabled]="!ui.canManage">
-                    Invite user
-                  </dp-button>
+                  <dp-button variant="primary" [disabled]="true">Invite user</dp-button>
                 </dp-empty-state>
               </ng-template>
             </ng-container>
           </ng-container>
         </ng-container>
     </section>
-
-    <dp-modal [visible]="inviteVisible" (close)="closeInvite()">
-      <div class="modal-content">
-        <h3>Invite user</h3>
-
-        <form
-          [formGroup]="inviteForm"
-          (ngSubmit)="submitInvite(vm.accountId)"
-          class="form"
-        >
-          <dp-form-field
-            label="Email"
-            [required]="true"
-            [error]="inviteForm.controls.email.errors?.['duplicate'] ? 'Already a member' : ''"
-          >
-            <dp-input type="email" placeholder="user@company.com" formControlName="email"></dp-input>
-          </dp-form-field>
-
-          <dp-form-field label="Role" [required]="true">
-            <dp-select formControlName="role">
-              <option *ngFor="let role of roleOptions; trackBy: trackByRoleValue" [value]="role">{{ role }}</option>
-            </dp-select>
-          </dp-form-field>
-
-          <dp-form-field label="Message (optional)">
-            <dp-input placeholder="Optional message" formControlName="message"></dp-input>
-          </dp-form-field>
-
-          <div class="modal-actions">
-            <dp-button variant="secondary" type="button" (click)="closeInvite()">Cancel</dp-button>
-            <dp-button variant="primary" type="submit" [loading]="saving">Send invite</dp-button>
-          </div>
-        </form>
-      </div>
-    </dp-modal>
-
-    <dp-modal [visible]="inviteSuccessVisible" (close)="closeInviteSuccess()">
-      <div class="modal-content">
-        <h3>Invite sent</h3>
-        <p class="muted">Пользователь получит приглашение и сможет зарегистрироваться.</p>
-
-        <div class="modal-actions">
-          <dp-button
-            variant="secondary"
-            *ngIf="lastInvitedMember"
-            (click)="resendInvite(vm.accountId, lastInvitedMember)"
-          >
-            Resend invite
-          </dp-button>
-
-          <dp-button
-            variant="danger"
-            *ngIf="lastInvitedMember"
-            (click)="requestCancelInvite(lastInvitedMember)"
-          >
-            Cancel invite
-          </dp-button>
-
-          <dp-button variant="secondary" (click)="closeInviteSuccess()">Close</dp-button>
-        </div>
-      </div>
-    </dp-modal>
 
     <dp-confirm-dialog
       [visible]="confirmDialogVisible"

@@ -2,17 +2,13 @@
   <dp-page-layout [accountId]="vm.accountId">
     <dp-page-header
       title="Workspace settings"
-      subtitle="Управляйте названием и описанием workspace, а также статусом и удалением."
+      subtitle="Управляйте названием workspace, статусом и удалением."
     ></dp-page-header>
 
     <section class="card" *ngIf="vm.accountState.status === 'ready' && vm.accountState.data; else settingsState">
       <form class="form" [formGroup]="form" (ngSubmit)="save(vm.accountId)">
         <dp-form-field label="Workspace name" [required]="true">
           <dp-input formControlName="name" placeholder="Workspace name"></dp-input>
-        </dp-form-field>
-
-        <dp-form-field label="Description">
-          <dp-input formControlName="description" placeholder="Optional description"></dp-input>
         </dp-form-field>
 
         <div class="form-actions">

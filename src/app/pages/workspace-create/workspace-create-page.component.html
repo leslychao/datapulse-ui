@@ -1,7 +1,7 @@
 <dp-page-layout [accountId]="null">
   <dp-page-header
     title="Create workspace"
-    subtitle="Название и краткое описание помогут команде понимать контекст."
+    subtitle="Укажите название, чтобы команда понимала контекст."
   >
     <div secondary-actions>
       <dp-button variant="secondary" (click)="goToWorkspaces()">Back</dp-button>
@@ -15,12 +15,6 @@
     <form class="form" [formGroup]="form" (ngSubmit)="submit()">
       <dp-form-field label="Workspace name" [required]="true">
         <dp-input placeholder="e.g. North Star Marketplace" formControlName="name"></dp-input>
-      </dp-form-field>
-      <dp-form-field
-        label="Description (optional)"
-        hint="Visible to team members in the workspace header."
-      >
-        <dp-input placeholder="Short description" formControlName="description"></dp-input>
       </dp-form-field>
 
       <div class="form-actions">

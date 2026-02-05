@@ -115,7 +115,7 @@
                     <span>{{ getMemberLabel(details.members.length) }}</span>
                     <div class="members__popover">
                       <div class="members__popover-item" *ngFor="let member of details.members">
-                        {{ member.fullName || member.email || "Member" }}
+                        {{ member.userId != null ? ("User #" + member.userId) : "Member" }}
                       </div>
                     </div>
                   </div>

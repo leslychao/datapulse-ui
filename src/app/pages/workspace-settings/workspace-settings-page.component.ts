@@ -88,10 +88,8 @@ export class WorkspaceSettingsPageComponent {
 
   readonly form: FormGroup<{
     name: FormControl<string>;
-    description: FormControl<string>;
   }> = this.fb.nonNullable.group({
-    name: ["", [Validators.required, Validators.maxLength(64)]],
-    description: [""]
+    name: ["", [Validators.required, Validators.maxLength(32)]]
   });
 
   readonly vm$ = combineLatest({
@@ -140,8 +138,7 @@ export class WorkspaceSettingsPageComponent {
         this.lastLoadedAccount = vm.accountState.data;
 
         this.form.reset({
-          name: vm.accountState.data.name,
-          description: vm.accountState.data.description ?? ""
+          name: vm.accountState.data.name ?? ""
         });
         this.form.markAsPristine();
         this.form.markAsUntouched();
@@ -172,10 +169,7 @@ export class WorkspaceSettingsPageComponent {
     }
 
     const rawName = this.form.controls.name.value;
-    const rawDescription = this.form.controls.description.value;
-
     const name = rawName.trim();
-    const description = rawDescription.trim();
 
     if (name.length === 0) {
       this.form.controls.name.setValue("");
@@ -185,7 +179,6 @@ export class WorkspaceSettingsPageComponent {
 
     const update: AccountUpdateRequest = {
       name,
-      description: description.length > 0 ? description : null,
       active: this.lastLoadedAccount?.active ?? true
     };
 
@@ -251,8 +244,7 @@ export class WorkspaceSettingsPageComponent {
     const nextActive = this.archiveIntent === "restore";
 
     const update: AccountUpdateRequest = {
-      name: source.name,
-      description: source.description ?? null,
+      name: source.name ?? "",
       active: nextActive
     };
 

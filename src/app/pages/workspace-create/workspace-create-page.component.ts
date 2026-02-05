@@ -46,10 +46,8 @@ export class WorkspaceCreatePageComponent {
 
   readonly form: FormGroup<{
     name: FormControl<string>;
-    description: FormControl<string>;
   }> = this.fb.nonNullable.group({
-    name: ["", [Validators.required, Validators.maxLength(64)]],
-    description: [""]
+    name: ["", [Validators.required, Validators.maxLength(32)]]
   });
 
   submit(): void {
@@ -57,10 +55,10 @@ export class WorkspaceCreatePageComponent {
       this.form.markAllAsTouched();
       return;
     }
-    const {name, description} = this.form.getRawValue();
+    const {name} = this.form.getRawValue();
     this.saving = true;
     this.accountsApi
-      .create({name: name.trim(), description: description.trim() || null, active: true})
+      .create({name: name.trim(), active: true})
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         tap((account) => {

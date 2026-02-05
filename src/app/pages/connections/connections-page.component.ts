@@ -265,8 +265,7 @@ export class ConnectionsPageComponent {
     const {marketplace, token, clientId, apiKey} = this.wizardForm.getRawValue();
     const request: AccountConnectionCreateRequest = {
       marketplace,
-      credentials: marketplace === Marketplace.Wildberries ? {token} : {clientId, apiKey},
-      active: true
+      credentials: marketplace === Marketplace.Wildberries ? {token} : {clientId, apiKey}
     };
     this.saving = true;
     this.wizardError = null;

@@ -2,18 +2,18 @@ import {Marketplace} from "./account-connection.model";
 
 export interface OrderPnlResponse {
   accountId: number;
-  sourcePlatform: string;
+  sourcePlatform: Marketplace;
   orderId: string;
   currency: string;
-  firstFinanceDate: string | null;
-  lastFinanceDate: string | null;
-  revenueGross: string | null;
-  marketplaceCommissionAmount: string | null;
-  logisticsCostAmount: string | null;
-  penaltiesAmount: string | null;
-  refundAmount: string | null;
-  netPayout: string | null;
-  pnlAmount: string | null;
+  firstFinanceDate: string;
+  lastFinanceDate: string;
+  revenueGross: number;
+  marketplaceCommissionAmount: number;
+  logisticsCostAmount: number;
+  penaltiesAmount: number;
+  refundAmount: number;
+  netPayout: number;
+  pnlAmount: number;
   itemsSoldCount: number;
   returnedItemsCount: number;
   isReturned: boolean;

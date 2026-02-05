@@ -1,8 +1,5 @@
 export enum AccountMemberStatus {
   Active = "ACTIVE",
-  Invited = "INVITED",
-  Blocked = "BLOCKED",
-  Removed = "REMOVED",
   Inactive = "INACTIVE"
 }
 
@@ -17,11 +14,8 @@ export interface AccountMemberResponse {
   id: number;
   accountId: number;
   userId: number;
-  email?: string | null;
-  fullName?: string | null;
-  lastActiveAt?: string | null;
-  status: AccountMemberStatus;
   role: AccountMemberRole;
+  status: AccountMemberStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,8 +23,6 @@ export interface AccountMemberResponse {
 export type AccountMember = AccountMemberResponse;
 
 export interface AccountMemberCreateRequest {
-  email?: string | null;
-  message?: string | null;
   role: AccountMemberRole;
   status: AccountMemberStatus;
 }
