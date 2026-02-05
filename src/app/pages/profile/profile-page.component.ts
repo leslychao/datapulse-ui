@@ -24,8 +24,7 @@ export class ProfilePageComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly profile$ = this.authUser.userProfile$;
-  readonly accountId$ = accountIdFromRoute(this.route);
-
+  public readonly accountId$ = accountIdFromRoute(this.route);
   constructor() {
     this.accountId$
       .pipe(

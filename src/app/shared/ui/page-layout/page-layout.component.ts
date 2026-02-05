@@ -65,11 +65,6 @@ export class PageLayoutComponent {
         label: "Workspace",
         items: [
           {
-            label: "Overview",
-            path: APP_PATHS.overview(accountId),
-            testId: "sidebar-overview"
-          },
-          {
             label: "Connections",
             path: APP_PATHS.connections(accountId),
             testId: "sidebar-connections"

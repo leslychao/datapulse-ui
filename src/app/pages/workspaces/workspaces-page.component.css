@@ -4,6 +4,36 @@
   gap: 16px;
 }
 
+/* Только первая колонка кликабельна */
+.workspace-link {
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.workspace-link:hover .cell-title {
+  text-decoration: underline;
+  text-decoration-color: rgba(42, 139, 242, 0.35);
+}
+
+/* Колонки: фиксируем “нормальную” влезаемость */
+.col-workspace { width: 22%; }
+.col-lifecycle { width: 12%; }
+.col-sources   { width: 20%; }
+.col-members   { width: 12%; }
+.col-last-sync { width: 16%; }
+.col-issues    { width: 8%; }
+.col-actions   { width: 10%; }
+
+/* Чтобы Actions выглядели аккуратно и не “прыгали” */
+.col-actions,
+.col-issues {
+  text-align: right;
+}
+
 .cell-title {
   font-weight: 600;
   display: flex;
@@ -92,7 +122,7 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.15s ease;
-  z-index: 3;
+  z-index: 10;
 }
 
 .data-sources:hover .data-sources__popover {
@@ -127,7 +157,7 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.15s ease;
-  z-index: 3;
+  z-index: 10;
 }
 
 .members:hover .members__popover {
@@ -152,9 +182,11 @@
   color: var(--muted);
 }
 
+/* Actions column */
 .row-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -162,28 +194,48 @@
   position: relative;
 }
 
+/* Кнопка "⋯" — ровная, квадратная, по центру */
 .row-menu__trigger {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
   border: 1px solid var(--line);
   background: #fff;
-  border-radius: 8px;
-  padding: 4px 8px;
+  border-radius: 10px;
+
   cursor: pointer;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
   color: var(--text);
 }
 
+.row-menu__trigger:hover {
+  background: rgba(17, 24, 39, 0.04);
+}
+
+/* Меню: запрещаем внутренний скролл */
 .row-menu__panel {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
+
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  min-width: 160px;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
-  z-index: 4;
+  border-radius: 14px;
+
+  min-width: 180px;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+
+  z-index: 20;
   padding: 6px;
+
+  overflow: visible;
+  max-height: none;
 }
 
 .row-menu__item {
@@ -191,9 +243,11 @@
   width: 100%;
   border: none;
   background: transparent;
+
   text-align: left;
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+
   font-size: 13px;
   color: var(--text);
   cursor: pointer;
@@ -215,22 +269,19 @@
 .row-menu__hint {
   font-size: 11px;
   color: var(--muted);
-  padding: 6px 10px;
-}
-
-.workspace-row {
-  cursor: pointer;
+  padding: 6px 12px 10px;
 }
 
 .workspace-row:hover {
   background: rgba(15, 23, 42, 0.03);
 }
 
+/* Backdrop должен быть под панелью, но над страницей */
 .row-menu__backdrop {
   position: fixed;
   inset: 0;
   background: transparent;
-  z-index: 3;
+  z-index: 19;
 }
 
 .empty-inline {

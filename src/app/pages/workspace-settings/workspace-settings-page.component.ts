@@ -18,7 +18,6 @@ import {
   ErrorStateComponent,
   FormFieldComponent,
   InputComponent,
-  SelectComponent,
   LoadingStateComponent,
   PageHeaderComponent,
   PageLayoutComponent,
@@ -31,6 +30,8 @@ interface WorkspaceSettingsViewModel {
   accountState: LoadState<AccountResponse | null, ApiError>;
   totalWorkspaces: number;
 }
+
+type ArchiveIntent = "archive" | "restore";
 
 @Component({
   selector: "dp-workspace-settings-page",
@@ -64,8 +65,23 @@ export class WorkspaceSettingsPageComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   saving = false;
+
   archiveDialogVisible = false;
   deleteDialogVisible = false;
+
+  archiveDialogTitle = "Archive workspace?";
+  archiveDialogDescription = "Workspace будет скрыт и синхронизации остановятся.";
+  archiveDialogConfirmLabel = "Archive";
+  archiveDialogIsDanger = false;
+
+  private archiveIntent: ArchiveIntent = "archive";
+
+  /**
+   * Последний успешно загруженный workspace.
+   * Нужен, чтобы выполнять Archive/Restore как lifecycle-action независимо от состояния формы,
+   * и при этом отправлять полный AccountUpdateRequest (name обязателен в контракте).
+   */
+  private lastLoadedAccount: AccountResponse | null = null;
 
   private readonly refresh$ = new Subject<void>();
   private readonly accountId$ = accountIdFromRoute(this.route);
@@ -73,11 +89,9 @@ export class WorkspaceSettingsPageComponent {
   readonly form: FormGroup<{
     name: FormControl<string>;
     description: FormControl<string>;
-    active: FormControl<boolean>;
   }> = this.fb.nonNullable.group({
     name: ["", [Validators.required, Validators.maxLength(64)]],
-    description: [""],
-    active: [true]
+    description: [""]
   });
 
   readonly vm$ = combineLatest({
@@ -92,6 +106,7 @@ export class WorkspaceSettingsPageComponent {
           totalWorkspaces: 0
         } as WorkspaceSettingsViewModel);
       }
+
       return this.iamApi.getAccessibleAccounts().pipe(
         toLoadState<AccountResponse[], ApiError>(),
         map((state) => {
@@ -109,7 +124,9 @@ export class WorkspaceSettingsPageComponent {
               totalWorkspaces: 0
             } as WorkspaceSettingsViewModel;
           }
+
           const account = state.data.find((item) => item.id === accountId) ?? null;
+
           return {
             accountId,
             accountState: {status: "ready", data: account},
@@ -120,13 +137,22 @@ export class WorkspaceSettingsPageComponent {
     }),
     tap((vm) => {
       if (vm.accountState.status === "ready" && vm.accountState.data) {
+        this.lastLoadedAccount = vm.accountState.data;
+
         this.form.reset({
           name: vm.accountState.data.name,
-          description: vm.accountState.data.description ?? "",
-          active: vm.accountState.data.active
+          description: vm.accountState.data.description ?? ""
         });
+        this.form.markAsPristine();
+        this.form.markAsUntouched();
       }
+
+      if (vm.accountState.status === "ready" && !vm.accountState.data) {
+        this.lastLoadedAccount = null;
+      }
+
       if (vm.accountState.status === "error") {
+        this.lastLoadedAccount = null;
         this.toastService.error("Не удалось загрузить workspace.", {
           details: vm.accountState.error.details,
           correlationId: vm.accountState.error.correlationId
@@ -135,57 +161,126 @@ export class WorkspaceSettingsPageComponent {
     })
   );
 
+  canSave(accountId: number | null): boolean {
+    return accountId != null && !this.saving && this.form.valid && !this.form.pristine;
+  }
+
   save(accountId: number | null): void {
-    if (accountId == null || this.form.invalid || this.saving) {
+    if (!this.canSave(accountId)) {
       this.form.markAllAsTouched();
       return;
     }
-    const {name, description, active} = this.form.getRawValue();
+
+    const rawName = this.form.controls.name.value;
+    const rawDescription = this.form.controls.description.value;
+
+    const name = rawName.trim();
+    const description = rawDescription.trim();
+
+    if (name.length === 0) {
+      this.form.controls.name.setValue("");
+      this.form.controls.name.markAsTouched();
+      return;
+    }
+
     const update: AccountUpdateRequest = {
-      name: name.trim(),
-      description: description.trim() || null,
-      active
+      name,
+      description: description.length > 0 ? description : null,
+      active: this.lastLoadedAccount?.active ?? true
     };
+
     this.saving = true;
+
     this.accountsApi
-      .update(accountId, update)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Workspace обновлён.");
-          this.refresh$.next();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error("Не удалось обновить workspace.", {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+    .update(accountId as number, update)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success("Workspace обновлён.");
+        this.refresh$.next();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error("Не удалось обновить workspace.", {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
-  openArchiveDialog(): void {
+  openArchiveDialog(isCurrentlyActive: boolean): void {
+    this.archiveIntent = isCurrentlyActive ? "archive" : "restore";
     this.archiveDialogVisible = true;
+
+    if (this.archiveIntent === "archive") {
+      this.archiveDialogTitle = "Archive workspace?";
+      this.archiveDialogDescription = "Workspace будет скрыт и синхронизации остановятся.";
+      this.archiveDialogConfirmLabel = "Archive";
+      this.archiveDialogIsDanger = false;
+      return;
+    }
+
+    this.archiveDialogTitle = "Restore workspace?";
+    this.archiveDialogDescription = "Workspace снова станет активным и доступным для работы.";
+    this.archiveDialogConfirmLabel = "Restore";
+    this.archiveDialogIsDanger = false;
   }
 
   closeArchiveDialog(): void {
     this.archiveDialogVisible = false;
   }
 
-  archive(accountId: number | null): void {
-    if (accountId == null) {
+  /**
+   * Confirm handler без accountId в аргументах:
+   * accountId берём из route/vm, а данные — из lastLoadedAccount.
+   */
+  confirmArchiveToggle(): void {
+    const source = this.lastLoadedAccount;
+    if (source == null || this.saving) {
+      this.closeArchiveDialog();
       return;
     }
-    this.form.patchValue({active: false});
-    this.save(accountId);
-    this.closeArchiveDialog();
+
+    const nextActive = this.archiveIntent === "restore";
+
+    const update: AccountUpdateRequest = {
+      name: source.name,
+      description: source.description ?? null,
+      active: nextActive
+    };
+
+    this.saving = true;
+
+    this.accountsApi
+    .update(source.id, update)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success(nextActive ? "Workspace восстановлен." : "Workspace архивирован.");
+        this.refresh$.next();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error("Не удалось изменить статус workspace.", {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.closeArchiveDialog();
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
   openDeleteDialog(): void {
@@ -200,42 +295,33 @@ export class WorkspaceSettingsPageComponent {
     if (accountId == null || this.saving) {
       return;
     }
+
     this.saving = true;
+
     this.accountsApi
-      .remove(accountId)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Workspace удалён.");
-          this.accountContext.clear();
-          this.router.navigateByUrl(APP_PATHS.workspaces);
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error("Не удалось удалить workspace.", {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
-  }
-
-  goToConnections(accountId: number): void {
-    this.router.navigateByUrl(APP_PATHS.connections(accountId));
-  }
-
-  goToUsers(accountId: number): void {
-    this.router.navigateByUrl(APP_PATHS.users(accountId));
-  }
-
-  goToOverview(accountId: number): void {
-    this.router.navigateByUrl(APP_PATHS.overview(accountId));
+    .remove(accountId)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success("Workspace удалён.");
+        this.accountContext.clear();
+        this.router.navigateByUrl(APP_PATHS.workspaces);
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error("Не удалось удалить workspace.", {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.closeDeleteDialog();
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
   goToWorkspaces(): void {

@@ -26,40 +26,48 @@
         <dp-table *ngIf="vm.accountsState.data.length; else emptyState">
           <table>
             <thead>
-              <tr>
-                <th>Workspace</th>
-                <th>Lifecycle</th>
-                <th>Data sources</th>
-                <th>Members</th>
-                <th>Last sync</th>
-                <th>Issues</th>
-                <th>Actions</th>
-              </tr>
+            <tr>
+              <th class="col-workspace">Workspace</th>
+              <th class="col-lifecycle">Lifecycle</th>
+              <th class="col-sources">Data sources</th>
+              <th class="col-members">Members</th>
+              <th class="col-last-sync">Last sync</th>
+              <th class="col-issues">Issues</th>
+              <th class="col-actions">Actions</th>
+            </tr>
             </thead>
+
             <tbody>
-              <tr
-                *ngFor="let account of vm.accountsState.data"
-                class="workspace-row"
-                (click)="goToWorkspace(account.id)"
-              >
-                <td>
+            <tr *ngFor="let account of vm.accountsState.data" class="workspace-row">
+              <td class="col-workspace">
+                <button
+                  type="button"
+                  class="workspace-link"
+                  (click)="goToWorkspace(account.id)"
+                  aria-label="Open workspace"
+                >
                   <div class="cell-title">
                     {{ account.name }}
                     <span class="current-pill" *ngIf="vm.currentAccountId === account.id">
-                      Current
-                    </span>
+                        Current
+                      </span>
                   </div>
                   <div class="cell-subtitle">ID: {{ account.id }}</div>
-                </td>
-                <td>
+                </button>
+              </td>
+
+              <td class="col-lifecycle">
                   <span class="status-pill" [class.is-disabled]="!account.active">
                     {{ getWorkspaceLabel(account) }}
                   </span>
-                </td>
-                <td>
-                  <ng-container *ngIf="getDetailsForAccount(account.id, vm.detailsState) as details; else loadingDataSources">
-                    <ng-container *ngIf="details.connections.length; else noSources">
-                      <div class="data-sources">
+              </td>
+
+              <td class="col-sources">
+                <ng-container
+                  *ngIf="getDetailsForAccount(account.id, vm.detailsState) as details; else loadingDataSources"
+                >
+                  <ng-container *ngIf="details.connections.length; else noSources">
+                    <div class="data-sources">
                         <span
                           class="data-sources__chip"
                           *ngFor="let badge of getDataSourceBadges(details.connections)"
@@ -70,131 +78,149 @@
                         >
                           {{ badge.label }}
                         </span>
-                        <div class="data-sources__popover">
-                          <div class="data-sources__popover-item" *ngFor="let connection of details.connections">
-                            {{ connection.marketplace === 'WILDBERRIES' ? 'WB' : 'Ozon' }}
-                            •
-                            {{ getConnectionStatusLabel(connection.lastSyncStatus) }}
-                          </div>
-                        </div>
-                      </div>
-                    </ng-container>
-                    <ng-template #noSources>
-                      <div class="empty-inline">
-                        <span class="muted">No data sources</span>
-                        <dp-button
-                          size="sm"
-                          variant="secondary"
-                          (click)="goToConnections(account.id); $event.stopPropagation()"
-                        >
-                          Add
-                        </dp-button>
-                      </div>
-                    </ng-template>
-                  </ng-container>
-                  <ng-template #loadingDataSources>
-                    <span class="muted">—</span>
-                  </ng-template>
-                </td>
-                <td>
-                  <ng-container *ngIf="getDetailsForAccount(account.id, vm.detailsState) as details; else loadingMembers">
-                    <div class="members" *ngIf="details.members.length; else noMembers">
-                      <span>{{ getMemberLabel(details.members.length) }}</span>
-                      <div class="members__popover">
-                        <div class="members__popover-item" *ngFor="let member of details.members">
-                          {{ member.fullName || member.email || "Member" }}
+                      <div class="data-sources__popover">
+                        <div class="data-sources__popover-item" *ngFor="let connection of details.connections">
+                          {{ connection.marketplace === 'WILDBERRIES' ? 'WB' : 'Ozon' }}
+                          •
+                          {{ getConnectionStatusLabel(connection.lastSyncStatus) }}
                         </div>
                       </div>
                     </div>
-                    <ng-template #noMembers>
-                      <span class="muted">No members</span>
-                    </ng-template>
                   </ng-container>
-                  <ng-template #loadingMembers>
-                    <span class="muted">—</span>
-                  </ng-template>
-                </td>
-                <td>
-                  <ng-container *ngIf="getDetailsForAccount(account.id, vm.detailsState) as details; else loadingSync">
-                    <ng-container *ngIf="getLastSyncSummary(details.connections) as summary">
-                      <ng-container *ngIf="summary.timestamp; else noSyncReason">
-                        <div class="last-sync">
-                          <span>{{ summary.timestamp | date: 'short' }}</span>
-                          <span class="dot">•</span>
-                          <span>{{ summary.statusLabel }}</span>
-                        </div>
-                      </ng-container>
-                      <ng-template #noSyncReason>
-                        <span class="muted">{{ summary.reason }}</span>
-                      </ng-template>
-                    </ng-container>
-                  </ng-container>
-                  <ng-template #loadingSync>
-                    <span class="muted">—</span>
-                  </ng-template>
-                </td>
-                <td>
-                  <ng-container *ngIf="getDetailsForAccount(account.id, vm.detailsState) as details">
-                    <span *ngIf="getIssuesCount(details.connections) as issues">
-                      {{ issues ? (issues + ' alert' + (issues > 1 ? 's' : '')) : '' }}
-                    </span>
-                  </ng-container>
-                </td>
-                <td>
-                  <div class="row-actions">
-                    <div class="row-menu">
-                      <button
-                        type="button"
-                        class="row-menu__trigger"
-                        aria-label="More actions"
-                        (click)="toggleActionMenu(account.id, $event); $event.stopPropagation()"
+
+                  <ng-template #noSources>
+                    <div class="empty-inline">
+                      <span class="muted">No data sources</span>
+                      <dp-button
+                        size="sm"
+                        variant="secondary"
+                        (click)="goToConnections(account.id); $event.stopPropagation()"
                       >
-                        ⋯
-                      </button>
-                      <div
-                        class="row-menu__backdrop"
-                        *ngIf="openActionMenuId === account.id"
-                        (click)="closeActionMenu()"
-                      ></div>
-                      <div
-                        class="row-menu__panel"
-                        *ngIf="openActionMenuId === account.id"
-                        (click)="$event.stopPropagation()"
-                      >
-                        <button
-                          type="button"
-                          class="row-menu__item"
-                          (click)="goToSettings(account.id); closeActionMenu(); $event.stopPropagation()"
-                        >
-                          Settings
-                        </button>
-                        <button
-                          type="button"
-                          class="row-menu__item"
-                          (click)="openArchiveDialog(account); closeActionMenu(); $event.stopPropagation()"
-                          [disabled]="!account.active"
-                        >
-                          Archive
-                        </button>
-                        <button
-                          type="button"
-                          class="row-menu__item row-menu__item--danger"
-                          (click)="openDeleteDialog(account); closeActionMenu(); $event.stopPropagation()"
-                          [disabled]="!canDelete(vm.accountsState.data.length)"
-                        >
-                          Delete
-                        </button>
-                        <div class="row-menu__hint" *ngIf="!canDelete(vm.accountsState.data.length)">
-                          Нельзя удалить последний workspace.
-                        </div>
+                        Add
+                      </dp-button>
+                    </div>
+                  </ng-template>
+                </ng-container>
+
+                <ng-template #loadingDataSources>
+                  <span class="muted">—</span>
+                </ng-template>
+              </td>
+
+              <td class="col-members">
+                <ng-container
+                  *ngIf="getDetailsForAccount(account.id, vm.detailsState) as details; else loadingMembers"
+                >
+                  <div class="members" *ngIf="details.members.length; else noMembers">
+                    <span>{{ getMemberLabel(details.members.length) }}</span>
+                    <div class="members__popover">
+                      <div class="members__popover-item" *ngFor="let member of details.members">
+                        {{ member.fullName || member.email || "Member" }}
                       </div>
                     </div>
                   </div>
-                </td>
-              </tr>
+                  <ng-template #noMembers>
+                    <span class="muted">No members</span>
+                  </ng-template>
+                </ng-container>
+
+                <ng-template #loadingMembers>
+                  <span class="muted">—</span>
+                </ng-template>
+              </td>
+
+              <td class="col-last-sync">
+                <ng-container
+                  *ngIf="getDetailsForAccount(account.id, vm.detailsState) as details; else loadingSync"
+                >
+                  <ng-container *ngIf="getLastSyncSummary(details.connections) as summary">
+                    <ng-container *ngIf="summary.timestamp; else noSyncReason">
+                      <div class="last-sync">
+                        <span>{{ summary.timestamp | date: 'short' }}</span>
+                        <span class="dot">•</span>
+                        <span>{{ summary.statusLabel }}</span>
+                      </div>
+                    </ng-container>
+                    <ng-template #noSyncReason>
+                      <span class="muted">{{ summary.reason }}</span>
+                    </ng-template>
+                  </ng-container>
+                </ng-container>
+
+                <ng-template #loadingSync>
+                  <span class="muted">—</span>
+                </ng-template>
+              </td>
+
+              <td class="col-issues">
+                <ng-container *ngIf="getDetailsForAccount(account.id, vm.detailsState) as details">
+                    <span *ngIf="getIssuesCount(details.connections) as issues">
+                      {{ issues ? (issues + ' alert' + (issues > 1 ? 's' : '')) : '' }}
+                    </span>
+                </ng-container>
+              </td>
+
+              <td class="col-actions">
+                <div class="row-actions">
+                  <div class="row-menu">
+                    <button
+                      type="button"
+                      class="row-menu__trigger"
+                      aria-label="More actions"
+                      (click)="toggleActionMenu(account.id, $event); $event.stopPropagation()"
+                    >
+                      ⋯
+                    </button>
+
+                    <div
+                      class="row-menu__backdrop"
+                      *ngIf="openActionMenuId === account.id"
+                      (click)="closeActionMenu()"
+                    ></div>
+
+                    <div
+                      class="row-menu__panel"
+                      *ngIf="openActionMenuId === account.id"
+                      (click)="$event.stopPropagation()"
+                    >
+                      <button
+                        type="button"
+                        class="row-menu__item"
+                        (click)="goToSettings(account.id); closeActionMenu(); $event.stopPropagation()"
+                      >
+                        Settings
+                      </button>
+
+                      <button
+                        type="button"
+                        class="row-menu__item"
+                        (click)="openArchiveDialog(account); closeActionMenu(); $event.stopPropagation()"
+                        [disabled]="!account.active"
+                      >
+                        Archive
+                      </button>
+
+                      <button
+                        type="button"
+                        class="row-menu__item row-menu__item--danger"
+                        (click)="openDeleteDialog(account); closeActionMenu(); $event.stopPropagation()"
+                        [disabled]="!canDelete(vm.accountsState.data.length)"
+                      >
+                        Delete
+                      </button>
+
+                      <div class="row-menu__hint" *ngIf="!canDelete(vm.accountsState.data.length)">
+                        Нельзя удалить последний workspace.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
             </tbody>
           </table>
         </dp-table>
+
         <ng-template #emptyState>
           <dp-empty-state
             title="Create your first workspace"

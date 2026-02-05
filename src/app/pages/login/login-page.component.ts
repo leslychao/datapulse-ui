@@ -6,10 +6,10 @@ import {distinctUntilChanged, filter, map} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AuthRedirectService} from "../../core/auth";
-import {ButtonComponent} from "../../shared/ui";
-import {APP_PATHS} from "../../core/app-paths";
 import {AuthSessionService} from "../../core/auth";
 import {IamService} from "../../core/state";
+import {ButtonComponent} from "../../shared/ui";
+import {APP_PATHS} from "../../core/app-paths";
 
 @Component({
   selector: "dp-login-page",
@@ -40,35 +40,33 @@ export class LoginPageComponent {
 
   constructor() {
     this.authSession.state$
-      .pipe(
-        map((state) => state.authenticated),
-        distinctUntilChanged(),
-        filter((authenticated) => authenticated),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(() => {
-        this.iamService.loadProfile().subscribe();
-      });
+    .pipe(
+      map((state) => state.authenticated),
+      distinctUntilChanged(),
+      filter((authenticated) => authenticated),
+      takeUntilDestroyed(this.destroyRef)
+    )
+    .subscribe(() => this.loadProfileAfterAuth());
 
     this.iamService.state$
-      .pipe(
-        filter((state) => state === "READY"),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(() => {
-        this.router.navigateByUrl(APP_PATHS.workspaces, {replaceUrl: true});
-      });
+    .pipe(
+      filter((state) => state === "READY"),
+      takeUntilDestroyed(this.destroyRef)
+    )
+    .subscribe(() => {
+      this.router.navigateByUrl(APP_PATHS.workspaces, {replaceUrl: true});
+    });
   }
 
   login(): void {
     this.authRedirect.login(APP_PATHS.workspaces);
   }
 
-  retry(): void {
-    this.iamService.loadProfile(true).subscribe();
+  switchAccount(): void {
+    this.authRedirect.logout();
   }
 
-  logout(): void {
-    this.authRedirect.logout();
+  private loadProfileAfterAuth(): void {
+    this.iamService.loadProfile().subscribe();
   }
 }

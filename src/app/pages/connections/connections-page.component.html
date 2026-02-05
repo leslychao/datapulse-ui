@@ -4,9 +4,6 @@
       title="Connections"
       subtitle="Управляйте подключениями и синхронизациями данных."
     >
-      <div secondary-actions>
-        <dp-button variant="secondary" (click)="refresh()">Refresh</dp-button>
-      </div>
       <div primary-action>
         <dp-button variant="primary" (click)="openWizard()">Create connection</dp-button>
       </div>
@@ -43,79 +40,79 @@
         <dp-table *ngIf="filteredConnections(vm.state.data).length; else emptyState">
           <table>
             <thead>
-              <tr>
-                <th>Connection</th>
-                <th>Status</th>
-                <th>Last sync</th>
-                <th>Freshness</th>
-                <th>Actions</th>
-              </tr>
+            <tr>
+              <th>Connection</th>
+              <th>Status</th>
+              <th>Last sync</th>
+              <th>Freshness</th>
+              <th>Actions</th>
+            </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let connection of filteredConnections(vm.state.data)">
-                <td>
-                  <div class="cell-title">{{ connection.marketplace }}</div>
-                  <div class="cell-subtitle">ID: {{ connection.id }}</div>
-                </td>
-                <td>
-                  <span [class]="getStatusClass(connection)">{{ getStatusLabel(connection) }}</span>
-                </td>
-                <td>{{ connection.lastSyncAt ? (connection.lastSyncAt | date: 'short') : '—' }}</td>
-                <td>{{ getFreshness(connection) }}</td>
-                <td>
-                  <div class="actions">
-                    <dp-button
-                      size="sm"
-                      variant="primary"
-                      (click)="runSync(connection)"
-                      [disabled]="!connection.active"
+            <tr *ngFor="let connection of filteredConnections(vm.state.data)">
+              <td>
+                <div class="cell-title">{{ connection.marketplace }}</div>
+                <div class="cell-subtitle">ID: {{ connection.id }}</div>
+              </td>
+              <td>
+                <span [class]="getStatusClass(connection)">{{ getStatusLabel(connection) }}</span>
+              </td>
+              <td>{{ connection.lastSyncAt ? (connection.lastSyncAt | date: 'short') : '—' }}</td>
+              <td>{{ getFreshness(connection) }}</td>
+              <td>
+                <div class="actions">
+                  <dp-button
+                    size="sm"
+                    variant="primary"
+                    (click)="runSync(connection)"
+                    [disabled]="!connection.active"
+                  >
+                    Run sync
+                  </dp-button>
+                  <dp-button size="sm" variant="secondary" (click)="openDetails(connection)">
+                    View details
+                  </dp-button>
+                  <dp-button size="sm" variant="secondary" (click)="openEditModal(connection)">
+                    Edit
+                  </dp-button>
+                  <div class="row-menu">
+                    <button
+                      type="button"
+                      class="row-menu__trigger"
+                      aria-label="More actions"
+                      (click)="toggleActionMenu(connection.id, $event)"
                     >
-                      Run sync
-                    </dp-button>
-                    <dp-button size="sm" variant="secondary" (click)="openDetails(connection)">
-                      View details
-                    </dp-button>
-                    <dp-button size="sm" variant="secondary" (click)="openEditModal(connection)">
-                      Edit
-                    </dp-button>
-                    <div class="row-menu">
+                      ⋯
+                    </button>
+                    <div
+                      class="row-menu__backdrop"
+                      *ngIf="openActionMenuId === connection.id"
+                      (click)="closeActionMenu()"
+                    ></div>
+                    <div
+                      class="row-menu__panel"
+                      *ngIf="openActionMenuId === connection.id"
+                    >
                       <button
                         type="button"
-                        class="row-menu__trigger"
-                        aria-label="More actions"
-                        (click)="toggleActionMenu(connection.id, $event)"
+                        class="row-menu__item"
+                        (click)="requestDisable(connection); closeActionMenu()"
+                        [disabled]="!connection.active"
                       >
-                        ⋯
+                        Disable
                       </button>
-                      <div
-                        class="row-menu__backdrop"
-                        *ngIf="openActionMenuId === connection.id"
-                        (click)="closeActionMenu()"
-                      ></div>
-                      <div
-                        class="row-menu__panel"
-                        *ngIf="openActionMenuId === connection.id"
+                      <button
+                        type="button"
+                        class="row-menu__item row-menu__item--danger"
+                        (click)="requestDelete(connection); closeActionMenu()"
                       >
-                        <button
-                          type="button"
-                          class="row-menu__item"
-                          (click)="requestDisable(connection); closeActionMenu()"
-                          [disabled]="!connection.active"
-                        >
-                          Disable
-                        </button>
-                        <button
-                          type="button"
-                          class="row-menu__item row-menu__item--danger"
-                          (click)="requestDelete(connection); closeActionMenu()"
-                        >
-                          Delete
-                        </button>
-                      </div>
+                        Delete
+                      </button>
                     </div>
                   </div>
-                </td>
-              </tr>
+                </div>
+              </td>
+            </tr>
             </tbody>
           </table>
         </dp-table>
@@ -151,7 +148,8 @@
           <div *ngIf="wizardStep === 'credentials'" class="wizard-step">
             <p class="muted">Введите credentials. Мы проверим доступ перед запуском.</p>
             <ng-container *ngIf="wizardIsWildberries; else ozonCredentials">
-              <dp-form-field label="Token" [required]="true" hint="Где взять: WB seller → API access.">
+              <dp-form-field label="Token" [required]="true"
+                             hint="Где взять: WB seller → API access.">
                 <dp-input type="password" formControlName="token"></dp-input>
               </dp-form-field>
             </ng-container>

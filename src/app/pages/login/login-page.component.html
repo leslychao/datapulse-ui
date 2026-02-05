@@ -13,16 +13,18 @@
 
     <ng-template #iamGate>
       <ng-container *ngIf="vm.iamState === 'ERROR'; else loading">
-        <p class="login-error">Не удалось загрузить профиль.</p>
+        <p class="login-error-title">Профиль недоступен</p>
+
+        <p class="login-error">
+          Мы не нашли профиль, связанный с вашей учётной записью.
+          Возможно, он был удалён или доступ к нему отозван.
+        </p>
+
         <div class="login-actions">
-          <dp-button type="button" variant="secondary" (click)="retry()">
-            Повторить загрузку профиля
-          </dp-button>
-          <dp-button type="button" variant="danger" (click)="logout()">
-            Выйти
+          <dp-button type="button" variant="primary" (click)="switchAccount()">
+            Войти под другим аккаунтом
           </dp-button>
         </div>
-        <p class="login-note" *ngIf="vm.iamError?.message">{{ vm.iamError?.message }}</p>
       </ng-container>
 
       <ng-template #loading>

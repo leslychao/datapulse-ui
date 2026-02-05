@@ -1,4 +1,11 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject} from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  HostListener,
+  inject
+} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
@@ -65,6 +72,7 @@ interface UsersViewModel {
 })
 export class UsersAccessPageComponent {
   readonly statusEnum = AccountMemberStatus;
+
   private readonly route = inject(ActivatedRoute);
   private readonly membersApi = inject(AccountMembersApiClient);
   private readonly authUser = inject(AuthUserService);
@@ -108,6 +116,8 @@ export class UsersAccessPageComponent {
   private readonly accountId$ = accountIdFromRoute(this.route);
   private membersSnapshot: AccountMember[] = [];
 
+  private openMenuMemberId: number | null = null;
+
   readonly vm$: Observable<UsersViewModel> = combineLatest({
     accountId: this.accountId$,
     refresh: this.refresh$.pipe(startWith(void 0)),
@@ -143,6 +153,12 @@ export class UsersAccessPageComponent {
     })
   );
 
+  @HostListener("document:click")
+  onDocumentClick(): void {
+    this.openMenuMemberId = null;
+    this.cdr.markForCheck();
+  }
+
   refresh(): void {
     this.refresh$.next();
   }
@@ -165,42 +181,46 @@ export class UsersAccessPageComponent {
       return;
     }
     const {email, role, message} = this.inviteForm.getRawValue();
-    if (members.some((member) => (member.email ?? "").toLowerCase() === email.trim().toLowerCase())) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (members.some((member) => (member.email ?? "").toLowerCase() === normalizedEmail)) {
       this.inviteForm.controls.email.setErrors({duplicate: true});
       return;
     }
+
     const request: AccountMemberCreateRequest = {
       email: email.trim(),
       message: message.trim() || null,
       role,
       status: AccountMemberStatus.Invited
     };
+
     this.saving = true;
     this.membersApi
-      .create(accountId, request)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap((member) => {
-          this.refresh$.next();
-          this.inviteVisible = false;
-          this.inviteSuccessVisible = true;
-          this.lastInvitedMember = member;
-          this.toastService.success("Invite sent.");
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error(this.mapErrorMessage(error, "Не удалось отправить приглашение."), {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+    .create(accountId, request)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap((member) => {
+        this.refresh$.next();
+        this.inviteVisible = false;
+        this.inviteSuccessVisible = true;
+        this.lastInvitedMember = member;
+        this.toastService.success("Invite sent.");
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось отправить приглашение."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
   closeInviteSuccess(): void {
@@ -211,6 +231,7 @@ export class UsersAccessPageComponent {
   filteredMembers(members: AccountMember[]): AccountMember[] {
     const status = this.filterStatusControl.value;
     const search = this.searchControl.value.trim().toLowerCase();
+
     return members.filter((member) => {
       if (status && member.status !== status) {
         return false;
@@ -236,6 +257,43 @@ export class UsersAccessPageComponent {
 
   ownersCount(members: AccountMember[]): number {
     return members.filter((member) => member.role === AccountMemberRole.Owner && member.status === AccountMemberStatus.Active).length;
+  }
+
+  isLastOwner(member: AccountMember, members: AccountMember[]): boolean {
+    return (
+      member.role === AccountMemberRole.Owner &&
+      member.status === AccountMemberStatus.Active &&
+      this.ownersCount(members) <= 1
+    );
+  }
+
+  isSelf(member: AccountMember | null, currentUserId: number | null): boolean {
+    if (!member || currentUserId == null) {
+      return false;
+    }
+    return member.userId === currentUserId;
+  }
+
+  countByStatus(members: AccountMember[], status: AccountMemberStatus): number {
+    return members.filter((member) => member.status === status).length;
+  }
+
+  onRoleSelectChange(member: AccountMember, event: Event): void {
+    const selectElement = event.target as HTMLSelectElement | null;
+    const rawValue = selectElement?.value ?? null;
+    if (!rawValue) {
+      return;
+    }
+    const role = this.parseRole(rawValue);
+    if (role == null) {
+      this.toastService.error("Некорректная роль.");
+      return;
+    }
+    this.openRoleConfirm(member, role);
+  }
+
+  private parseRole(value: string): AccountMemberRole | null {
+    return this.roleOptions.includes(value as AccountMemberRole) ? (value as AccountMemberRole) : null;
   }
 
   openRoleConfirm(member: AccountMember, role: AccountMemberRole): void {
@@ -298,27 +356,110 @@ export class UsersAccessPageComponent {
     }
     this.saving = true;
     this.membersApi
-      .update(accountId, member.id, {role: member.role, status: AccountMemberStatus.Invited})
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Invite resent.");
-          this.refresh$.next();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error(this.mapErrorMessage(error, "Не удалось отправить приглашение."), {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+    .update(accountId, member.id, {role: member.role, status: AccountMemberStatus.Invited})
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success("Invite resent.");
+        this.refresh$.next();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось отправить приглашение."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
+  }
+
+  toggleMenu(member: AccountMember): void {
+    this.openMenuMemberId = this.openMenuMemberId === member.id ? null : member.id;
+    this.cdr.markForCheck();
+  }
+
+  isMenuOpenFor(member: AccountMember): boolean {
+    return this.openMenuMemberId === member.id;
+  }
+
+  menuDisabled(members: AccountMember[], currentUserId: number | null): boolean {
+    return !this.canManageUsers(this.currentMember(members, currentUserId)?.role ?? null);
+  }
+
+  blockDisabled(member: AccountMember, members: AccountMember[], currentUserId: number | null): boolean {
+    if (!this.canManageUsers(this.currentMember(members, currentUserId)?.role ?? null)) {
+      return true;
+    }
+    if (member.status === AccountMemberStatus.Blocked) {
+      return true;
+    }
+    return this.isLastOwner(member, members);
+  }
+
+  unblockDisabled(member: AccountMember, currentUserId: number | null, members: AccountMember[]): boolean {
+    if (!this.canManageUsers(this.currentMember(members, currentUserId)?.role ?? null)) {
+      return true;
+    }
+    return member.status !== AccountMemberStatus.Blocked;
+  }
+
+  removeDisabled(member: AccountMember, members: AccountMember[], currentUserId: number | null): boolean {
+    if (!this.canManageUsers(this.currentMember(members, currentUserId)?.role ?? null)) {
+      return true;
+    }
+    return this.isLastOwner(member, members);
+  }
+
+  menuHint(member: AccountMember, members: AccountMember[], currentUserId: number | null): string | null {
+    if (!this.canManageUsers(this.currentMember(members, currentUserId)?.role ?? null)) {
+      return "Недостаточно прав для управления пользователями.";
+    }
+    if (this.isLastOwner(member, members)) {
+      return "В workspace должен оставаться минимум один OWNER.";
+    }
+    return null;
+  }
+
+  onMenuBlock(member: AccountMember, accountId: number | null, members: AccountMember[], currentUserId: number | null): void {
+    if (accountId == null || this.blockDisabled(member, members, currentUserId)) {
+      return;
+    }
+    this.openMenuMemberId = null;
+    this.requestBlock(member);
+  }
+
+  onMenuUnblock(member: AccountMember, accountId: number | null, members: AccountMember[], currentUserId: number | null): void {
+    if (accountId == null || this.unblockDisabled(member, currentUserId, members)) {
+      return;
+    }
+    this.openMenuMemberId = null;
+    this.requestUnblock(member);
+  }
+
+  onMenuCancelInvite(member: AccountMember, accountId: number | null, currentUserId: number | null): void {
+    if (accountId == null) {
+      return;
+    }
+    const canManage = this.canManageUsers(this.currentMember(this.latestMembersSnapshot(), currentUserId)?.role ?? null);
+    if (!canManage) {
+      return;
+    }
+    this.openMenuMemberId = null;
+    this.requestCancelInvite(member);
+  }
+
+  onMenuRemove(member: AccountMember, accountId: number | null, members: AccountMember[], currentUserId: number | null): void {
+    if (accountId == null || this.removeDisabled(member, members, currentUserId)) {
+      return;
+    }
+    this.openMenuMemberId = null;
+    this.requestRemove(member);
   }
 
   closeConfirm(): void {
@@ -350,21 +491,6 @@ export class UsersAccessPageComponent {
     this.closeConfirm();
   }
 
-  isLastOwner(member: AccountMember, members: AccountMember[]): boolean {
-    return (
-      member.role === AccountMemberRole.Owner &&
-      member.status === AccountMemberStatus.Active &&
-      this.ownersCount(members) <= 1
-    );
-  }
-
-  isSelf(member: AccountMember | null, currentUserId: number | null): boolean {
-    if (!member || currentUserId == null) {
-      return false;
-    }
-    return member.userId === currentUserId;
-  }
-
   private latestMembersSnapshot(): AccountMember[] {
     return this.membersSnapshot;
   }
@@ -375,26 +501,26 @@ export class UsersAccessPageComponent {
     }
     this.saving = true;
     this.membersApi
-      .update(accountId, member.id, update)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.refresh$.next();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error(this.mapErrorMessage(error, "Не удалось обновить участника."), {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+    .update(accountId, member.id, update)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.refresh$.next();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось обновить участника."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
   removeMember(accountId: number, member: AccountMember): void {
@@ -403,27 +529,67 @@ export class UsersAccessPageComponent {
     }
     this.saving = true;
     this.membersApi
-      .remove(accountId, member.id)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.refresh$.next();
-          this.toastService.success("Участник удален.");
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error(this.mapErrorMessage(error, "Не удалось удалить участника."), {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+    .remove(accountId, member.id)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.refresh$.next();
+        this.toastService.success("Участник удален.");
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось удалить участника."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
+  }
+
+  confirmTitle(): string {
+    if (this.confirmAction === "role") {
+      return "Change role?";
+    }
+    if (this.confirmAction === "remove") {
+      return "Remove user?";
+    }
+    if (this.confirmAction === "block") {
+      return "Block user?";
+    }
+    if (this.confirmAction === "unblock") {
+      return "Unblock user?";
+    }
+    if (this.confirmAction === "cancel") {
+      return "Cancel invite?";
+    }
+    return "Confirm action";
+  }
+
+  confirmDescription(currentUserId: number | null): string {
+    if (this.confirmAction === "remove") {
+      return this.isSelf(this.selectedMember, currentUserId)
+        ? "Вы потеряете доступ к workspace."
+        : "Пользователь потеряет доступ к workspace.";
+    }
+    if (this.confirmAction === "block") {
+      return "Доступ будет временно ограничен.";
+    }
+    if (this.confirmAction === "unblock") {
+      return "Доступ будет восстановлен.";
+    }
+    if (this.confirmAction === "cancel") {
+      return "Приглашение будет отменено.";
+    }
+    if (this.confirmAction === "role") {
+      return "Роль пользователя будет изменена.";
+    }
+    return "";
   }
 
   mapErrorMessage(error: ApiError, fallback: string): string {

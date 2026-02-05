@@ -1,209 +1,275 @@
-:root{
+:root {
   /* Telegram-like soft neutral (not snow-white) */
-  --bg:#f2f3f5;
-  --panel:#ffffff;
+  --bg: #f2f3f5;
+  --panel: #ffffff;
 
-  --text:#111827;
-  --muted:#6b7280;
+  --text: #111827;
+  --muted: #6b7280;
 
-  --line:rgba(17,24,39,.08);
+  --line: rgba(17, 24, 39, .08);
 
-  --accent:#2a8bf2;
-  --danger:#ef4444;
+  --accent: #2a8bf2;
+  --danger: #ef4444;
 
-  --radius:12px;
-  --mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --radius: 12px;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --field-bg:rgba(17,24,39,.04);
-  --field-bg-focus:#ffffff;
+  --field-bg: rgba(17, 24, 39, .04);
+  --field-bg-focus: #ffffff;
 
-  --shadow:none;
-  --focus-ring:0 0 0 3px rgba(42,139,242,.10);
+  --shadow: none;
+  --focus-ring: 0 0 0 3px rgba(42, 139, 242, .10);
 }
 
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  background:var(--bg);
-  color:var(--text);
-  font-size:14px;
-  line-height:1.5;
+* {
+  box-sizing: border-box
 }
 
-.muted{
-  color:var(--muted);
-  font-size:12px;
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.shell{max-width:960px;margin:0 auto;padding:16px}
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px
+}
 
 /* Top bar */
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:12px;
-  padding:12px 4px;
-  background:transparent;
-  border:none;
-  border-radius:0;
-  box-shadow:none;
-  border-bottom:1px solid var(--line);
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 4px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  border-bottom: 1px solid var(--line);
 }
 
-.brand{font-weight:600; letter-spacing:.2px}
-.subtitle{color:var(--muted);font-size:12px;margin-top:2px}
+.brand {
+  font-weight: 600;
+  letter-spacing: .2px
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px
+}
 
 /* Card */
-.card{
-  margin-top:12px;
-  padding:16px 16px;
-  background:var(--panel);
-  border:none;
-  border-radius:var(--radius);
-  box-shadow:none;
+.card {
+  margin-top: 12px;
+  padding: 16px 16px;
+  background: var(--panel);
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: none;
 }
 
-.card.bordered{
-  border:1px solid var(--line);
+.card.bordered {
+  border: 1px solid var(--line);
 }
 
 /* Filters */
-.filters{
-  display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr)) auto;
-  gap:10px;
-  align-items:end;
+.filters {
+  display: grid;
+  grid-template-columns:repeat(5, minmax(0, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
 }
 
-label{
-  display:block;
-  font-size:12px;
-  color:var(--muted);
-  margin-bottom:6px;
+label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
 }
 
 /* Inputs */
-input,select{
-  width:100%;
-  padding:10px 12px;
-  border-radius:10px;
-  border:1px solid transparent;
-  background:var(--field-bg);
-  color:var(--text);
-  outline:none;
-  transition:background .12s ease, box-shadow .12s ease, border-color .12s ease;
+input, select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: var(--field-bg);
+  color: var(--text);
+  outline: none;
+  transition: background .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
 
-input::placeholder{color:rgba(107,114,128,.85)}
+input::placeholder {
+  color: rgba(107, 114, 128, .85)
+}
 
-input:focus,select:focus{
-  background:var(--field-bg-focus);
-  border-color:rgba(42,139,242,.35);
-  box-shadow:var(--focus-ring);
+input:focus, select:focus {
+  background: var(--field-bg-focus);
+  border-color: rgba(42, 139, 242, .35);
+  box-shadow: var(--focus-ring);
 }
 
 /* Buttons */
-button{
-  padding:10px 12px;
-  border-radius:10px;
-  border:1px solid transparent;
-  background:transparent;
-  color:var(--text);
-  cursor:pointer;
-  transition:background .12s ease, transform .02s ease;
+button {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .12s ease, transform .02s ease;
 }
 
-button:hover{background:rgba(17,24,39,.04)}
-button:active{transform:translateY(1px)}
-
-button.primary{
-  background:rgba(42,139,242,.12);
-  color:var(--accent);
+button:hover {
+  background: rgba(17, 24, 39, .04)
 }
-button.primary:hover{background:rgba(42,139,242,.16)}
 
-button.danger{
-  background:rgba(239,68,68,.10);
-  color:var(--danger);
+button:active {
+  transform: translateY(1px)
 }
-button.danger:hover{background:rgba(239,68,68,.14)}
 
-button.link{
-  padding:0;
-  border-radius:0;
-  background:transparent;
-  color:var(--accent);
+button.primary {
+  background: rgba(42, 139, 242, .12);
+  color: var(--accent);
 }
-button.link:hover{background:transparent; text-decoration:underline;}
+
+button.primary:hover {
+  background: rgba(42, 139, 242, .16)
+}
+
+button.danger {
+  background: rgba(239, 68, 68, .10);
+  color: var(--danger);
+}
+
+button.danger:hover {
+  background: rgba(239, 68, 68, .14)
+}
+
+button.link {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent);
+}
+
+button.link:hover {
+  background: transparent;
+  text-decoration: underline;
+}
 
 /* Table */
-.table-wrap{
-  margin-top:12px;
-  overflow:auto;
-  border:none;
-  border-radius:12px;
-  background:var(--panel);
+.table-wrap {
+  margin-top: 12px;
+
+  /* Таблица не должна создавать “внутренние” вертикальные скроллы.
+     Скролл страницы — у страницы. */
+  overflow: visible;
+
+  border: none;
+  border-radius: 12px;
+  background: var(--panel);
 }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:900px;
-  background:var(--panel);
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  /* Убираем min-width, чтобы не было горизонтального скролла в Workspaces */
+  min-width: 0;
+
+  /* Чтобы таблица стабильно “влезала”, а текст переносился */
+  table-layout: fixed;
+
+  background: var(--panel);
 }
 
-th,td{
-  padding:10px 12px;
-  border-bottom:1px solid var(--line);
-  font-size:13px;
-  line-height:1.35;
+th, td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.35;
+  vertical-align: top;
+
+  /* по умолчанию — перенос */
+  overflow-wrap: anywhere;
 }
 
-th{
-  color:var(--muted);
-  font-weight:600;
-  text-align:left;
-  position:sticky;
-  top:0;
-  background:var(--panel);
-  border-bottom:1px solid rgba(17,24,39,.10);
+th {
+  color: var(--muted);
+  font-weight: 600;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  border-bottom: 1px solid rgba(17, 24, 39, .10);
 }
 
-tbody tr:hover td{background:rgba(42,139,242,.04)}
+tbody tr:hover td {
+  background: rgba(42, 139, 242, .04)
+}
 
 /* Status line */
-.status-line{
-  display:flex;
-  align-items:flex-start;
-  gap:8px;
-  color:var(--muted);
-  font-size:13px;
-  margin:10px 0 14px;
+.status-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  margin: 10px 0 14px;
 }
 
-.status-dot{
-  width:8px;
-  height:8px;
-  border-radius:999px;
-  background:rgba(17,24,39,.30);
-  margin-top:5px;
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, .30);
+  margin-top: 5px;
 }
 
-.status-line.is-active{color:var(--text)}
-.status-line.is-active .status-dot{background:var(--accent)}
+.status-line.is-active {
+  color: var(--text)
+}
 
-.status-line.is-error{color:var(--danger)}
-.status-line.is-error .status-dot{background:var(--danger)}
+.status-line.is-active .status-dot {
+  background: var(--accent)
+}
 
-.status-meta{
-  font-size:12px;
-  color:var(--muted);
-  margin-top:4px;
+.status-line.is-error {
+  color: var(--danger)
+}
+
+.status-line.is-error .status-dot {
+  background: var(--danger)
+}
+
+.status-meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
 }
 
 /* Utilities */
-.mono{font-family:var(--mono);font-size:12px;color:rgba(17,24,39,.80)}
-.error{color:var(--danger);font-size:12px;margin-top:6px}
+.mono {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: rgba(17, 24, 39, .80)
+}
+
+.error {
+  color: var(--danger);
+  font-size: 12px;
+  margin-top: 6px
+}
