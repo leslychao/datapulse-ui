@@ -1,8 +1,16 @@
 .actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  justify-content: flex-end;
   align-items: center;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+/* Align Actions header/cells to the right */
+.th-actions,
+.td-actions {
+  text-align: right;
 }
 
 .cell-title {
@@ -47,12 +55,17 @@
 .row-menu__trigger {
   border: 1px solid var(--line);
   background: #fff;
-  border-radius: 8px;
-  padding: 4px 8px;
+  border-radius: 10px;
+  padding: 6px 10px;
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
   color: var(--text);
+}
+
+.row-menu__trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .row-menu__panel {
@@ -62,23 +75,33 @@
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 12px;
-  min-width: 160px;
+  min-width: 200px;
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
   z-index: 4;
   padding: 6px;
 }
 
 .row-menu__item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   border: none;
   background: transparent;
   text-align: left;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 13px;
   color: var(--text);
   cursor: pointer;
+}
+
+/* Third point: bullets with • */
+.row-menu__item::before {
+  content: "•";
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
 }
 
 .row-menu__item:hover {
@@ -90,7 +113,21 @@
   cursor: not-allowed;
 }
 
+.row-menu__item[disabled]::before {
+  color: var(--muted);
+}
+
+.row-menu__divider {
+  height: 1px;
+  background: var(--line);
+  margin: 6px 6px;
+}
+
 .row-menu__item--danger {
+  color: #b91c1c;
+}
+
+.row-menu__item--danger::before {
   color: #b91c1c;
 }
 

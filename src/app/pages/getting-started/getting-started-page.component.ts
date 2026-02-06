@@ -1,19 +1,28 @@
-import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewChild, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
+import {HttpResponse} from "@angular/common/http";
+import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewChild, inject} from "@angular/core";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {Router} from "@angular/router";
 import {catchError, finalize, of, tap} from "rxjs";
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountFormComponent} from "../../features/accounts/account-form.component";
 import {ConnectionFormComponent} from "../../features/connections";
 import {InviteMemberModalComponent, InviteMemberPayload} from "../../features/members";
 import {
+  AccountConnectionsApiClient,
   AccountMembersApiClient,
   AccountsApiClient,
-  AccountConnectionsApiClient,
   ApiError,
   EtlScenarioApi
 } from "../../core/api";
+import {APP_PATHS} from "../../core/app-paths";
+import {
+  AccountCatalogService,
+  AccountContextService,
+  OnboardingState,
+  OnboardingStateService,
+  OnboardingStatusState
+} from "../../core/state";
 import {
   AccountConnection,
   AccountConnectionSyncStatus,
@@ -23,14 +32,6 @@ import {
   EtlScenarioRequest
 } from "../../shared/models";
 import {
-  AccountCatalogService,
-  AccountContextService,
-  OnboardingState,
-  OnboardingStateService,
-  OnboardingStatusState
-} from "../../core/state";
-import {APP_PATHS} from "../../core/app-paths";
-import {
   ButtonComponent,
   ErrorStateComponent,
   ModalComponent,
@@ -39,9 +40,7 @@ import {
 } from "../../shared/ui";
 
 type OnboardingStepId = "account" | "connection" | "invite" | "sync";
-
 type OnboardingStepStatus = "pending" | "active" | "done" | "skipped";
-
 type OnboardingStepActionHandler = "account" | "connection" | "invite" | "skipInvite" | "sync";
 
 interface OnboardingStepAction {
@@ -71,7 +70,6 @@ interface OnboardingFlowState {
 }
 
 const SYNC_SUCCESS = AccountConnectionSyncStatus.Success;
-const SYNC_NEW = AccountConnectionSyncStatus.New;
 
 const DEFAULT_ETL_EVENTS: EtlScenarioEvent[] = [
   {event: "WAREHOUSE_DICT", dateMode: "LAST_DAYS", lastDays: 30},
@@ -105,27 +103,13 @@ export class GettingStartedPageComponent implements OnInit {
   @ViewChild(ConnectionFormComponent) connectionForm?: ConnectionFormComponent;
 
   readonly steps: OnboardingStep[] = [
-    {
-      id: "account",
-      label: "Create workspace",
-      description: "Создайте рабочую область для подключения данных."
-    },
-    {
-      id: "connection",
-      label: "Create connection",
-      description: "Подключите маркетплейс к созданному workspace."
-    },
-    {
-      id: "invite",
-      label: "Invite teammates",
-      description: "Пригласите коллег для совместной работы.",
-      optional: true
-    },
+    {id: "account", label: "Create workspace", description: "Создайте рабочую область для подключения данных."},
+    {id: "connection", label: "Create connection", description: "Подключите маркетплейс к созданному workspace."},
+    {id: "invite", label: "Invite teammates", description: "Пригласите коллег для совместной работы.", optional: true},
     {
       id: "sync",
       label: "Run first sync",
-      description:
-        "Запустите синхронизацию ALL_EVENTS, чтобы данные начали поступать в аналитику."
+      description: "Запустите синхронизацию ALL_EVENTS, чтобы данные начали поступать в аналитику."
     }
   ];
 
@@ -140,7 +124,7 @@ export class GettingStartedPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly onboardingState = inject(OnboardingStateService);
 
-  private get snapshot() {
+  private get snapshot(): OnboardingState {
     return this.onboardingState.state();
   }
 
@@ -269,6 +253,18 @@ export class GettingStartedPageComponent implements OnInit {
     }
   }
 
+  private get isAnyModalOpen(): boolean {
+    return this.accountModalVisible || this.connectionModalVisible || this.inviteModalVisible;
+  }
+
+  get isShellLocked(): boolean {
+    return this.isProcessing || this.inviteSaving || this.isAnyModalOpen;
+  }
+
+  get isSubmitLocked(): boolean {
+    return this.isProcessing || this.inviteSaving;
+  }
+
   get isAccountReady(): boolean {
     return this.accountId != null;
   }
@@ -278,31 +274,24 @@ export class GettingStartedPageComponent implements OnInit {
   }
 
   get canCreateConnection(): boolean {
-    return this.accountId != null && !this.isConnectionReady && !this.isFlowLocked;
-  }
-
-  get canStartSync(): boolean {
-    return (
-      this.accountId != null &&
-      this.isConnectionReady &&
-      this.isInviteResolved &&
-      !this.hasSuccessfulSync(this.connections) &&
-      !this.hasInProgressSync(this.connections) &&
-      !this.isProcessing
-    );
+    return this.accountId != null && !this.isConnectionReady && !this.isSubmitLocked;
   }
 
   get isInviteResolved(): boolean {
     return this.inviteCompleted || this.inviteSkipped;
   }
 
-  get isFlowLocked(): boolean {
+  /**
+   * ВАЖНО: New = “ещё не синхронизировали”, это НЕ “in progress”.
+   * Поэтому “Run first sync” должен быть доступен при New.
+   */
+  get canStartSync(): boolean {
     return (
-      this.isProcessing ||
-      this.inviteSaving ||
-      this.accountModalVisible ||
-      this.connectionModalVisible ||
-      this.inviteModalVisible
+      this.accountId != null &&
+      this.isConnectionReady &&
+      this.isInviteResolved &&
+      !this.hasSuccessfulSync(this.connections) &&
+      !this.isProcessing
     );
   }
 
@@ -311,7 +300,7 @@ export class GettingStartedPageComponent implements OnInit {
   }
 
   openAccountModal(): void {
-    if (this.isAccountReady || this.isFlowLocked) {
+    if (this.isAccountReady || this.isSubmitLocked || this.isAnyModalOpen) {
       return;
     }
     this.accountModalVisible = true;
@@ -325,7 +314,7 @@ export class GettingStartedPageComponent implements OnInit {
   }
 
   openConnectionModal(): void {
-    if (!this.canCreateConnection) {
+    if (!this.canCreateConnection || this.isAnyModalOpen) {
       return;
     }
     this.connectionModalVisible = true;
@@ -339,7 +328,7 @@ export class GettingStartedPageComponent implements OnInit {
   }
 
   openInviteModal(): void {
-    if (!this.canInviteMembers()) {
+    if (!this.canInviteMembers() || this.isAnyModalOpen) {
       return;
     }
     this.inviteModalVisible = true;
@@ -353,76 +342,88 @@ export class GettingStartedPageComponent implements OnInit {
   }
 
   createAccount(): void {
-    if (this.isProcessing) {
+    if (this.isSubmitLocked) {
       return;
     }
+
     this.resetErrors();
+
     const accountRequest = this.accountForm?.getRequest();
     if (!accountRequest) {
       this.setStatusState("error", "Введите название workspace.");
       return;
     }
+
     this.setStatusState("processing", "Создаем workspace...");
+
     this.accountApi
-      .create(accountRequest)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap((account) => {
-          this.accountId = account.id;
-          this.accountName = account.name;
-          this.inviteCompleted = false;
-          this.inviteSkipped = false;
-          this.invitedMembers = [];
-          this.accountContext.setAccountId(account.id);
-          this.accountCatalog.upsertAccount(account);
-          this.accountModalVisible = false;
-          this.setStatusState("success", "Workspace создан.");
-        }),
-        catchError((error: ApiError) => {
-          this.handleApiError(error, "Не удалось создать workspace.");
-          return of(null);
-        }),
-        finalize(() => this.setProcessing(false))
-      )
-      .subscribe();
+    .create(accountRequest)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap((account) => {
+        this.accountId = account.id;
+        this.accountName = account.name;
+
+        this.inviteCompleted = false;
+        this.inviteSkipped = false;
+        this.invitedMembers = [];
+
+        this.accountContext.setAccountId(account.id);
+        this.accountCatalog.upsertAccount(account);
+
+        this.accountModalVisible = false;
+        this.setStatusState("success", "Workspace создан.");
+      }),
+      catchError((apiError: ApiError) => {
+        this.handleApiError(apiError, "Не удалось создать workspace.");
+        return of(null);
+      }),
+      finalize(() => this.setProcessing(false))
+    )
+    .subscribe();
   }
 
   createConnection(): void {
-    if (!this.canCreateConnection) {
+    if (this.isSubmitLocked) {
       return;
     }
+
     if (this.accountId == null) {
       this.setStatusState("error", "Сначала создайте workspace.");
       return;
     }
+
     this.resetErrors();
+
     const request = this.connectionForm?.getRequest();
     if (!request) {
       this.setStatusState("error", "Заполните данные подключения.");
       return;
     }
+
     this.setStatusState("processing", "Создаем подключение...");
+
     this.connectionApi
-      .create(this.accountId, request)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.setStatusState("success", "Подключение создано.");
-          this.connectionModalVisible = false;
-          this.loadConnections(this.accountId!);
-        }),
-        catchError((error: ApiError) => {
-          this.tokenErrorMessage = this.mapErrorMessage(error);
-          this.handleApiError(error, "Не удалось создать подключение.");
-          return of(null);
-        }),
-        finalize(() => this.setProcessing(false))
-      )
-      .subscribe();
+    .create(this.accountId, request)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.setStatusState("success", "Подключение создано.");
+        this.connectionModalVisible = false;
+        this.loadConnections(this.accountId!);
+      }),
+      catchError((apiError: ApiError) => {
+        this.tokenErrorMessage = this.mapErrorMessage(apiError);
+        this.handleApiError(apiError, "Не удалось создать подключение.");
+        return of(null);
+      }),
+      finalize(() => this.setProcessing(false))
+    )
+    .subscribe();
   }
 
   skipInvite(): void {
-    if (!this.canInviteMembers()) {
+    if (!this.canInviteMembers() || this.isSubmitLocked) {
       return;
     }
     this.inviteSkipped = true;
@@ -433,7 +434,9 @@ export class GettingStartedPageComponent implements OnInit {
     if (this.accountId == null || this.inviteSaving) {
       return;
     }
+
     this.inviteSaving = true;
+
     const request = {
       email: payload.email,
       role: payload.role,
@@ -441,30 +444,37 @@ export class GettingStartedPageComponent implements OnInit {
     };
 
     this.membersApi
-      .create(this.accountId, request)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap((member) => {
-          this.invitedMembers = [...this.invitedMembers, member];
-          this.inviteCompleted = true;
-          this.inviteSkipped = false;
-          this.inviteModalVisible = false;
-          this.toastService.success("Инвайт отправлен.");
-        }),
-        catchError((error: ApiError) => {
-          this.toastService.error("Не удалось отправить инвайт.", {
-            details: error.details,
-            correlationId: error.correlationId
-          });
-          return of(null);
-        }),
-        finalize(() => {
-          this.inviteSaving = false;
-        })
-      )
-      .subscribe();
+    .create(this.accountId, request)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap((member) => {
+        this.invitedMembers = [...this.invitedMembers, member];
+
+        this.inviteCompleted = true;
+        this.inviteSkipped = false;
+        this.inviteModalVisible = false;
+
+        this.toastService.success("Инвайт отправлен.");
+      }),
+      catchError((apiError: ApiError) => {
+        this.toastService.error("Не удалось отправить инвайт.", {
+          details: apiError.details,
+          correlationId: apiError.correlationId
+        });
+        return of(null);
+      }),
+      finalize(() => {
+        this.inviteSaving = false;
+      })
+    )
+    .subscribe();
   }
 
+  /**
+   * Должно:
+   * 1) вызвать EtlScenarioApi.run(request) согласно контракту,
+   * 2) после 200/202 — редирект на analytics overview.
+   */
   startSync(): void {
     if (this.accountId == null) {
       this.setStatusState("error", "Создайте workspace, чтобы запустить синхронизацию.");
@@ -478,96 +488,37 @@ export class GettingStartedPageComponent implements OnInit {
       this.setStatusState("error", "Завершите шаг с приглашением команды или пропустите его.");
       return;
     }
+    if (!this.canStartSync) {
+      this.setStatusState("error", "Сейчас синхронизацию запустить нельзя.");
+      return;
+    }
+
     this.syncError = null;
     this.resetErrors();
     this.setProcessing(true);
+
     const request = this.buildScenarioRequest(this.accountId);
 
     this.etlScenarioApi
-      .run(request)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap((response) => {
-          if (response.status === 200 || response.status === 202) {
-            this.setStatusState("success", "Sync started");
-            this.router.navigateByUrl(APP_PATHS.overview(this.accountId!), {replaceUrl: true});
-            return;
-          }
-          this.setStatusState("error", "Не удалось запустить синхронизацию.");
-        }),
-        catchError((error: ApiError) => {
-          this.syncError = error;
-          this.handleApiError(error, "Не удалось запустить синхронизацию.");
-          return of(null);
-        }),
-        finalize(() => this.setProcessing(false))
-      )
-      .subscribe();
-  }
-
-  private setStatusState(state: OnboardingStatusState, text: string, hint: string | null = null): void {
-    this.statusState = state;
-    this.statusText = text;
-    this.statusHint = hint;
-    this.isStatusActive = state !== "idle";
-    this.setProcessing(state === "processing");
-  }
-
-  private setProcessing(isProcessing: boolean): void {
-    this.isProcessing = isProcessing;
-    this.formLocked = isProcessing;
-  }
-
-  private handleApiError(error: ApiError, fallbackMessage: string): void {
-    this.error = error;
-    this.setStatusState("error", error.message || fallbackMessage);
-  }
-
-  private resetErrors(): void {
-    this.error = null;
-    this.tokenErrorMessage = null;
-    if (this.statusState === "error") {
-      this.onboardingState.resetStatus();
-    }
-  }
-
-  private mapErrorMessage(error: ApiError): string {
-    return error.message;
-  }
-
-  private loadConnections(accountId: number): void {
-    this.connectionApi
-      .list(accountId)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        catchError((error: ApiError) => {
-          this.handleApiError(error, "Не удалось загрузить подключения.");
-          return of([] as AccountConnection[]);
-        }),
-        tap((connections) => {
-          this.connections = connections;
-        })
-      )
-      .subscribe();
-  }
-
-  private hasSuccessfulSync(connections: AccountConnection[]): boolean {
-    return connections.some(
-      (connection) => connection.active && connection.lastSyncStatus === SYNC_SUCCESS
-    );
-  }
-
-  private hasInProgressSync(connections: AccountConnection[]): boolean {
-    return connections.some(
-      (connection) => connection.active && connection.lastSyncStatus === SYNC_NEW
-    );
-  }
-
-  private buildScenarioRequest(accountId: number): EtlScenarioRequest {
-    return {
-      accountId,
-      events: DEFAULT_ETL_EVENTS
-    };
+    .run(request)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap((response: HttpResponse<unknown>) => {
+        if (response.status === 200 || response.status === 202) {
+          this.setStatusState("success", "Sync started");
+          this.router.navigateByUrl(APP_PATHS.overview(this.accountId!), {replaceUrl: true});
+          return;
+        }
+        this.setStatusState("error", "Не удалось запустить синхронизацию.");
+      }),
+      catchError((apiError: ApiError) => {
+        this.syncError = apiError;
+        this.handleApiError(apiError, "Не удалось запустить синхронизацию.");
+        return of(null);
+      }),
+      finalize(() => this.setProcessing(false))
+    )
+    .subscribe();
   }
 
   get existingMembers(): AccountMember[] {
@@ -599,16 +550,72 @@ export class GettingStartedPageComponent implements OnInit {
     }
   }
 
+  private setStatusState(state: OnboardingStatusState, text: string, hint: string | null = null): void {
+    this.statusState = state;
+    this.statusText = text;
+    this.statusHint = hint;
+    this.isStatusActive = state !== "idle";
+    this.setProcessing(state === "processing");
+  }
+
+  private setProcessing(isProcessing: boolean): void {
+    this.isProcessing = isProcessing;
+    this.formLocked = isProcessing;
+  }
+
+  private handleApiError(apiError: ApiError, fallbackMessage: string): void {
+    this.error = apiError;
+    this.setStatusState("error", apiError.message || fallbackMessage);
+  }
+
+  private resetErrors(): void {
+    this.error = null;
+    this.tokenErrorMessage = null;
+    if (this.statusState === "error") {
+      this.onboardingState.resetStatus();
+    }
+  }
+
+  private mapErrorMessage(apiError: ApiError): string {
+    return apiError.message;
+  }
+
+  private loadConnections(accountId: number): void {
+    this.connectionApi
+    .list(accountId)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((apiError: ApiError) => {
+        this.handleApiError(apiError, "Не удалось загрузить подключения.");
+        return of([] as AccountConnection[]);
+      }),
+      tap((connections) => {
+        this.connections = connections;
+      })
+    )
+    .subscribe();
+  }
+
+  private hasSuccessfulSync(connections: AccountConnection[]): boolean {
+    return connections.some((connection) => connection.active && connection.lastSyncStatus === SYNC_SUCCESS);
+  }
+
+  private buildScenarioRequest(accountId: number): EtlScenarioRequest {
+    return {accountId, events: DEFAULT_ETL_EVENTS};
+  }
+
   private canInviteMembers(): boolean {
-    return this.isConnectionReady && !this.isInviteResolved && !this.isFlowLocked;
+    return this.isConnectionReady && !this.isInviteResolved && !this.isSubmitLocked;
   }
 
   private buildFlowState(): OnboardingFlowState {
     const accountDone = this.isAccountReady;
     const connectionDone = this.isConnectionReady;
+
     const inviteDone = this.inviteCompleted;
-    const inviteSkipped = this.inviteSkipped;
-    const inviteResolved = inviteDone || inviteSkipped;
+    const inviteWasSkipped = this.inviteSkipped;
+    const inviteResolved = inviteDone || inviteWasSkipped;
+
     const syncDone = this.hasSuccessfulSync(this.connections);
 
     const activeStepId: OnboardingStepId | null =
@@ -628,46 +635,26 @@ export class GettingStartedPageComponent implements OnInit {
         status: accountDone ? "done" : "active",
         action: accountDone
           ? undefined
-          : {
-              label: "Create workspace",
-              variant: "primary",
-              handler: "account",
-              disabled: this.isFlowLocked
-            }
+          : {label: "Create workspace", variant: "primary", handler: "account", disabled: this.isShellLocked}
       },
       {
         ...this.steps[1],
         status: connectionDone ? "done" : accountDone ? "active" : "pending",
         action:
           accountDone && !connectionDone
-            ? {
-                label: "Create connection",
-                variant: "primary",
-                handler: "connection",
-                disabled: this.isFlowLocked
-              }
+            ? {label: "Create connection", variant: "primary", handler: "connection", disabled: this.isShellLocked}
             : undefined
       },
       {
         ...this.steps[2],
-        status: inviteDone ? "done" : inviteSkipped ? "skipped" : connectionDone ? "active" : "pending",
+        status: inviteDone ? "done" : inviteWasSkipped ? "skipped" : connectionDone ? "active" : "pending",
         action:
           connectionDone && !inviteResolved
-            ? {
-                label: "Invite teammates",
-                variant: "secondary",
-                handler: "invite",
-                disabled: this.isFlowLocked
-              }
+            ? {label: "Invite teammates", variant: "secondary", handler: "invite", disabled: this.isShellLocked}
             : undefined,
         secondaryAction:
           connectionDone && !inviteResolved
-            ? {
-                label: "Skip",
-                variant: "link",
-                handler: "skipInvite",
-                disabled: this.isFlowLocked
-              }
+            ? {label: "Skip", variant: "link", handler: "skipInvite", disabled: this.isShellLocked}
             : undefined
       },
       {
@@ -675,20 +662,11 @@ export class GettingStartedPageComponent implements OnInit {
         status: syncDone ? "done" : inviteResolved && connectionDone ? "active" : "pending",
         action:
           inviteResolved && connectionDone && !syncDone
-            ? {
-                label: "Run first sync",
-                variant: "primary",
-                handler: "sync",
-                disabled: !this.canStartSync || this.isFlowLocked
-              }
+            ? {label: "Run first sync", variant: "primary", handler: "sync", disabled: !this.canStartSync || this.isShellLocked}
             : undefined
       }
     ];
 
-    return {
-      steps,
-      activeStepId,
-      isLocked: this.isFlowLocked
-    };
+    return {steps, activeStepId, isLocked: this.isShellLocked};
   }
 }

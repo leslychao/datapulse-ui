@@ -1,5 +1,6 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
+import {HttpClient} from "@angular/common/http";
 import {ActivatedRoute} from "@angular/router";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {Subject, map, of, switchMap} from "rxjs";
@@ -40,6 +41,29 @@ interface ConnectionsViewModel {
 
 type WizardStep = "marketplace" | "credentials" | "validate" | "sync" | "success";
 
+/** ETL scenario run: строго по примеру пользователя */
+type EtlEventCode =
+  | "WAREHOUSE_DICT"
+  | "CATEGORY_DICT"
+  | "TARIFF_DICT"
+  | "PRODUCT_DICT"
+  | "SALES_FACT"
+  | "INVENTORY_FACT"
+  | "FACT_FINANCE";
+
+type EtlDateMode = "LAST_DAYS";
+
+interface EtlScenarioRunEvent {
+  event: EtlEventCode;
+  dateMode: EtlDateMode;
+  lastDays: number;
+}
+
+interface EtlScenarioRunRequest {
+  accountId: number;
+  events: EtlScenarioRunEvent[];
+}
+
 @Component({
   selector: "dp-connections-page",
   standalone: true,
@@ -66,7 +90,9 @@ type WizardStep = "marketplace" | "credentials" | "validate" | "sync" | "success
 })
 export class ConnectionsPageComponent {
   readonly syncStatus = AccountConnectionSyncStatus;
+
   saving = false;
+
   wizardVisible = false;
   wizardStep: WizardStep = "marketplace";
   wizardError: string | null = null;
@@ -77,6 +103,7 @@ export class ConnectionsPageComponent {
   detailsExpanded = false;
   deleteDialogVisible = false;
   disableDialogVisible = false;
+
   openActionMenuId: number | null = null;
 
   editingConnection: AccountConnection | null = null;
@@ -86,12 +113,15 @@ export class ConnectionsPageComponent {
 
   private readonly route = inject(ActivatedRoute);
   private readonly connectionApi = inject(AccountConnectionsApiClient);
+  private readonly http = inject(HttpClient);
   private readonly toastService = inject(ToastService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly marketplaceOptions = Object.values(Marketplace);
+
+  private readonly syncRequestedConnectionIds = new Set<number>();
 
   readonly wizardForm: FormGroup<{
     marketplace: FormControl<Marketplace>;
@@ -130,18 +160,13 @@ export class ConnectionsPageComponent {
       }
       return this.refresh$.pipe(
         startWith(void 0),
-        switchMap(() =>
-          this.connectionApi.list(accountId).pipe(toLoadState<AccountConnection[], ApiError>())
-        ),
+        switchMap(() => this.connectionApi.list(accountId).pipe(toLoadState<AccountConnection[], ApiError>())),
         tap((state) => {
           if (state.status === "error") {
-            this.toastService.error(
-              this.mapErrorMessage(state.error, "Не удалось загрузить подключения."),
-              {
-                details: state.error.details,
-                correlationId: state.error.correlationId
-              }
-            );
+            this.toastService.error(this.mapErrorMessage(state.error, "Не удалось загрузить подключения."), {
+              details: state.error.details,
+              correlationId: state.error.correlationId
+            });
           }
         }),
         map((state) => ({accountId, state}))
@@ -152,11 +177,11 @@ export class ConnectionsPageComponent {
   constructor() {
     this.applyCredentialValidators(this.wizardForm, Marketplace.Wildberries);
     this.wizardForm.controls.marketplace.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        this.applyCredentialValidators(this.wizardForm, value);
-        this.cdr.markForCheck();
-      });
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe((value) => {
+      this.applyCredentialValidators(this.wizardForm, value);
+      this.cdr.markForCheck();
+    });
   }
 
   get wizardIsWildberries(): boolean {
@@ -240,17 +265,6 @@ export class ConnectionsPageComponent {
     }
     if (this.wizardStep === "success") {
       this.closeWizard();
-      return;
-    }
-  }
-
-  backWizardStep(): void {
-    if (this.wizardStep === "credentials") {
-      this.wizardStep = "marketplace";
-      return;
-    }
-    if (this.wizardStep === "validate") {
-      this.wizardStep = "credentials";
     }
   }
 
@@ -262,34 +276,37 @@ export class ConnectionsPageComponent {
     if (accountId == null) {
       return;
     }
+
     const {marketplace, token, clientId, apiKey} = this.wizardForm.getRawValue();
     const request: AccountConnectionCreateRequest = {
       marketplace,
       credentials: marketplace === Marketplace.Wildberries ? {token} : {clientId, apiKey}
     };
+
     this.saving = true;
     this.wizardError = null;
+
     this.connectionApi
-      .create(accountId, request)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap((connection) => {
-          this.createdConnection = connection;
-          this.wizardStep = "sync";
-          this.toastService.success("Подключение создано. Запускаем первичную синхронизацию.");
-          this.refresh$.next();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.wizardError = this.mapErrorMessage(error, "Не удалось проверить credentials.");
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+    .create(accountId, request)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap((connection) => {
+        this.createdConnection = connection;
+        this.wizardStep = "sync";
+        this.toastService.success("Подключение создано. Запускаем первичную синхронизацию.");
+        this.refresh$.next();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.wizardError = this.mapErrorMessage(error, "Не удалось проверить credentials.");
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
   finishWizard(): void {
@@ -321,6 +338,7 @@ export class ConnectionsPageComponent {
     if (accountId == null) {
       return;
     }
+
     const {token, clientId, apiKey} = this.editForm.getRawValue();
     const request: AccountConnectionUpdateRequest = {
       credentials:
@@ -328,30 +346,32 @@ export class ConnectionsPageComponent {
           ? {token}
           : {clientId, apiKey}
     };
+
     this.saving = true;
+
     this.connectionApi
-      .update(accountId, this.editingConnection.id, request)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Подключение обновлено.");
-          this.refresh$.next();
-          this.closeEditModal();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error(this.mapErrorMessage(error, "Не удалось обновить подключение."), {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+    .update(accountId, this.editingConnection.id, request)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success("Подключение обновлено.");
+        this.refresh$.next();
+        this.closeEditModal();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось обновить подключение."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
   openDetails(connection: AccountConnection): void {
@@ -388,30 +408,32 @@ export class ConnectionsPageComponent {
     if (accountId == null) {
       return;
     }
+
     this.saving = true;
+
     this.connectionApi
-      .remove(accountId, this.deletingConnection.id)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Подключение удалено.");
-          this.refresh$.next();
-          this.closeDeleteDialog();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error(this.mapErrorMessage(error, "Не удалось удалить подключение."), {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+    .remove(accountId, this.deletingConnection.id)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success("Подключение удалено.");
+        this.refresh$.next();
+        this.closeDeleteDialog();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось удалить подключение."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
   requestDisable(connection: AccountConnection): void {
@@ -432,63 +454,100 @@ export class ConnectionsPageComponent {
     if (accountId == null) {
       return;
     }
+
     this.saving = true;
+
     this.connectionApi
-      .update(accountId, this.disablingConnection.id, {active: false})
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Подключение отключено.");
-          this.refresh$.next();
-          this.closeDisableDialog();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error(this.mapErrorMessage(error, "Не удалось отключить подключение."), {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+    .update(accountId, this.disablingConnection.id, {active: false})
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success("Подключение отключено.");
+        this.refresh$.next();
+        this.closeDisableDialog();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось отключить подключение."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
-  runSync(connection: AccountConnection): void {
-    if (this.saving) {
+  requestRunSync(connection: AccountConnection): void {
+    if (!this.canRunSync(connection)) {
       return;
     }
+    this.syncRequestedConnectionIds.add(connection.id);
+    this.cdr.markForCheck();
+    this.runEtlScenario();
+  }
+
+  canRunSync(connection: AccountConnection): boolean {
+    if (this.saving) {
+      return false;
+    }
+    if (!connection.active) {
+      return false;
+    }
+    if (this.syncRequestedConnectionIds.has(connection.id)) {
+      return false;
+    }
+    return true;
+  }
+
+  private runEtlScenario(): void {
     const accountId = this.getAccountId();
     if (accountId == null) {
+      this.syncRequestedConnectionIds.clear();
+      this.cdr.markForCheck();
       return;
     }
+
+    const request: EtlScenarioRunRequest = {
+      accountId,
+      events: [
+        {event: "WAREHOUSE_DICT", dateMode: "LAST_DAYS", lastDays: 30},
+        {event: "CATEGORY_DICT", dateMode: "LAST_DAYS", lastDays: 30},
+        {event: "TARIFF_DICT", dateMode: "LAST_DAYS", lastDays: 30},
+        {event: "PRODUCT_DICT", dateMode: "LAST_DAYS", lastDays: 7},
+        {event: "SALES_FACT", dateMode: "LAST_DAYS", lastDays: 7},
+        {event: "INVENTORY_FACT", dateMode: "LAST_DAYS", lastDays: 7},
+        {event: "FACT_FINANCE", dateMode: "LAST_DAYS", lastDays: 7}
+      ]
+    };
+
     this.saving = true;
-    this.connectionApi
-      .update(accountId, connection.id, {active: true})
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Синхронизация запущена.");
-          this.refresh$.next();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error(this.mapErrorMessage(error, "Не удалось запустить синхронизацию."), {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+
+    this.http
+    .post<void>("/api/etl/scenario/run", request)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success("Синхронизация запущена.");
+        this.refresh$.next();
+      }),
+      tap({
+        error: (error: unknown) => {
+          const fallbackMessage = "Не удалось запустить синхронизацию.";
+          this.toastService.error(fallbackMessage);
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.syncRequestedConnectionIds.clear();
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
   getStatusLabel(connection: AccountConnection): string {
@@ -498,8 +557,8 @@ export class ConnectionsPageComponent {
     if (connection.lastSyncStatus === AccountConnectionSyncStatus.Failed) {
       return "Error";
     }
-    if (connection.lastSyncStatus === AccountConnectionSyncStatus.New) {
-      return "Syncing";
+    if (!connection.lastSyncAt) {
+      return "Not synced yet";
     }
     return "Connected";
   }
@@ -511,7 +570,7 @@ export class ConnectionsPageComponent {
     if (connection.lastSyncStatus === AccountConnectionSyncStatus.Failed) {
       return "status-pill is-error";
     }
-    if (connection.lastSyncStatus === AccountConnectionSyncStatus.New) {
+    if (!connection.lastSyncAt) {
       return "status-pill is-syncing";
     }
     return "status-pill";
@@ -540,11 +599,7 @@ export class ConnectionsPageComponent {
     return connections.filter((connection) => connection.marketplace === selected);
   }
 
-  private applyCredentialValidators(
-    form: FormGroup,
-    marketplace: Marketplace,
-    reset: boolean = true
-  ): void {
+  private applyCredentialValidators(form: FormGroup, marketplace: Marketplace, reset: boolean = true): void {
     const tokenControl = form.get("token");
     const clientIdControl = form.get("clientId");
     const apiKeyControl = form.get("apiKey");
@@ -569,6 +624,7 @@ export class ConnectionsPageComponent {
         tokenControl.reset("");
       }
     }
+
     tokenControl.updateValueAndValidity();
     clientIdControl.updateValueAndValidity();
     apiKeyControl.updateValueAndValidity();

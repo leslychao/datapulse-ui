@@ -45,54 +45,68 @@
               <th>Status</th>
               <th>Last sync</th>
               <th>Freshness</th>
-              <th>Actions</th>
+              <th class="th-actions">Actions</th>
             </tr>
             </thead>
+
             <tbody>
             <tr *ngFor="let connection of filteredConnections(vm.state.data)">
               <td>
                 <div class="cell-title">{{ connection.marketplace }}</div>
                 <div class="cell-subtitle">ID: {{ connection.id }}</div>
               </td>
+
               <td>
                 <span [class]="getStatusClass(connection)">{{ getStatusLabel(connection) }}</span>
               </td>
+
               <td>{{ connection.lastSyncAt ? (connection.lastSyncAt | date: 'short') : '—' }}</td>
+
               <td>{{ getFreshness(connection) }}</td>
-              <td>
+
+              <td class="td-actions">
                 <div class="actions">
-                  <dp-button
-                    size="sm"
-                    variant="primary"
-                    (click)="runSync(connection)"
-                    [disabled]="!connection.active"
-                  >
-                    Run sync
-                  </dp-button>
-                  <dp-button size="sm" variant="secondary" (click)="openDetails(connection)">
+                  <dp-button size="sm" variant="link" (click)="openDetails(connection)">
                     View details
                   </dp-button>
-                  <dp-button size="sm" variant="secondary" (click)="openEditModal(connection)">
-                    Edit
-                  </dp-button>
+
                   <div class="row-menu">
                     <button
                       type="button"
                       class="row-menu__trigger"
                       aria-label="More actions"
+                      [disabled]="saving"
                       (click)="toggleActionMenu(connection.id, $event)"
                     >
                       ⋯
                     </button>
+
                     <div
                       class="row-menu__backdrop"
                       *ngIf="openActionMenuId === connection.id"
                       (click)="closeActionMenu()"
                     ></div>
-                    <div
-                      class="row-menu__panel"
-                      *ngIf="openActionMenuId === connection.id"
-                    >
+
+                    <div class="row-menu__panel" *ngIf="openActionMenuId === connection.id">
+                      <button
+                        type="button"
+                        class="row-menu__item"
+                        (click)="openEditModal(connection); closeActionMenu()"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        class="row-menu__item"
+                        (click)="requestRunSync(connection); closeActionMenu()"
+                        [disabled]="!canRunSync(connection)"
+                      >
+                        Run sync
+                      </button>
+
+                      <div class="row-menu__divider"></div>
+
                       <button
                         type="button"
                         class="row-menu__item"
@@ -101,6 +115,7 @@
                       >
                         Disable
                       </button>
+
                       <button
                         type="button"
                         class="row-menu__item row-menu__item--danger"
@@ -116,6 +131,7 @@
             </tbody>
           </table>
         </dp-table>
+
         <ng-template #emptyState>
           <dp-empty-state
             title="Нет подключений"
@@ -148,8 +164,11 @@
           <div *ngIf="wizardStep === 'credentials'" class="wizard-step">
             <p class="muted">Введите credentials. Мы проверим доступ перед запуском.</p>
             <ng-container *ngIf="wizardIsWildberries; else ozonCredentials">
-              <dp-form-field label="Token" [required]="true"
-                             hint="Где взять: WB seller → API access.">
+              <dp-form-field
+                label="Token"
+                [required]="true"
+                hint="Где взять: WB seller → API access."
+              >
                 <dp-input type="password" formControlName="token"></dp-input>
               </dp-form-field>
             </ng-container>
@@ -193,11 +212,7 @@
           >
             Next
           </dp-button>
-          <dp-button
-            variant="primary"
-            *ngIf="wizardStep === 'sync'"
-            (click)="nextWizardStep()"
-          >
+          <dp-button variant="primary" *ngIf="wizardStep === 'sync'" (click)="nextWizardStep()">
             Continue
           </dp-button>
         </div>
@@ -208,12 +223,14 @@
       <div class="modal-content">
         <h3>Edit connection</h3>
         <p class="muted">Введите новые credentials для обновления подключения.</p>
+
         <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="form">
           <ng-container *ngIf="editIsWildberries; else editOzon">
             <dp-form-field label="Token" [required]="true">
               <dp-input type="password" formControlName="token"></dp-input>
             </dp-form-field>
           </ng-container>
+
           <ng-template #editOzon>
             <dp-form-field label="Client ID" [required]="true">
               <dp-input formControlName="clientId"></dp-input>
@@ -222,6 +239,7 @@
               <dp-input type="password" formControlName="apiKey"></dp-input>
             </dp-form-field>
           </ng-template>
+
           <div class="modal-actions">
             <dp-button variant="secondary" type="button" (click)="closeEditModal()">
               Cancel
@@ -235,33 +253,45 @@
     <dp-modal [visible]="detailsVisible" (close)="closeDetails()">
       <div class="modal-content" *ngIf="detailsConnection as connection">
         <h3>Connection details</h3>
+
         <div class="details-grid">
           <div>
             <div class="detail-label">Marketplace</div>
             <div>{{ connection.marketplace }}</div>
           </div>
+
           <div>
             <div class="detail-label">Status</div>
             <div>{{ getStatusLabel(connection) }}</div>
           </div>
+
           <div>
             <div class="detail-label">Last sync</div>
             <div>{{ connection.lastSyncAt ? (connection.lastSyncAt | date: 'short') : '—' }}</div>
           </div>
         </div>
+
         <div class="diagnostic" *ngIf="connection.lastSyncStatus === syncStatus.Failed">
           <h4>Needs attention</h4>
           <p class="muted">Проверьте credentials и повторите синхронизацию.</p>
           <dp-button variant="secondary" (click)="openEditModal(connection)">
             Re-check credentials
           </dp-button>
-          <dp-button variant="primary" (click)="runSync(connection)">Retry sync</dp-button>
+          <dp-button
+            variant="primary"
+            (click)="requestRunSync(connection)"
+            [disabled]="!canRunSync(connection)"
+          >
+            Retry sync
+          </dp-button>
         </div>
+
         <div class="details-toggle">
           <dp-button variant="link" (click)="toggleDetails()">
             {{ detailsExpanded ? "Hide details" : "Details" }}
           </dp-button>
         </div>
+
         <pre class="details-meta" *ngIf="detailsExpanded">{{ connection | json }}</pre>
       </div>
     </dp-modal>

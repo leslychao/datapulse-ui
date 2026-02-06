@@ -27,6 +27,7 @@
         [class.is-skipped]="step.status === 'skipped'"
       >
         <div class="step__index">{{ index + 1 }}</div>
+
         <div class="step__content">
           <div class="step__title">
             {{ step.label }}
@@ -34,6 +35,7 @@
           </div>
           <div class="step__description">{{ step.description }}</div>
         </div>
+
         <div class="step__actions">
           <dp-button
             *ngIf="step.action"
@@ -44,6 +46,7 @@
           >
             {{ step.action.label }}
           </dp-button>
+
           <dp-button
             *ngIf="step.secondaryAction"
             [variant]="step.secondaryAction.variant"
@@ -53,8 +56,6 @@
           >
             {{ step.secondaryAction.label }}
           </dp-button>
-          <span class="step__status" *ngIf="step.status === 'done'">Done</span>
-          <span class="step__status" *ngIf="step.status === 'skipped'">Skipped</span>
         </div>
       </div>
     </div>
@@ -69,12 +70,19 @@
   <dp-modal [visible]="accountModalVisible" (close)="closeAccountModal()">
     <div class="modal-content">
       <h3>Create workspace</h3>
+
       <dp-account-form [disabled]="formLocked"></dp-account-form>
+
       <div class="modal-actions">
         <dp-button variant="secondary" type="button" (click)="closeAccountModal()">
           Cancel
         </dp-button>
-        <dp-button variant="primary" type="button" (click)="createAccount()" [disabled]="isProcessing">
+        <dp-button
+          variant="primary"
+          type="button"
+          (click)="createAccount()"
+          [disabled]="isProcessing"
+        >
           Create
         </dp-button>
       </div>
@@ -84,15 +92,22 @@
   <dp-modal [visible]="connectionModalVisible" (close)="closeConnectionModal()">
     <div class="modal-content">
       <h3>Create connection</h3>
+
       <dp-connection-form
         [disabled]="formLocked"
         [errorMessage]="tokenErrorMessage"
       ></dp-connection-form>
+
       <div class="modal-actions">
         <dp-button variant="secondary" type="button" (click)="closeConnectionModal()">
           Cancel
         </dp-button>
-        <dp-button variant="primary" type="button" (click)="createConnection()" [disabled]="isProcessing">
+        <dp-button
+          variant="primary"
+          type="button"
+          (click)="createConnection()"
+          [disabled]="isProcessing"
+        >
           Create
         </dp-button>
       </div>

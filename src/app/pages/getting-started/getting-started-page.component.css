@@ -133,21 +133,46 @@
   justify-content: flex-end;
 }
 
-.step__status {
-  font-size: 12px;
-  color: var(--muted);
-}
+/* ---------------- Modal fixes ----------------
+   IMPORTANT:
+   - Do NOT set width/min-width here.
+   - dp-modal should control panel width/padding.
+   - Here we only ensure proper internal layout and scrolling.
+*/
 
 .modal-content {
-  display: grid;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  min-width: min(520px, 90vw);
+
+  max-height: 70vh;
+  overflow: hidden;
 }
 
+.modal-content > h3 {
+  margin: 0;
+}
+
+.modal-content dp-account-form,
+.modal-content dp-connection-form {
+  display: block;
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+/* footer always stays inside modal */
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  flex-wrap: wrap;
+
+  padding-top: 12px;
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+
+  flex-shrink: 0;
 }
 
 @media (max-width: 820px) {
@@ -164,9 +189,5 @@
 @media (max-width: 600px) {
   .getting-started-page {
     padding: 24px 16px 32px;
-  }
-
-  .modal-content {
-    min-width: auto;
   }
 }
