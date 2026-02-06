@@ -6,7 +6,6 @@ import {FormFieldComponent, InputComponent} from "../../shared/ui";
 
 type AccountFormGroup = FormGroup<{
   name: FormControl<string>;
-  description: FormControl<string>;
 }>;
 
 @Component({
@@ -25,8 +24,7 @@ export class AccountFormComponent implements OnChanges {
 
   constructor(private readonly fb: FormBuilder) {
     this.form = this.fb.nonNullable.group({
-      name: ["", [Validators.required, Validators.maxLength(32)]],
-      description: [""]
+      name: ["", [Validators.required, Validators.maxLength(32)]]
     });
   }
 
@@ -48,8 +46,8 @@ export class AccountFormComponent implements OnChanges {
       this.form.markAllAsTouched();
       return null;
     }
-    const {name, description} = this.form.getRawValue();
-    return {name: name.trim(), description: description.trim() || null, active: true};
+    const {name} = this.form.getRawValue();
+    return {name: name.trim(), active: true};
   }
 
   getCurrentName(): string {

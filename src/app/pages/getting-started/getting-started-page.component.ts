@@ -6,27 +6,43 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountFormComponent} from "../../features/accounts/account-form.component";
 import {ConnectionFormComponent} from "../../features/connections";
-import {AccountsApiClient, AccountConnectionsApiClient, ApiError, EtlScenarioApi} from "../../core/api";
+import {InviteMemberModalComponent, InviteMemberPayload} from "../../features/members";
+import {
+  AccountMembersApiClient,
+  AccountsApiClient,
+  AccountConnectionsApiClient,
+  ApiError,
+  EtlScenarioApi
+} from "../../core/api";
 import {
   AccountConnection,
   AccountConnectionSyncStatus,
+  AccountMember,
+  AccountMemberStatus,
   EtlScenarioEvent,
   EtlScenarioRequest
 } from "../../shared/models";
 import {
+  AccountCatalogService,
   AccountContextService,
   OnboardingState,
   OnboardingStateService,
-  OnboardingStatusState,
-  AccountCatalogService
+  OnboardingStatusState
 } from "../../core/state";
 import {APP_PATHS} from "../../core/app-paths";
-import {ButtonComponent, PageHeaderComponent, PageLayoutComponent} from "../../shared/ui";
+import {
+  ButtonComponent,
+  ErrorStateComponent,
+  ModalComponent,
+  PageHeaderComponent,
+  ToastService
+} from "../../shared/ui";
 
 interface OnboardingStep {
-  id: "account" | "connection" | "sync";
+  id: "account" | "connection" | "invite";
   label: string;
   description: string;
+  optional?: boolean;
 }
 
 const SYNC_SUCCESS = AccountConnectionSyncStatus.Success;
@@ -43,41 +59,52 @@ const DEFAULT_ETL_EVENTS: EtlScenarioEvent[] = [
 ];
 
 @Component({
-  selector: "dp-onboarding-page",
+  selector: "dp-getting-started-page",
   standalone: true,
   imports: [
     CommonModule,
     AccountFormComponent,
     ConnectionFormComponent,
+    InviteMemberModalComponent,
     ButtonComponent,
-    PageLayoutComponent,
+    ModalComponent,
+    ErrorStateComponent,
     PageHeaderComponent
   ],
-  templateUrl: "./onboarding-page.component.html",
-  styleUrl: "./onboarding-page.component.css",
+  templateUrl: "./getting-started-page.component.html",
+  styleUrl: "./getting-started-page.component.css",
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class OnboardingPageComponent implements OnInit {
+export class GettingStartedPageComponent implements OnInit {
   @ViewChild(AccountFormComponent) accountForm?: AccountFormComponent;
   @ViewChild(ConnectionFormComponent) connectionForm?: ConnectionFormComponent;
 
   readonly steps: OnboardingStep[] = [
     {
       id: "account",
-      label: "Аккаунт",
+      label: "Create workspace",
       description: "Создайте рабочую область для подключения данных."
     },
     {
       id: "connection",
-      label: "Подключение",
-      description: "Подключите маркетплейс к созданному аккаунту."
+      label: "Create connection",
+      description: "Подключите маркетплейс к созданному workspace."
     },
     {
-      id: "sync",
-      label: "Синхронизация",
-      description: "Запустите первую синхронизацию данных."
+      id: "invite",
+      label: "Invite teammates",
+      description: "Пригласите коллег для совместной работы.",
+      optional: true
     }
   ];
+
+  accountModalVisible = false;
+  connectionModalVisible = false;
+  inviteModalVisible = false;
+
+  syncError: ApiError | null = null;
+  inviteSaving = false;
+  private invitedMembers: AccountMember[] = [];
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly onboardingState = inject(OnboardingStateService);
@@ -138,6 +165,22 @@ export class OnboardingPageComponent implements OnInit {
     this.patchState({tokenErrorMessage: value});
   }
 
+  get inviteCompleted(): boolean {
+    return this.snapshot.inviteCompleted;
+  }
+
+  set inviteCompleted(value: boolean) {
+    this.patchState({inviteCompleted: value});
+  }
+
+  get inviteSkipped(): boolean {
+    return this.snapshot.inviteSkipped;
+  }
+
+  set inviteSkipped(value: boolean) {
+    this.patchState({inviteSkipped: value});
+  }
+
   get statusState(): OnboardingStatusState {
     return this.snapshot.statusState;
   }
@@ -189,127 +232,90 @@ export class OnboardingPageComponent implements OnInit {
   constructor(
     private readonly accountApi: AccountsApiClient,
     private readonly connectionApi: AccountConnectionsApiClient,
+    private readonly membersApi: AccountMembersApiClient,
     private readonly etlScenarioApi: EtlScenarioApi,
     private readonly accountContext: AccountContextService,
     private readonly accountCatalog: AccountCatalogService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly toastService: ToastService
   ) {}
 
   ngOnInit(): void {
     if (this.accountId != null) {
-      this.loadConnections(this.accountId, false);
+      this.loadConnections(this.accountId, true);
     }
   }
 
-  get canSubmitAccount(): boolean {
-    if (this.isProcessing) {
-      return false;
-    }
-    if (this.accountId == null) {
-      return this.accountForm?.isValid() ?? false;
-    }
-    if (this.isAccountNameChanged()) {
-      return this.accountForm?.isValid() ?? false;
-    }
-    return true;
+  get isAccountReady(): boolean {
+    return this.accountId != null;
   }
 
-  get accountActionLabel(): string {
-    if (this.accountId == null) {
-      return this.isProcessing ? "Создаем..." : "Создать аккаунт";
-    }
-    if (this.isAccountNameChanged()) {
-      return this.isProcessing ? "Сохраняем..." : "Сохранить изменения";
-    }
-    return "Далее";
+  get isConnectionReady(): boolean {
+    return this.connections.length > 0;
+  }
+
+  get isInviteStepDone(): boolean {
+    return this.inviteCompleted || this.inviteSkipped;
   }
 
   get canCreateConnection(): boolean {
-    return this.accountId != null && this.connections.length === 0 && !this.isProcessing;
-  }
-
-  get canProceedToSync(): boolean {
-    return this.connections.length > 0 && !this.isProcessing;
-  }
-
-  get connectionActionLabel(): string {
-    if (this.connections.length > 0) {
-      return "Далее";
-    }
-    return this.isProcessing ? "Создаем..." : "Создать подключение";
+    return this.accountId != null && !this.isProcessing && !this.isConnectionReady;
   }
 
   get canStartSync(): boolean {
     return (
       this.accountId != null &&
-      this.connections.length > 0 &&
+      this.isConnectionReady &&
       !this.hasSuccessfulSync(this.connections) &&
       !this.hasInProgressSync(this.connections) &&
       !this.isProcessing
     );
   }
 
-  isStepComplete(index: number): boolean {
-    if (index === 0) {
-      return this.accountId != null;
-    }
-    if (index === 1) {
-      return this.connections.length > 0;
-    }
-    return this.hasSuccessfulSync(this.connections);
+  openAccountModal(): void {
+    this.accountModalVisible = true;
   }
 
-  maxAvailableStep(): number {
-    if (this.accountId == null) {
-      return 0;
-    }
-    if (this.connections.length === 0) {
-      return 1;
-    }
-    return 2;
-  }
-
-  canNavigateToStep(index: number): boolean {
-    if (this.isSyncStarted()) {
-      return index === this.currentStep;
-    }
-    return index <= this.maxAvailableStep() && !this.isProcessing;
-  }
-
-  goToStep(index: number): void {
-    if (!this.canNavigateToStep(index)) {
+  closeAccountModal(): void {
+    if (this.isProcessing) {
       return;
     }
-    this.currentStep = index;
-    this.resetErrors();
-    if (index > 0) {
-      this.ensureConnectionState();
-    }
+    this.accountModalVisible = false;
   }
 
-  submitAccount(): void {
-    if (!this.canSubmitAccount) {
-      return;
-    }
-    if (this.accountId == null) {
-      this.createAccount();
-      return;
-    }
-    if (!this.isAccountNameChanged()) {
-      this.goToStep(1);
-      return;
-    }
-    this.updateAccount();
+  openConnectionModal(): void {
+    this.connectionModalVisible = true;
   }
 
-  private createAccount(): void {
+  closeConnectionModal(): void {
+    if (this.isProcessing) {
+      return;
+    }
+    this.connectionModalVisible = false;
+  }
+
+  openInviteModal(): void {
+    this.inviteModalVisible = true;
+  }
+
+  closeInviteModal(): void {
+    if (this.inviteSaving) {
+      return;
+    }
+    this.inviteModalVisible = false;
+  }
+
+  createAccount(): void {
+    if (this.isProcessing) {
+      return;
+    }
     this.resetErrors();
     const accountRequest = this.accountForm?.getRequest();
     if (!accountRequest) {
-      this.setStatusState("error", "Заполните название аккаунта.");
+      this.setStatusState("error", "Введите название workspace.");
       return;
     }
-    this.setStatusState("processing", "Создаем аккаунт...");
+    this.setStatusState("processing", "Создаем workspace...");
     this.accountApi
       .create(accountRequest)
       .pipe(
@@ -317,42 +323,17 @@ export class OnboardingPageComponent implements OnInit {
         tap((account) => {
           this.accountId = account.id;
           this.accountName = account.name;
+          this.inviteCompleted = false;
+          this.inviteSkipped = false;
+          this.invitedMembers = [];
           this.accountContext.setAccountId(account.id);
           this.accountCatalog.upsertAccount(account);
           this.currentStep = 1;
-          this.setStatusState("success", "Аккаунт создан.");
+          this.accountModalVisible = false;
+          this.setStatusState("success", "Workspace создан.");
         }),
         catchError((error: ApiError) => {
-          this.handleApiError(error, "Не удалось создать аккаунт.");
-          return of(null);
-        }),
-        finalize(() => this.setProcessing(false))
-      )
-      .subscribe();
-  }
-
-  private updateAccount(): void {
-    if (this.accountId == null) {
-      return;
-    }
-    this.resetErrors();
-    const accountRequest = this.accountForm?.getRequest();
-    if (!accountRequest) {
-      this.setStatusState("error", "Заполните название аккаунта.");
-      return;
-    }
-    this.setStatusState("processing", "Сохраняем изменения...");
-    this.accountApi
-      .update(this.accountId, accountRequest)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap((account) => {
-          this.accountName = account.name;
-          this.currentStep = 1;
-          this.setStatusState("success", "Изменения сохранены.");
-        }),
-        catchError((error: ApiError) => {
-          this.handleApiError(error, "Не удалось сохранить изменения.");
+          this.handleApiError(error, "Не удалось создать workspace.");
           return of(null);
         }),
         finalize(() => this.setProcessing(false))
@@ -364,11 +345,11 @@ export class OnboardingPageComponent implements OnInit {
     if (!this.canCreateConnection) {
       return;
     }
-    this.resetErrors();
     if (this.accountId == null) {
-      this.setStatusState("error", "Сначала создайте аккаунт.");
+      this.setStatusState("error", "Сначала создайте workspace.");
       return;
     }
+    this.resetErrors();
     const request = this.connectionForm?.getRequest();
     if (!request) {
       this.setStatusState("error", "Заполните данные подключения.");
@@ -381,6 +362,7 @@ export class OnboardingPageComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
         tap(() => {
           this.setStatusState("success", "Подключение создано.");
+          this.connectionModalVisible = false;
           this.loadConnections(this.accountId!, true);
         }),
         catchError((error: ApiError) => {
@@ -393,26 +375,60 @@ export class OnboardingPageComponent implements OnInit {
       .subscribe();
   }
 
-  handleConnectionAction(): void {
-    if (this.isProcessing) {
+  skipInvite(): void {
+    if (!this.isConnectionReady) {
       return;
     }
-    if (this.connections.length > 0) {
-      this.goToStep(2);
+    this.inviteSkipped = true;
+    this.inviteCompleted = false;
+  }
+
+  submitInvite(payload: InviteMemberPayload): void {
+    if (this.accountId == null || this.inviteSaving) {
       return;
     }
-    this.createConnection();
+    this.inviteSaving = true;
+    const request = {
+      email: payload.email,
+      role: payload.role,
+      status: AccountMemberStatus.Invited
+    };
+
+    this.membersApi
+      .create(this.accountId, request)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        tap((member) => {
+          this.invitedMembers = [...this.invitedMembers, member];
+          this.inviteCompleted = true;
+          this.inviteSkipped = false;
+          this.inviteModalVisible = false;
+          this.toastService.success("Инвайт отправлен.");
+        }),
+        catchError((error: ApiError) => {
+          this.toastService.error("Не удалось отправить инвайт.", {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+          return of(null);
+        }),
+        finalize(() => {
+          this.inviteSaving = false;
+        })
+      )
+      .subscribe();
   }
 
   startSync(): void {
     if (this.accountId == null) {
-      this.setStatusState("error", "Создайте аккаунт, чтобы запустить синхронизацию.");
+      this.setStatusState("error", "Создайте workspace, чтобы запустить синхронизацию.");
       return;
     }
-    if (this.connections.length === 0) {
+    if (!this.isConnectionReady) {
       this.setStatusState("error", "Сначала создайте подключение.");
       return;
     }
+    this.syncError = null;
     this.resetErrors();
     this.setProcessing(true);
     const request = this.buildScenarioRequest(this.accountId);
@@ -422,13 +438,15 @@ export class OnboardingPageComponent implements OnInit {
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         tap((response) => {
-          if (response.status === 200 || response.status === 201) {
+          if (response.status === 200 || response.status === 202) {
+            this.setStatusState("success", "Sync started");
             this.router.navigateByUrl(APP_PATHS.overview(this.accountId!), {replaceUrl: true});
             return;
           }
           this.setStatusState("error", "Не удалось запустить синхронизацию.");
         }),
         catchError((error: ApiError) => {
+          this.syncError = error;
           this.handleApiError(error, "Не удалось запустить синхронизацию.");
           return of(null);
         }),
@@ -474,14 +492,10 @@ export class OnboardingPageComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
         catchError((error: ApiError) => {
           this.handleApiError(error, "Не удалось загрузить подключения.");
-          return of([]);
+          return of([] as AccountConnection[]);
         }),
         tap((connections) => {
           this.connections = connections;
-          if (this.hasSuccessfulSync(connections)) {
-            this.router.navigateByUrl(APP_PATHS.overview(accountId), {replaceUrl: true});
-            return;
-          }
           if (allowAutoAdvance) {
             this.currentStep = this.resolveStep(connections);
           }
@@ -500,13 +514,6 @@ export class OnboardingPageComponent implements OnInit {
     return 2;
   }
 
-  private ensureConnectionState(): void {
-    if (this.accountId == null) {
-      return;
-    }
-    this.loadConnections(this.accountId, false);
-  }
-
   private hasSuccessfulSync(connections: AccountConnection[]): boolean {
     return connections.some(
       (connection) => connection.active && connection.lastSyncStatus === SYNC_SUCCESS
@@ -515,23 +522,8 @@ export class OnboardingPageComponent implements OnInit {
 
   private hasInProgressSync(connections: AccountConnection[]): boolean {
     return connections.some(
-      (connection) =>
-        connection.active &&
-        connection.lastSyncStatus === SYNC_NEW
+      (connection) => connection.active && connection.lastSyncStatus === SYNC_NEW
     );
-  }
-
-  private isAccountNameChanged(): boolean {
-    if (!this.accountForm || this.accountId == null) {
-      return false;
-    }
-    const currentName = this.accountForm.getCurrentName();
-    const storedName = (this.accountName ?? "").trim();
-    return currentName !== storedName;
-  }
-
-  private isSyncStarted(): boolean {
-    return this.hasSuccessfulSync(this.connections) || this.hasInProgressSync(this.connections);
   }
 
   private buildScenarioRequest(accountId: number): EtlScenarioRequest {
@@ -539,5 +531,9 @@ export class OnboardingPageComponent implements OnInit {
       accountId,
       events: DEFAULT_ETL_EVENTS
     };
+  }
+
+  get existingMembers(): AccountMember[] {
+    return this.invitedMembers;
   }
 }

@@ -1,7 +1,7 @@
 export const APP_ROUTE_SEGMENTS = {
   login: "login",
   app: "app",
-  onboarding: "onboarding",
+  gettingStarted: "getting-started",
   overview: "overview",
   finance: "finance",
   pnl: "pnl",
@@ -27,7 +27,7 @@ export const APP_PATHS = {
   workspaces: `/${APP_ROUTE_SEGMENTS.workspaces}`,
   workspacesAccount: (accountId: number) => `/${APP_ROUTE_SEGMENTS.workspaces}/${accountId}`,
   workspacesCreate: `/${APP_ROUTE_SEGMENTS.workspaces}/${APP_ROUTE_SEGMENTS.workspacesCreate}`,
-  onboarding: `/${APP_ROUTE_SEGMENTS.app}/${APP_ROUTE_SEGMENTS.onboarding}`,
+  gettingStarted: `/${APP_ROUTE_SEGMENTS.gettingStarted}`,
   settingsProfile: (accountId: number) =>
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.profile}`,
   overview: (accountId: number) =>

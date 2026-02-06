@@ -274,34 +274,13 @@
       </ng-container>
     </section>
 
-    <dp-modal [visible]="inviteVisible" (close)="closeInvite()">
-      <div class="modal-content">
-        <h3>Invite user</h3>
-
-        <form
-          [formGroup]="inviteForm"
-          (ngSubmit)="submitInvite(vm.accountId, vm.state.status === 'ready' ? vm.state.data : [])"
-          class="form"
-        >
-          <dp-form-field label="Email">
-            <dp-input placeholder="name@company.com" formControlName="email"></dp-input>
-          </dp-form-field>
-
-          <dp-form-field label="Role">
-            <dp-select formControlName="role">
-              <option *ngFor="let role of roleOptions" [value]="role">{{ role }}</option>
-            </dp-select>
-          </dp-form-field>
-
-          <div class="modal-actions">
-            <dp-button variant="secondary" type="button" (click)="closeInvite()">Cancel</dp-button>
-            <dp-button variant="primary" type="submit" [disabled]="inviteForm.invalid || saving">
-              Send invite
-            </dp-button>
-          </div>
-        </form>
-      </div>
-    </dp-modal>
+    <dp-invite-member-modal
+      [visible]="inviteVisible"
+      [saving]="saving"
+      [existingMembers]="vm.state.status === 'ready' ? vm.state.data : []"
+      (close)="closeInvite()"
+      (submitInvite)="submitInvite(vm.accountId, $event)"
+    ></dp-invite-member-modal>
 
     <dp-confirm-dialog
       [visible]="confirmDialogVisible"

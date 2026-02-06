@@ -27,7 +27,7 @@ describe("accountGuard", () => {
     router = TestBed.inject(Router);
   });
 
-  it("redirects to onboarding when no accounts exist", async () => {
+  it("redirects to getting started when no accounts exist", async () => {
     accountCatalog.load.and.returnValue(of([]));
 
     const state = {url: "/app/home"} as RouterStateSnapshot;
@@ -35,17 +35,17 @@ describe("accountGuard", () => {
       firstValueFrom(accountGuard({} as never, state))
     );
 
-    expect(router.serializeUrl(result as any)).toBe(APP_PATHS.onboarding);
+    expect(router.serializeUrl(result as any)).toBe(APP_PATHS.gettingStarted);
   });
 
-  it("redirects to account selection when accounts exist on onboarding route", async () => {
+  it("allows navigation when accounts exist", async () => {
     accountCatalog.load.and.returnValue(of([{id: 1, name: "Main"}] as any));
 
-    const state = {url: APP_PATHS.onboarding} as RouterStateSnapshot;
+    const state = {url: \"/app/home\"} as RouterStateSnapshot;
     const result = await TestBed.runInInjectionContext(() =>
       firstValueFrom(accountGuard({} as never, state))
     );
 
-    expect(router.serializeUrl(result as any)).toBe(APP_PATHS.workspaces);
+    expect(result).toBeTrue();
   });
 });

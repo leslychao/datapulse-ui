@@ -5,38 +5,6 @@
       subtitle="Ключевые показатели по выбранному workspace"
     ></dp-page-header>
 
-    <section class="card" *ngIf="vm.state.state === dataState.notConnected">
-      <div class="section-header">
-        <div>
-          <h3>Getting started</h3>
-          <p class="muted">Подключите данные и запустите первую синхронизацию.</p>
-        </div>
-      </div>
-      <div class="getting-started">
-        <div class="getting-started__item">
-          <div class="getting-started__title">Add data source</div>
-          <div class="getting-started__desc">Подключите маркетплейс или сервис.</div>
-          <dp-button size="sm" variant="primary" (click)="goToConnections(vm.accountId)">
-            Add source
-          </dp-button>
-        </div>
-        <div class="getting-started__item">
-          <div class="getting-started__title">Run first sync</div>
-          <div class="getting-started__desc">Проверьте статус синхронизации.</div>
-          <dp-button size="sm" variant="secondary" (click)="goToConnections(vm.accountId)">
-            Open connections
-          </dp-button>
-        </div>
-        <div class="getting-started__item">
-          <div class="getting-started__title">Invite teammates (optional)</div>
-          <div class="getting-started__desc">Добавьте коллег и роли.</div>
-          <dp-button size="sm" variant="secondary" (click)="goToUsers(vm.accountId)">
-            Invite users
-          </dp-button>
-        </div>
-      </div>
-    </section>
-
     <dp-filter-bar [fields]="filters"></dp-filter-bar>
     <dp-metric-tile-group [tiles]="tiles" [state]="vm.state.state"></dp-metric-tile-group>
 
