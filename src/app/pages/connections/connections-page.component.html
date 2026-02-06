@@ -108,13 +108,23 @@
                       <div class="row-menu__divider"></div>
 
                       <button
+                        *ngIf="connection.active; else enableAction"
                         type="button"
                         class="row-menu__item"
                         (click)="requestDisable(connection); closeActionMenu()"
-                        [disabled]="!connection.active"
                       >
                         Disable
                       </button>
+
+                      <ng-template #enableAction>
+                        <button
+                          type="button"
+                          class="row-menu__item"
+                          (click)="requestEnable(connection); closeActionMenu()"
+                        >
+                          Enable
+                        </button>
+                      </ng-template>
 
                       <button
                         type="button"
@@ -314,6 +324,16 @@
       confirmLabel="Disable"
       (confirm)="disableConnection()"
       (cancel)="closeDisableDialog()"
+      [loading]="saving"
+    ></dp-confirm-dialog>
+
+    <dp-confirm-dialog
+      [visible]="enableDialogVisible"
+      title="Enable connection?"
+      description="Синхронизация будет снова доступна для запуска."
+      confirmLabel="Enable"
+      (confirm)="enableConnection()"
+      (cancel)="closeEnableDialog()"
       [loading]="saving"
     ></dp-confirm-dialog>
   </dp-page-layout>

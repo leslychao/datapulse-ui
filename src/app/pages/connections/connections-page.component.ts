@@ -41,7 +41,6 @@ interface ConnectionsViewModel {
 
 type WizardStep = "marketplace" | "credentials" | "validate" | "sync" | "success";
 
-/** ETL scenario run: строго по примеру пользователя */
 type EtlEventCode =
   | "WAREHOUSE_DICT"
   | "CATEGORY_DICT"
@@ -101,15 +100,19 @@ export class ConnectionsPageComponent {
   editVisible = false;
   detailsVisible = false;
   detailsExpanded = false;
+
   deleteDialogVisible = false;
   disableDialogVisible = false;
+  enableDialogVisible = false;
 
   openActionMenuId: number | null = null;
 
   editingConnection: AccountConnection | null = null;
   detailsConnection: AccountConnection | null = null;
+
   deletingConnection: AccountConnection | null = null;
   disablingConnection: AccountConnection | null = null;
+  enablingConnection: AccountConnection | null = null;
 
   private readonly route = inject(ActivatedRoute);
   private readonly connectionApi = inject(AccountConnectionsApiClient);
@@ -341,6 +344,7 @@ export class ConnectionsPageComponent {
 
     const {token, clientId, apiKey} = this.editForm.getRawValue();
     const request: AccountConnectionUpdateRequest = {
+      marketplace: this.editingConnection.marketplace,
       credentials:
         this.editingConnection.marketplace === Marketplace.Wildberries
           ? {token}
@@ -457,8 +461,12 @@ export class ConnectionsPageComponent {
 
     this.saving = true;
 
+    const request: AccountConnectionUpdateRequest = {
+      active: false
+    };
+
     this.connectionApi
-    .update(accountId, this.disablingConnection.id, {active: false})
+    .update(accountId, this.disablingConnection.id, request)
     .pipe(
       takeUntilDestroyed(this.destroyRef),
       tap(() => {
@@ -469,6 +477,56 @@ export class ConnectionsPageComponent {
       tap({
         error: (error: ApiError) => {
           this.toastService.error(this.mapErrorMessage(error, "Не удалось отключить подключение."), {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
+  }
+
+  requestEnable(connection: AccountConnection): void {
+    this.enablingConnection = connection;
+    this.enableDialogVisible = true;
+  }
+
+  closeEnableDialog(): void {
+    this.enableDialogVisible = false;
+    this.enablingConnection = null;
+  }
+
+  enableConnection(): void {
+    if (!this.enablingConnection || this.saving) {
+      return;
+    }
+    const accountId = this.getAccountId();
+    if (accountId == null) {
+      return;
+    }
+
+    this.saving = true;
+
+    const request: AccountConnectionUpdateRequest = {
+      active: true
+    };
+
+    this.connectionApi
+    .update(accountId, this.enablingConnection.id, request)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success("Подключение включено.");
+        this.refresh$.next();
+        this.closeEnableDialog();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error(this.mapErrorMessage(error, "Не удалось включить подключение."), {
             details: error.details,
             correlationId: error.correlationId
           });
@@ -536,9 +594,8 @@ export class ConnectionsPageComponent {
         this.refresh$.next();
       }),
       tap({
-        error: (error: unknown) => {
-          const fallbackMessage = "Не удалось запустить синхронизацию.";
-          this.toastService.error(fallbackMessage);
+        error: () => {
+          this.toastService.error("Не удалось запустить синхронизацию.");
         }
       }),
       finalize(() => {

@@ -41,6 +41,7 @@ export interface AccountConnectionCreateRequest {
 }
 
 export interface AccountConnectionUpdateRequest {
+  marketplace?: Marketplace;
   credentials?: AccountConnectionCredentials;
   active?: boolean;
 }
