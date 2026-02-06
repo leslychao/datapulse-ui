@@ -1,82 +1,100 @@
 <ng-container *ngIf="vm$ | async as vm">
   <dp-page-layout [accountId]="vm.accountId">
     <dp-page-header
-      title="Workspace settings"
-      subtitle="Управляйте названием и описанием workspace, а также статусом и удалением."
+      title="Workspace"
+      subtitle="Name & description"
     ></dp-page-header>
 
-    <section class="card" *ngIf="vm.accountState.status === 'ready' && vm.accountState.data; else settingsState">
-      <form class="form" [formGroup]="form" (ngSubmit)="save(vm.accountId)">
-        <dp-form-field label="Workspace name" [required]="true">
-          <dp-input formControlName="name" placeholder="Workspace name"></dp-input>
-        </dp-form-field>
+    <section
+      class="card"
+      *ngIf="vm.accountState.status === 'ready' && vm.accountState.data; else settingsState"
+    >
+      <form
+        class="form"
+        [formGroup]="form"
+        (ngSubmit)="save(vm.accountId)"
+      >
+        <div class="form-grid">
+          <dp-form-field label="Workspace name" [required]="true">
+            <dp-input
+              formControlName="name"
+              placeholder="Workspace name"
+            ></dp-input>
+          </dp-form-field>
 
-        <dp-form-field label="Description">
-          <dp-input formControlName="description" placeholder="Optional description"></dp-input>
-        </dp-form-field>
+          <dp-form-field
+            label="Description"
+            class="form-grid__span-2"
+          >
+            <dp-input
+              formControlName="description"
+              placeholder="Optional description"
+            ></dp-input>
+          </dp-form-field>
+        </div>
 
+        <!-- actions: silent icon -->
         <div class="form-actions">
           <dp-button
-            variant="primary"
+            class="icon-action"
+            variant="secondary"
             type="submit"
             [loading]="saving"
             [disabled]="!canSave(vm.accountId)"
           >
-            Save changes
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                d="M9.0 16.2 4.8 12.0 3.4 13.4 9.0 19.0 21.0 7.0 19.6 5.6z"
+              />
+            </svg>
+            <span class="sr-only">Save changes</span>
           </dp-button>
         </div>
       </form>
 
-      <div class="section-divider"></div>
+      <div class="divider"></div>
 
-      <div class="lifecycle">
-        <div class="lifecycle-text">
-          <h3 class="section-title">Workspace status</h3>
-          <p class="muted">
-            Текущий статус:
-            <span class="status" [class.status-archived]="!vm.accountState.data.active">
-              {{ vm.accountState.data.active ? "Active" : "Archived" }}
-            </span>
-          </p>
-          <p class="muted" *ngIf="vm.accountState.data.active">
-            Архивированный workspace будет скрыт, а синхронизации остановятся.
-          </p>
-          <p class="muted" *ngIf="!vm.accountState.data.active">
-            Восстановление вернёт workspace в активное состояние и позволит продолжить работу.
-          </p>
-        </div>
+      <!-- destructive action -->
+      <div class="delete-row">
+        <div class="delete-row__text">
+          <div class="delete-row__title">Delete workspace</div>
 
-        <div class="lifecycle-actions">
-          <dp-button
-            variant="secondary"
-            (click)="openArchiveDialog(vm.accountState.data.active)"
-            [disabled]="saving"
+          <div class="delete-row__hint muted">
+            Это действие необратимо и удалит подключения и доступы.
+          </div>
+
+          <div
+            class="delete-row__hint muted"
+            *ngIf="!canDelete(vm.totalWorkspaces)"
           >
-            {{ vm.accountState.data.active ? "Archive workspace" : "Restore workspace" }}
-          </dp-button>
-        </div>
-      </div>
-
-      <div class="section-divider"></div>
-
-      <div class="danger-zone">
-        <div>
-          <h3 class="danger-title">Danger zone</h3>
-          <p class="muted">Удаление необратимо: будут удалены подключения и доступы.</p>
+            Нельзя удалить последний workspace.
+          </div>
         </div>
 
-        <div class="danger-actions">
+        <div class="delete-row__actions">
           <dp-button
-            variant="danger"
-            (click)="openDeleteDialog()"
+            class="icon-action icon-action--danger"
+            variant="secondary"
+            (click)="openDeleteDialog(vm.totalWorkspaces)"
             [disabled]="saving || !canDelete(vm.totalWorkspaces)"
           >
-            Delete workspace
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 7h2v9h-2v-9zm4 0h2v9h-2v-9zM7 10h2v9H7v-9z"
+              />
+            </svg>
+            <span class="sr-only">Delete workspace</span>
           </dp-button>
-        </div>
-
-        <div class="hint" *ngIf="!canDelete(vm.totalWorkspaces)">
-          Нельзя удалить последний workspace.
         </div>
       </div>
     </section>
@@ -87,28 +105,35 @@
       </ng-container>
 
       <ng-container *ngIf="vm.accountState.status === 'error'">
-        <dp-error-state title="Workspace не найден" [description]="vm.accountState.error.message">
-          <dp-button variant="secondary" (click)="goToWorkspaces()">Back to workspaces</dp-button>
+        <dp-error-state
+          title="Workspace не найден"
+          [description]="vm.accountState.error.message"
+        >
+          <dp-button
+            variant="secondary"
+            (click)="goToWorkspaces()"
+          >
+            Back to workspaces
+          </dp-button>
         </dp-error-state>
       </ng-container>
 
-      <ng-container *ngIf="vm.accountState.status === 'ready' && !vm.accountState.data">
-        <dp-empty-state title="Workspace не найден" description="Выберите workspace снова.">
-          <dp-button variant="secondary" (click)="goToWorkspaces()">Back to workspaces</dp-button>
+      <ng-container
+        *ngIf="vm.accountState.status === 'ready' && !vm.accountState.data"
+      >
+        <dp-empty-state
+          title="Workspace не найден"
+          description="Выберите workspace снова."
+        >
+          <dp-button
+            variant="secondary"
+            (click)="goToWorkspaces()"
+          >
+            Back to workspaces
+          </dp-button>
         </dp-empty-state>
       </ng-container>
     </ng-template>
-
-    <dp-confirm-dialog
-      [visible]="archiveDialogVisible"
-      [title]="archiveDialogTitle"
-      [description]="archiveDialogDescription"
-      [confirmLabel]="archiveDialogConfirmLabel"
-      (confirm)="confirmArchiveToggle()"
-      (cancel)="closeArchiveDialog()"
-      [loading]="saving"
-      [danger]="archiveDialogIsDanger"
-    ></dp-confirm-dialog>
 
     <dp-confirm-dialog
       [visible]="deleteDialogVisible"
@@ -116,7 +141,7 @@
       description="Это действие необратимо и удалит подключения и доступы."
       confirmLabel="Delete"
       [danger]="true"
-      (confirm)="delete(vm.accountId)"
+      (confirm)="delete(vm.accountId, vm.totalWorkspaces)"
       (cancel)="closeDeleteDialog()"
       [loading]="saving"
     ></dp-confirm-dialog>
