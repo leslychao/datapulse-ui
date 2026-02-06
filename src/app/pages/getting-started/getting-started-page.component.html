@@ -1,5 +1,5 @@
-<div class="getting-started-page">
-  <div class="getting-started-shell">
+<div class="getting-started-page" *ngIf="flowState as flow">
+  <div class="getting-started-shell" [class.is-flow-locked]="flow.isLocked">
     <dp-page-header
       title="Getting started"
       subtitle="Создайте workspace, подключите данные и запустите первую синхронизацию."
@@ -21,112 +21,49 @@
       <div
         class="step"
         role="listitem"
-        [class.is-complete]="isAccountReady"
-        [class.is-current]="currentStep === 0"
+        *ngFor="let step of flow.steps; let index = index"
+        [class.is-complete]="step.status === 'done'"
+        [class.is-active]="step.status === 'active'"
+        [class.is-skipped]="step.status === 'skipped'"
       >
-        <div class="step__index">1</div>
-        <div class="step__content">
-          <div class="step__title">{{ steps[0].label }}</div>
-          <div class="step__description">{{ steps[0].description }}</div>
-        </div>
-        <div class="step__actions">
-          <dp-button
-            variant="primary"
-            type="button"
-            (click)="openAccountModal()"
-            [disabled]="isAccountReady || isProcessing"
-          >
-            Create workspace
-          </dp-button>
-          <span class="step__status" *ngIf="isAccountReady">Done</span>
-        </div>
-      </div>
-
-      <div
-        class="step"
-        role="listitem"
-        [class.is-complete]="isConnectionReady"
-        [class.is-current]="currentStep === 1"
-      >
-        <div class="step__index">2</div>
-        <div class="step__content">
-          <div class="step__title">{{ steps[1].label }}</div>
-          <div class="step__description">{{ steps[1].description }}</div>
-        </div>
-        <div class="step__actions">
-          <dp-button
-            variant="primary"
-            type="button"
-            (click)="openConnectionModal()"
-            [disabled]="!canCreateConnection"
-          >
-            Create connection
-          </dp-button>
-          <span class="step__status" *ngIf="isConnectionReady">Done</span>
-        </div>
-      </div>
-
-      <div
-        class="step"
-        role="listitem"
-        [class.is-complete]="isInviteStepDone"
-        [class.is-current]="currentStep === 2"
-      >
-        <div class="step__index">3</div>
+        <div class="step__index">{{ index + 1 }}</div>
         <div class="step__content">
           <div class="step__title">
-            {{ steps[2].label }}
-            <span class="step__optional">Optional</span>
+            {{ step.label }}
+            <span class="step__optional" *ngIf="step.optional">Optional</span>
           </div>
-          <div class="step__description">{{ steps[2].description }}</div>
+          <div class="step__description">{{ step.description }}</div>
         </div>
         <div class="step__actions">
           <dp-button
-            variant="secondary"
+            *ngIf="step.action"
+            [variant]="step.action.variant"
             type="button"
-            (click)="openInviteModal()"
-            [disabled]="!isConnectionReady"
+            (click)="handleAction(step.action)"
+            [disabled]="step.action.disabled ?? false"
           >
-            Invite teammates
+            {{ step.action.label }}
           </dp-button>
           <dp-button
-            variant="link"
+            *ngIf="step.secondaryAction"
+            [variant]="step.secondaryAction.variant"
             type="button"
-            (click)="skipInvite()"
-            [disabled]="!isConnectionReady || inviteCompleted"
+            (click)="handleAction(step.secondaryAction)"
+            [disabled]="step.secondaryAction.disabled ?? false"
           >
-            Skip
+            {{ step.secondaryAction.label }}
           </dp-button>
-          <span class="step__status" *ngIf="isInviteStepDone">
-            {{ inviteCompleted ? "Invited" : "Skipped" }}
-          </span>
+          <span class="step__status" *ngIf="step.status === 'done'">Done</span>
+          <span class="step__status" *ngIf="step.status === 'skipped'">Skipped</span>
         </div>
       </div>
     </div>
 
-    <section class="card sync-card">
-      <div class="sync-card__body">
-        <h2>Run first sync</h2>
-        <p class="muted">
-          Запустите синхронизацию ALL_EVENTS, чтобы данные начали поступать в аналитику.
-        </p>
-      </div>
-      <div class="sync-card__actions">
-        <dp-button variant="primary" type="button" (click)="startSync()" [disabled]="!canStartSync">
-          Run first sync
-        </dp-button>
-      </div>
-
-      <dp-error-state
-        *ngIf="syncError"
-        title="Sync failed"
-        [description]="syncError.message"
-      >
-        <dp-button variant="secondary" type="button" (click)="startSync()">
-          Retry
-        </dp-button>
-      </dp-error-state>
-    </section>
+    <dp-error-state *ngIf="syncError" title="Sync failed" [description]="syncError.message">
+      <dp-button variant="secondary" type="button" (click)="startSync()">
+        Retry
+      </dp-button>
+    </dp-error-state>
   </div>
 
   <dp-modal [visible]="accountModalVisible" (close)="closeAccountModal()">

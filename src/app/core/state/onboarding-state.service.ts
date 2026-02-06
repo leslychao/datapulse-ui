@@ -6,7 +6,6 @@ import {AccountConnection} from "../../shared/models";
 export type OnboardingStatusState = "idle" | "processing" | "success" | "error";
 
 export interface OnboardingState {
-  currentStep: number;
   accountId: number | null;
   accountName: string | null;
   connections: AccountConnection[];
@@ -25,7 +24,6 @@ export interface OnboardingState {
 const DEFAULT_STATUS_TEXT = "Getting started · in progress";
 
 const INITIAL_STATE: OnboardingState = {
-  currentStep: 0,
   accountId: null,
   accountName: null,
   connections: [],
