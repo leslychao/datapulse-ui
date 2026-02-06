@@ -5,6 +5,8 @@ import {authGuard} from "./core/guards/auth.guard";
 import {accountGuard} from "./core/guards/account.guard";
 import {accountIdGuard} from "./core/guards/account-id.guard";
 import {iamResolvedGuard} from "./core/guards/iam-resolved.guard";
+import {accountsPresentGuard} from "./core/guards/accounts-present.guard";
+import {gettingStartedGuard} from "./core/guards/getting-started.guard";
 import {accountlessRouteMatcher} from "./core/routing/accountless-route.matcher";
 
 export const appRoutes: Routes = [
@@ -21,7 +23,7 @@ export const appRoutes: Routes = [
   },
   {
     path: APP_ROUTE_SEGMENTS.workspaces,
-    canMatch: [authGuard, iamResolvedGuard],
+    canMatch: [authGuard, iamResolvedGuard, accountsPresentGuard],
     loadComponent: () =>
       import("./pages/workspaces/workspaces-page.component").then(
         (m) => m.WorkspacesPageComponent
@@ -29,7 +31,7 @@ export const appRoutes: Routes = [
   },
   {
     path: `${APP_ROUTE_SEGMENTS.workspaces}/${APP_ROUTE_SEGMENTS.workspacesCreate}`,
-    canMatch: [authGuard, iamResolvedGuard],
+    canMatch: [authGuard, iamResolvedGuard, accountsPresentGuard],
     loadComponent: () =>
       import("./pages/workspace-create/workspace-create-page.component").then(
         (m) => m.WorkspaceCreatePageComponent
@@ -37,10 +39,18 @@ export const appRoutes: Routes = [
   },
   {
     path: `${APP_ROUTE_SEGMENTS.workspaces}/:accountId`,
-    canMatch: [authGuard, iamResolvedGuard],
+    canMatch: [authGuard, iamResolvedGuard, accountsPresentGuard],
     loadComponent: () =>
       import("./pages/workspaces/workspaces-page.component").then(
         (m) => m.WorkspacesPageComponent
+      )
+  },
+  {
+    path: APP_ROUTE_SEGMENTS.gettingStarted,
+    canMatch: [authGuard, iamResolvedGuard, gettingStartedGuard],
+    loadComponent: () =>
+      import("./pages/getting-started/getting-started-page.component").then(
+        (m) => m.GettingStartedPageComponent
       )
   },
   {
@@ -52,13 +62,6 @@ export const appRoutes: Routes = [
         path: "",
         pathMatch: "full",
         redirectTo: "/workspaces"
-      },
-      {
-        path: APP_ROUTE_SEGMENTS.onboarding,
-        loadComponent: () =>
-          import("./pages/onboarding/onboarding-page.component").then(
-            (m) => m.OnboardingPageComponent
-          )
       },
       {
         matcher: accountlessRouteMatcher,

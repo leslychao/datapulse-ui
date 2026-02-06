@@ -1,0 +1,28 @@
+.modal-content {
+  display: grid;
+  gap: 16px;
+  min-width: min(520px, 90vw);
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+@media (max-width: 600px) {
+  .modal-content {
+    min-width: auto;
+  }
+}

@@ -2,7 +2,8 @@ import {ChangeDetectionStrategy, Component, OnInit} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute, Router} from "@angular/router";
 
-import {AccountContextService} from "../../core/state";
+import {AccountCatalogService, AccountContextService} from "../../core/state";
+import {take} from "rxjs";
 import {APP_PATHS, APP_ROUTE_SEGMENTS} from "../../core/app-paths";
 import {LoaderComponent} from "../../shared/ui";
 
@@ -18,18 +19,30 @@ export class AccountlessRedirectPageComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly accountContext: AccountContextService
+    private readonly accountContext: AccountContextService,
+    private readonly accountCatalog: AccountCatalogService
   ) {}
 
   ngOnInit(): void {
-    const accountId = this.accountContext.snapshot;
-    if (accountId == null) {
-      this.router.navigateByUrl(APP_PATHS.workspaces, {replaceUrl: true});
-      return;
-    }
+    this.accountCatalog.load().pipe(take(1)).subscribe({
+      next: (accounts) => {
+        if (accounts.length === 0) {
+          this.accountContext.clear();
+          this.router.navigateByUrl(APP_PATHS.gettingStarted, {replaceUrl: true});
+          return;
+        }
 
-    const requestedSegments = this.route.snapshot.url.map((segment) => segment.path);
-    const target = `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${requestedSegments.join("/")}`;
-    this.router.navigateByUrl(target, {replaceUrl: true});
+        const contextAccountId = this.accountContext.snapshot;
+        const matched = accounts.find((account) => account.id === contextAccountId) ?? accounts[0];
+
+        this.accountContext.setAccountId(matched.id);
+        const requestedSegments = this.route.snapshot.url.map((segment) => segment.path);
+        const target = `/${APP_ROUTE_SEGMENTS.app}/${matched.id}/${requestedSegments.join("/")}`;
+        this.router.navigateByUrl(target, {replaceUrl: true});
+      },
+      error: () => {
+        this.router.navigateByUrl(APP_PATHS.workspaces, {replaceUrl: true});
+      }
+    });
   }
 }

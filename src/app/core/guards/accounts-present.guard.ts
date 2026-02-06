@@ -1,11 +1,11 @@
 import {inject} from "@angular/core";
-import {CanActivateChildFn, Router} from "@angular/router";
+import {CanMatchFn, Router} from "@angular/router";
 import {catchError, map, of, take} from "rxjs";
 
 import {AccountCatalogService, AccountContextService} from "../state";
 import {APP_PATHS} from "../app-paths";
 
-export const accountGuard: CanActivateChildFn = (_route, _state) => {
+export const accountsPresentGuard: CanMatchFn = () => {
   const accountCatalog = inject(AccountCatalogService);
   const accountContext = inject(AccountContextService);
   const router = inject(Router);

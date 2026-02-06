@@ -27,7 +27,7 @@ export const accountIdGuard: CanActivateChildFn = (route) => {
     map((accounts) => {
       if (accounts.length === 0) {
         accountContext.clear();
-        return router.parseUrl(APP_PATHS.onboarding);
+        return router.parseUrl(APP_PATHS.gettingStarted);
       }
       const hasMatch = accounts.some((account) => account.id === accountId);
       if (!hasMatch) {

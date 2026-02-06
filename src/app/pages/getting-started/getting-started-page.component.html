@@ -1,0 +1,172 @@
+<div class="getting-started-page">
+  <div class="getting-started-shell">
+    <dp-page-header
+      title="Getting started"
+      subtitle="Создайте workspace, подключите данные и запустите первую синхронизацию."
+    ></dp-page-header>
+
+    <div
+      class="status-line"
+      [class.is-active]="isStatusActive"
+      [class.is-error]="statusState === 'error'"
+    >
+      <span class="status-dot"></span>
+      <div>
+        <div>{{ statusText }}</div>
+        <div class="status-meta" *ngIf="statusHint">{{ statusHint }}</div>
+      </div>
+    </div>
+
+    <div class="steps" role="list">
+      <div
+        class="step"
+        role="listitem"
+        [class.is-complete]="isAccountReady"
+        [class.is-current]="currentStep === 0"
+      >
+        <div class="step__index">1</div>
+        <div class="step__content">
+          <div class="step__title">{{ steps[0].label }}</div>
+          <div class="step__description">{{ steps[0].description }}</div>
+        </div>
+        <div class="step__actions">
+          <dp-button
+            variant="primary"
+            type="button"
+            (click)="openAccountModal()"
+            [disabled]="isAccountReady || isProcessing"
+          >
+            Create workspace
+          </dp-button>
+          <span class="step__status" *ngIf="isAccountReady">Done</span>
+        </div>
+      </div>
+
+      <div
+        class="step"
+        role="listitem"
+        [class.is-complete]="isConnectionReady"
+        [class.is-current]="currentStep === 1"
+      >
+        <div class="step__index">2</div>
+        <div class="step__content">
+          <div class="step__title">{{ steps[1].label }}</div>
+          <div class="step__description">{{ steps[1].description }}</div>
+        </div>
+        <div class="step__actions">
+          <dp-button
+            variant="primary"
+            type="button"
+            (click)="openConnectionModal()"
+            [disabled]="!canCreateConnection"
+          >
+            Create connection
+          </dp-button>
+          <span class="step__status" *ngIf="isConnectionReady">Done</span>
+        </div>
+      </div>
+
+      <div
+        class="step"
+        role="listitem"
+        [class.is-complete]="isInviteStepDone"
+        [class.is-current]="currentStep === 2"
+      >
+        <div class="step__index">3</div>
+        <div class="step__content">
+          <div class="step__title">
+            {{ steps[2].label }}
+            <span class="step__optional">Optional</span>
+          </div>
+          <div class="step__description">{{ steps[2].description }}</div>
+        </div>
+        <div class="step__actions">
+          <dp-button
+            variant="secondary"
+            type="button"
+            (click)="openInviteModal()"
+            [disabled]="!isConnectionReady"
+          >
+            Invite teammates
+          </dp-button>
+          <dp-button
+            variant="link"
+            type="button"
+            (click)="skipInvite()"
+            [disabled]="!isConnectionReady || inviteCompleted"
+          >
+            Skip
+          </dp-button>
+          <span class="step__status" *ngIf="isInviteStepDone">
+            {{ inviteCompleted ? "Invited" : "Skipped" }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <section class="card sync-card">
+      <div class="sync-card__body">
+        <h2>Run first sync</h2>
+        <p class="muted">
+          Запустите синхронизацию ALL_EVENTS, чтобы данные начали поступать в аналитику.
+        </p>
+      </div>
+      <div class="sync-card__actions">
+        <dp-button variant="primary" type="button" (click)="startSync()" [disabled]="!canStartSync">
+          Run first sync
+        </dp-button>
+      </div>
+
+      <dp-error-state
+        *ngIf="syncError"
+        title="Sync failed"
+        [description]="syncError.message"
+      >
+        <dp-button variant="secondary" type="button" (click)="startSync()">
+          Retry
+        </dp-button>
+      </dp-error-state>
+    </section>
+  </div>
+
+  <dp-modal [visible]="accountModalVisible" (close)="closeAccountModal()">
+    <div class="modal-content">
+      <h3>Create workspace</h3>
+      <dp-account-form [disabled]="formLocked"></dp-account-form>
+      <div class="modal-actions">
+        <dp-button variant="secondary" type="button" (click)="closeAccountModal()">
+          Cancel
+        </dp-button>
+        <dp-button variant="primary" type="button" (click)="createAccount()" [disabled]="isProcessing">
+          Create
+        </dp-button>
+      </div>
+    </div>
+  </dp-modal>
+
+  <dp-modal [visible]="connectionModalVisible" (close)="closeConnectionModal()">
+    <div class="modal-content">
+      <h3>Create connection</h3>
+      <dp-connection-form
+        [disabled]="formLocked"
+        [errorMessage]="tokenErrorMessage"
+      ></dp-connection-form>
+      <div class="modal-actions">
+        <dp-button variant="secondary" type="button" (click)="closeConnectionModal()">
+          Cancel
+        </dp-button>
+        <dp-button variant="primary" type="button" (click)="createConnection()" [disabled]="isProcessing">
+          Create
+        </dp-button>
+      </div>
+    </div>
+  </dp-modal>
+
+  <dp-invite-member-modal
+    [visible]="inviteModalVisible"
+    [saving]="inviteSaving"
+    [existingMembers]="existingMembers"
+    (close)="closeInviteModal()"
+    (submitInvite)="submitInvite($event)"
+  ></dp-invite-member-modal>
+</div>

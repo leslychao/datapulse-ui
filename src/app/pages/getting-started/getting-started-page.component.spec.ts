@@ -5,12 +5,17 @@ import {Router} from "@angular/router";
 import {of} from "rxjs";
 
 import {APP_PATHS} from "../../core/app-paths";
-import {AccountsApiClient, AccountConnectionsApiClient, EtlScenarioApi} from "../../core/api";
+import {
+  AccountMembersApiClient,
+  AccountsApiClient,
+  AccountConnectionsApiClient,
+  EtlScenarioApi
+} from "../../core/api";
 import {AccountCatalogService, AccountContextService} from "../../core/state";
 import {AccountConnection, AccountConnectionSyncStatus, Marketplace} from "../../shared/models";
-import {OnboardingPageComponent} from "./onboarding-page.component";
+import {GettingStartedPageComponent} from "./getting-started-page.component";
 
-describe("OnboardingPageComponent", () => {
+describe("GettingStartedPageComponent", () => {
   let router: jasmine.SpyObj<Router>;
   let etlScenarioApi: jasmine.SpyObj<EtlScenarioApi>;
 
@@ -19,12 +24,13 @@ describe("OnboardingPageComponent", () => {
     etlScenarioApi = jasmine.createSpyObj<EtlScenarioApi>("EtlScenarioApi", ["run"]);
 
     TestBed.configureTestingModule({
-      imports: [OnboardingPageComponent],
+      imports: [GettingStartedPageComponent],
       providers: [
         {provide: Router, useValue: router},
         {provide: EtlScenarioApi, useValue: etlScenarioApi},
-        {provide: AccountsApiClient, useValue: jasmine.createSpyObj("AccountsApiClient", ["create", "update"])},
+        {provide: AccountsApiClient, useValue: jasmine.createSpyObj("AccountsApiClient", ["create"])},
         {provide: AccountConnectionsApiClient, useValue: jasmine.createSpyObj("AccountConnectionsApiClient", ["list", "create"])},
+        {provide: AccountMembersApiClient, useValue: jasmine.createSpyObj("AccountMembersApiClient", ["create"])},
         {provide: AccountContextService, useValue: jasmine.createSpyObj("AccountContextService", ["setAccountId", "clear"])},
         {provide: AccountCatalogService, useValue: jasmine.createSpyObj("AccountCatalogService", ["upsertAccount"])}
       ],
@@ -32,37 +38,10 @@ describe("OnboardingPageComponent", () => {
     });
   });
 
-  it("allows returning to previous onboarding steps", () => {
-    const fixture = TestBed.createComponent(OnboardingPageComponent);
-    const component = fixture.componentInstance;
-
-    const connection: AccountConnection = {
-      id: 1,
-      accountId: 10,
-      marketplace: Marketplace.Wildberries,
-      active: true,
-      lastSyncAt: "",
-      lastSyncStatus: AccountConnectionSyncStatus.New,
-      createdAt: "",
-      updatedAt: "",
-      maskedCredentials: ""
-    };
-
-    component.accountId = 10;
-    component.connections = [connection];
-    component.currentStep = 2;
-
-    expect(component.canNavigateToStep(1)).toBeTrue();
-
-    component.goToStep(1);
-
-    expect(component.currentStep).toBe(1);
-  });
-
-  it("redirects to summary after successful sync start", () => {
+  it("redirects to overview after successful sync start", () => {
     etlScenarioApi.run.and.returnValue(of(new HttpResponse({status: 200})));
 
-    const fixture = TestBed.createComponent(OnboardingPageComponent);
+    const fixture = TestBed.createComponent(GettingStartedPageComponent);
     const component = fixture.componentInstance;
 
     const connection: AccountConnection = {
@@ -85,10 +64,10 @@ describe("OnboardingPageComponent", () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith(APP_PATHS.overview(11), {replaceUrl: true});
   });
 
-  it("redirects to summary after sync start returns 201", () => {
-    etlScenarioApi.run.and.returnValue(of(new HttpResponse({status: 201})));
+  it("redirects to overview after sync start returns 202", () => {
+    etlScenarioApi.run.and.returnValue(of(new HttpResponse({status: 202})));
 
-    const fixture = TestBed.createComponent(OnboardingPageComponent);
+    const fixture = TestBed.createComponent(GettingStartedPageComponent);
     const component = fixture.componentInstance;
 
     const connection: AccountConnection = {

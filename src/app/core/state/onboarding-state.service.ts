@@ -10,6 +10,8 @@ export interface OnboardingState {
   accountId: number | null;
   accountName: string | null;
   connections: AccountConnection[];
+  inviteCompleted: boolean;
+  inviteSkipped: boolean;
   error: ApiError | null;
   tokenErrorMessage: string | null;
   statusState: OnboardingStatusState;
@@ -20,13 +22,15 @@ export interface OnboardingState {
   formLocked: boolean;
 }
 
-const DEFAULT_STATUS_TEXT = "Онбординг · не завершён";
+const DEFAULT_STATUS_TEXT = "Getting started · in progress";
 
 const INITIAL_STATE: OnboardingState = {
   currentStep: 0,
   accountId: null,
   accountName: null,
   connections: [],
+  inviteCompleted: false,
+  inviteSkipped: false,
   error: null,
   tokenErrorMessage: null,
   statusState: "idle",

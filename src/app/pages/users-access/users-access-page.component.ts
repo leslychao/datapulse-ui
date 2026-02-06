@@ -8,7 +8,7 @@ import {
 } from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
-import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {FormBuilder, ReactiveFormsModule} from "@angular/forms";
 import {Observable, Subject, combineLatest, map, of, switchMap} from "rxjs";
 import {finalize, startWith, tap} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
@@ -30,7 +30,6 @@ import {
   FormFieldComponent,
   InputComponent,
   LoadingStateComponent,
-  ModalComponent,
   PageHeaderComponent,
   PageLayoutComponent,
   SelectComponent,
@@ -38,6 +37,7 @@ import {
   TableToolbarComponent,
   ToastService
 } from "../../shared/ui";
+import {InviteMemberModalComponent, InviteMemberPayload} from "../../features/members";
 import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
 
 interface UsersViewModel {
@@ -63,8 +63,8 @@ interface UsersViewModel {
     EmptyStateComponent,
     LoadingStateComponent,
     ErrorStateComponent,
-    ModalComponent,
-    ConfirmDialogComponent
+    ConfirmDialogComponent,
+    InviteMemberModalComponent
   ],
   templateUrl: "./users-access-page.component.html",
   styleUrl: "./users-access-page.component.css",
@@ -82,9 +82,7 @@ export class UsersAccessPageComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   inviteVisible = false;
-  inviteSuccessVisible = false;
   saving = false;
-  lastInvitedMember: AccountMember | null = null;
 
   confirmDialogVisible = false;
   confirmAction: "role" | "remove" | "block" | "unblock" | "cancel" | null = null;
@@ -98,16 +96,6 @@ export class UsersAccessPageComponent {
   ];
 
   readonly roleOptions = Object.values(AccountMemberRole);
-
-  readonly inviteForm: FormGroup<{
-    email: FormControl<string>;
-    role: FormControl<AccountMemberRole>;
-    message: FormControl<string>;
-  }> = this.fb.nonNullable.group({
-    email: ["", [Validators.required, Validators.email]],
-    role: [AccountMemberRole.Viewer, Validators.required],
-    message: [""]
-  });
 
   readonly filterStatusControl = this.fb.nonNullable.control("");
   readonly searchControl = this.fb.nonNullable.control("");
@@ -164,7 +152,6 @@ export class UsersAccessPageComponent {
   }
 
   openInvite(): void {
-    this.inviteForm.reset({email: "", role: AccountMemberRole.Viewer, message: ""});
     this.inviteVisible = true;
   }
 
@@ -175,23 +162,14 @@ export class UsersAccessPageComponent {
     this.inviteVisible = false;
   }
 
-  submitInvite(accountId: number | null, members: AccountMember[]): void {
-    if (accountId == null || this.inviteForm.invalid || this.saving) {
-      this.inviteForm.markAllAsTouched();
-      return;
-    }
-    const {email, role, message} = this.inviteForm.getRawValue();
-    const normalizedEmail = email.trim().toLowerCase();
-
-    if (members.some((member) => (member.email ?? "").toLowerCase() === normalizedEmail)) {
-      this.inviteForm.controls.email.setErrors({duplicate: true});
+  submitInvite(accountId: number | null, payload: InviteMemberPayload): void {
+    if (accountId == null || this.saving) {
       return;
     }
 
     const request: AccountMemberCreateRequest = {
-      email: email.trim(),
-      message: message.trim() || null,
-      role,
+      email: payload.email,
+      role: payload.role,
       status: AccountMemberStatus.Invited
     };
 
@@ -203,8 +181,6 @@ export class UsersAccessPageComponent {
       tap((member) => {
         this.refresh$.next();
         this.inviteVisible = false;
-        this.inviteSuccessVisible = true;
-        this.lastInvitedMember = member;
         this.toastService.success("Invite sent.");
       }),
       tap({
@@ -221,11 +197,6 @@ export class UsersAccessPageComponent {
       })
     )
     .subscribe();
-  }
-
-  closeInviteSuccess(): void {
-    this.inviteSuccessVisible = false;
-    this.lastInvitedMember = null;
   }
 
   filteredMembers(members: AccountMember[]): AccountMember[] {

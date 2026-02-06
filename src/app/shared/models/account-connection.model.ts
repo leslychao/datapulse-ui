@@ -38,7 +38,6 @@ export type AccountConnectionCredentials = WildberriesCredentials | OzonCredenti
 export interface AccountConnectionCreateRequest {
   marketplace: Marketplace;
   credentials: AccountConnectionCredentials;
-  active?: boolean;
 }
 
 export interface AccountConnectionUpdateRequest {

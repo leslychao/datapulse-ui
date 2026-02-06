@@ -1,0 +1,27 @@
+<dp-modal [visible]="visible" (close)="requestClose()">
+  <div class="modal-content">
+    <h3>Invite teammate</h3>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+      <dp-form-field label="Email" [required]="true">
+        <dp-input placeholder="name@company.com" formControlName="email"></dp-input>
+        <div class="field-error" *ngIf="form.controls.email.hasError('duplicate')">
+          Такой email уже добавлен.
+        </div>
+      </dp-form-field>
+
+      <dp-form-field label="Role" [required]="true">
+        <dp-select formControlName="role">
+          <option *ngFor="let role of roleOptions" [value]="role">{{ role }}</option>
+        </dp-select>
+      </dp-form-field>
+
+      <div class="modal-actions">
+        <dp-button variant="secondary" type="button" (click)="requestClose()">Cancel</dp-button>
+        <dp-button variant="primary" type="submit" [disabled]="form.invalid || saving">
+          Send invite
+        </dp-button>
+      </div>
+    </form>
+  </div>
+</dp-modal>
