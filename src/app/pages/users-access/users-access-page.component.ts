@@ -612,4 +612,21 @@ export class UsersAccessPageComponent {
         return status;
     }
   }
+  memberInitials(member: AccountMember): string {
+    const candidate = (member.fullName || member.email || ("User " + member.userId)).trim();
+    if (!candidate) {
+      return "U";
+    }
+
+    const words = candidate.split(/\s+/).filter(Boolean);
+    const first = words[0] ?? "";
+    const second = words.length > 1 ? words[1] ?? "" : "";
+
+    const firstLetter = first.charAt(0);
+    const secondLetter = second ? second.charAt(0) : first.charAt(1);
+
+    const initials = (firstLetter + (secondLetter || "")).toUpperCase();
+    return initials || "U";
+  }
+
 }

@@ -1,8 +1,12 @@
 .page-layout{
+  width:100%;
+  max-width:var(--layout-max-width);
+  margin:0 auto;
+
   display:grid;
   grid-template-columns:240px minmax(0,1fr);
   gap:16px;
-  padding:16px 20px 32px;
+  padding:16px var(--layout-gutter) 32px;
 }
 
 .page-layout__sidebar{

@@ -19,6 +19,10 @@
 
   --shadow: none;
   --focus-ring: 0 0 0 3px rgba(42, 139, 242, .10);
+
+  /* Layout */
+  --layout-max-width: 1280px;
+  --layout-gutter: 20px;
 }
 
 * {

@@ -3,11 +3,14 @@
     <dp-page-header
       title="Users & Access"
       subtitle="Управляйте ролями и доступом в workspace."
-    ></dp-page-header>
+    >
+      <!-- primary-action intentionally empty: invite moved to summary -->
+      <ng-container primary-action></ng-container>
+    </dp-page-header>
 
-    <section class="card">
-      <dp-table-toolbar>
-        <div filters>
+    <section class="card tg-card">
+      <div class="tg-top">
+        <div class="tg-filters">
           <dp-form-field label="Status">
             <dp-select [formControl]="filterStatusControl">
               <option value="">All statuses</option>
@@ -21,17 +24,7 @@
             <dp-input placeholder="Email or name" [formControl]="searchControl"></dp-input>
           </dp-form-field>
         </div>
-
-        <div actions>
-          <dp-button
-            variant="primary"
-            (click)="openInvite()"
-            [disabled]="vm.state.status !== 'ready' || !canManageUsers(currentMember(vm.state.status === 'ready' ? vm.state.data : [], vm.currentUserId)?.role ?? null)"
-          >
-            Invite user
-          </dp-button>
-        </div>
-      </dp-table-toolbar>
+      </div>
 
       <ng-container *ngIf="vm.state.status === 'loading'">
         <dp-loading-state label="Loading users"></dp-loading-state>
@@ -47,136 +40,201 @@
       </ng-container>
 
       <ng-container *ngIf="vm.state.status === 'ready'">
-        <div class="summary">
-          <span><strong>Users:</strong> {{ vm.state.data.length }}</span>
-          <span class="summary-sep">·</span>
-          <span>Active: <strong>{{ countByStatus(vm.state.data, statusEnum.Active) }}</strong></span>
-          <span class="summary-sep">·</span>
-          <span>Invited: <strong>{{ countByStatus(vm.state.data, statusEnum.Invited) }}</strong></span>
-          <span class="summary-sep">·</span>
-          <span>Blocked: <strong>{{ countByStatus(vm.state.data, statusEnum.Blocked) }}</strong></span>
+        <div class="tg-stats-bar">
+          <div class="tg-stats">
+            <div class="tg-stat">
+              <div class="tg-stat__label">Users</div>
+              <div class="tg-stat__value">{{ vm.state.data.length }}</div>
+            </div>
+
+            <div class="tg-stat">
+              <div class="tg-stat__label">Active</div>
+              <div class="tg-stat__value">{{ countByStatus(vm.state.data, statusEnum.Active) }}</div>
+            </div>
+
+            <div class="tg-stat">
+              <div class="tg-stat__label">Invited</div>
+              <div class="tg-stat__value">{{ countByStatus(vm.state.data, statusEnum.Invited) }}</div>
+            </div>
+
+            <div class="tg-stat">
+              <div class="tg-stat__label">Blocked</div>
+              <div class="tg-stat__value">{{ countByStatus(vm.state.data, statusEnum.Blocked) }}</div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="tg-invite-icon"
+            (click)="openInvite()"
+            [disabled]="
+              vm.state.status !== 'ready' ||
+              !canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)
+            "
+            aria-label="Invite user"
+            title="Invite user"
+          >
+            <!-- minimal inline icon: user + plus -->
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path
+                d="M15 19.5c0-2.5-2.5-4.5-6-4.5S3 17 3 19.5V21h12v-1.5Z"
+                fill="currentColor"
+                opacity="0.9"
+              />
+              <path
+                d="M9 13c2.2 0 4-1.8 4-4S11.2 5 9 5 5 6.8 5 9s1.8 4 4 4Z"
+                fill="currentColor"
+              />
+              <path
+                d="M19 8V6h-2v2h-2v2h2v2h2v-2h2V8h-2Z"
+                fill="currentColor"
+              />
+            </svg>
+          </button>
         </div>
 
         <ng-container *ngIf="filteredMembers(vm.state.data).length; else emptyState">
-          <dp-table>
-            <table>
-              <thead>
-              <tr>
-                <th>User</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Last active</th>
-                <th style="text-align:right;">Actions</th>
-              </tr>
-              </thead>
+          <div class="tg-list">
+            <!-- HEADER -->
+            <div class="tg-head" role="row">
+              <div class="tg-head__cell" role="columnheader">User</div>
+              <div class="tg-head__cell" role="columnheader">Role</div>
+              <div class="tg-head__cell" role="columnheader">Last activity</div>
+              <div class="tg-head__cell tg-head__cell--actions" role="columnheader">Actions</div>
+            </div>
 
-              <tbody>
-              <tr *ngFor="let member of filteredMembers(vm.state.data)">
-                <td class="row-content">
-                  <div class="cell-title">
-                    {{ member.fullName || member.email || ('User #' + member.userId) }}
+            <!-- ROWS -->
+            <div class="tg-row" *ngFor="let member of filteredMembers(vm.state.data)" role="row">
+              <!-- Col 1: User (status bound to profile) -->
+              <div class="tg-cell tg-cell--user" role="cell">
+                <div class="tg-avatar" aria-hidden="true">
+                  {{ memberInitials(member) }}
+                </div>
+
+                <div class="tg-meta">
+                  <div class="tg-title">
+                    <span class="tg-title__text">
+                      {{ member.fullName || member.email || ('User #' + member.userId) }}
+                    </span>
+
+                    <span
+                      class="status-pill"
+                      [class.status-pill--active]="member.status === statusEnum.Active"
+                      [class.status-pill--invited]="member.status === statusEnum.Invited"
+                      [class.status-pill--blocked]="member.status === statusEnum.Blocked"
+                    >
+                      {{ statusLabel(member.status) }}
+                    </span>
                   </div>
-                  <div class="cell-subtitle">
+
+                  <div class="tg-subtitle">
                     {{ member.email || 'No email on file' }}
                   </div>
-                </td>
+                </div>
+              </div>
 
-                <td class="row-content">
-                  <dp-select
-                    class="role-select"
-                    [value]="member.role"
-                    (change)="onRoleSelectChange(member, $event)"
-                    [disabled]="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null) || isLastOwner(member, vm.state.data)"
+              <!-- Col 2: Role -->
+              <div class="tg-cell tg-cell--role" role="cell" (click)="$event.stopPropagation()">
+                <dp-select
+                  class="role-select"
+                  [value]="member.role"
+                  (change)="onRoleSelectChange(member, $event)"
+                  [disabled]="
+                    !canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null) ||
+                    isLastOwner(member, vm.state.data)
+                  "
+                >
+                  <option *ngFor="let role of roleOptions" [value]="role">{{ role }}</option>
+                </dp-select>
+
+                <div class="hint" *ngIf="isLastOwner(member, vm.state.data)">
+                  Нельзя изменить роль последнего OWNER.
+                </div>
+
+                <div class="hint" *ngIf="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)">
+                  Недостаточно прав для управления пользователями.
+                </div>
+              </div>
+
+              <!-- Col 3: Last activity -->
+              <div class="tg-cell tg-cell--activity" role="cell">
+                <div class="tg-activity__value">
+                  {{ member.lastActiveAt ? (member.lastActiveAt | date:'dd.MM.yyyy, HH:mm') : '—' }}
+                </div>
+                <div class="tg-activity__hint" *ngIf="member.lastActiveAt">
+                  local time
+                </div>
+              </div>
+
+              <!-- Col 4: Actions -->
+              <div class="tg-cell tg-cell--actions" role="cell" (click)="$event.stopPropagation()">
+                <dp-button
+                  size="sm"
+                  variant="secondary"
+                  class="tg-action-resend"
+                  *ngIf="member.status === statusEnum.Invited"
+                  (click)="resendInvite(vm.accountId, member)"
+                  [disabled]="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)"
+                >
+                  Resend
+                </dp-button>
+
+                <dp-button
+                  size="sm"
+                  variant="secondary"
+                  class="tg-more"
+                  (click)="toggleMenu(member)"
+                  [disabled]="menuDisabled(vm.state.data, vm.currentUserId)"
+                  aria-label="Open actions"
+                >
+                  ⋯
+                </dp-button>
+
+                <div class="menu" *ngIf="isMenuOpenFor(member)">
+                  <button
+                    type="button"
+                    class="menu-item"
+                    (click)="onMenuBlock(member, vm.accountId, vm.state.data, vm.currentUserId)"
+                    [disabled]="blockDisabled(member, vm.state.data, vm.currentUserId)"
                   >
-                    <option *ngFor="let role of roleOptions" [value]="role">{{ role }}</option>
-                  </dp-select>
+                    Block
+                  </button>
 
-                  <div class="hint" *ngIf="isLastOwner(member, vm.state.data)">
-                    Нельзя изменить роль последнего OWNER.
+                  <button
+                    type="button"
+                    class="menu-item"
+                    (click)="onMenuUnblock(member, vm.accountId, vm.state.data, vm.currentUserId)"
+                    [disabled]="unblockDisabled(member, vm.currentUserId, vm.state.data)"
+                  >
+                    Unblock
+                  </button>
+
+                  <button
+                    type="button"
+                    class="menu-item"
+                    *ngIf="member.status === statusEnum.Invited"
+                    (click)="onMenuCancelInvite(member, vm.accountId, vm.currentUserId)"
+                    [disabled]="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)"
+                  >
+                    Cancel invite
+                  </button>
+
+                  <button
+                    type="button"
+                    class="menu-item menu-danger"
+                    (click)="onMenuRemove(member, vm.accountId, vm.state.data, vm.currentUserId)"
+                    [disabled]="removeDisabled(member, vm.state.data, vm.currentUserId)"
+                  >
+                    Remove from workspace
+                  </button>
+
+                  <div class="menu-hint" *ngIf="menuHint(member, vm.state.data, vm.currentUserId) as hint">
+                    {{ hint }}
                   </div>
-                </td>
-
-                <td class="row-content">
-                  <span class="status-pill">{{ statusLabel(member.status) }}</span>
-                </td>
-
-                <td class="row-content">
-                  {{ member.lastActiveAt ? (member.lastActiveAt | date: 'short') : 'Never' }}
-                </td>
-
-                <td>
-                  <div class="actions" (click)="$event.stopPropagation()">
-                    <dp-button
-                      size="sm"
-                      variant="secondary"
-                      *ngIf="member.status === statusEnum.Invited"
-                      (click)="resendInvite(vm.accountId, member)"
-                      [disabled]="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)"
-                    >
-                      Resend
-                    </dp-button>
-
-                    <dp-button
-                      size="sm"
-                      variant="secondary"
-                      (click)="toggleMenu(member)"
-                      [disabled]="menuDisabled(vm.state.data, vm.currentUserId)"
-                    >
-                      ⋯
-                    </dp-button>
-
-                    <div class="menu" *ngIf="isMenuOpenFor(member)">
-                      <button
-                        type="button"
-                        class="menu-item"
-                        (click)="onMenuBlock(member, vm.accountId, vm.state.data, vm.currentUserId)"
-                        [disabled]="blockDisabled(member, vm.state.data, vm.currentUserId)"
-                      >
-                        Block
-                      </button>
-
-                      <button
-                        type="button"
-                        class="menu-item"
-                        (click)="onMenuUnblock(member, vm.accountId, vm.state.data, vm.currentUserId)"
-                        [disabled]="unblockDisabled(member, vm.currentUserId, vm.state.data)"
-                      >
-                        Unblock
-                      </button>
-
-                      <button
-                        type="button"
-                        class="menu-item"
-                        *ngIf="member.status === statusEnum.Invited"
-                        (click)="onMenuCancelInvite(member, vm.accountId, vm.currentUserId)"
-                        [disabled]="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)"
-                      >
-                        Cancel invite
-                      </button>
-
-                      <button
-                        type="button"
-                        class="menu-item menu-danger"
-                        (click)="onMenuRemove(member, vm.accountId, vm.state.data, vm.currentUserId)"
-                        [disabled]="removeDisabled(member, vm.state.data, vm.currentUserId)"
-                      >
-                        Remove from workspace
-                      </button>
-
-                      <div class="menu-hint" *ngIf="menuHint(member, vm.state.data, vm.currentUserId) as hint">
-                        {{ hint }}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="hint" *ngIf="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)">
-                    Недостаточно прав для управления пользователями.
-                  </div>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </dp-table>
+                </div>
+              </div>
+            </div>
+          </div>
         </ng-container>
 
         <ng-template #emptyState>
@@ -184,7 +242,33 @@
             title="Нет пользователей"
             description="Пригласите коллег, чтобы работать вместе."
           >
-            <dp-button variant="primary" (click)="openInvite()">Invite user</dp-button>
+            <button
+              type="button"
+              class="tg-invite-icon"
+              (click)="openInvite()"
+              [disabled]="
+                vm.state.status !== 'ready' ||
+                !canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)
+              "
+              aria-label="Invite user"
+              title="Invite user"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M15 19.5c0-2.5-2.5-4.5-6-4.5S3 17 3 19.5V21h12v-1.5Z"
+                  fill="currentColor"
+                  opacity="0.9"
+                />
+                <path
+                  d="M9 13c2.2 0 4-1.8 4-4S11.2 5 9 5 5 6.8 5 9s1.8 4 4 4Z"
+                  fill="currentColor"
+                />
+                <path
+                  d="M19 8V6h-2v2h-2v2h2v2h2v-2h2V8h-2Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
           </dp-empty-state>
         </ng-template>
       </ng-container>
@@ -199,56 +283,23 @@
           (ngSubmit)="submitInvite(vm.accountId, vm.state.status === 'ready' ? vm.state.data : [])"
           class="form"
         >
-          <dp-form-field
-            label="Email"
-            [required]="true"
-            [error]="inviteForm.controls.email.errors?.['duplicate'] ? 'Already a member' : ''"
-          >
-            <dp-input type="email" placeholder="user@company.com" formControlName="email"></dp-input>
+          <dp-form-field label="Email">
+            <dp-input placeholder="name@company.com" formControlName="email"></dp-input>
           </dp-form-field>
 
-          <dp-form-field label="Role" [required]="true">
+          <dp-form-field label="Role">
             <dp-select formControlName="role">
               <option *ngFor="let role of roleOptions" [value]="role">{{ role }}</option>
             </dp-select>
           </dp-form-field>
 
-          <dp-form-field label="Message (optional)">
-            <dp-input placeholder="Optional message" formControlName="message"></dp-input>
-          </dp-form-field>
-
           <div class="modal-actions">
             <dp-button variant="secondary" type="button" (click)="closeInvite()">Cancel</dp-button>
-            <dp-button variant="primary" type="submit" [loading]="saving">Send invite</dp-button>
+            <dp-button variant="primary" type="submit" [disabled]="inviteForm.invalid || saving">
+              Send invite
+            </dp-button>
           </div>
         </form>
-      </div>
-    </dp-modal>
-
-    <dp-modal [visible]="inviteSuccessVisible" (close)="closeInviteSuccess()">
-      <div class="modal-content">
-        <h3>Invite sent</h3>
-        <p class="muted">Пользователь получит приглашение и сможет зарегистрироваться.</p>
-
-        <div class="modal-actions">
-          <dp-button
-            variant="secondary"
-            *ngIf="lastInvitedMember"
-            (click)="resendInvite(vm.accountId, lastInvitedMember)"
-          >
-            Resend invite
-          </dp-button>
-
-          <dp-button
-            variant="danger"
-            *ngIf="lastInvitedMember"
-            (click)="requestCancelInvite(lastInvitedMember)"
-          >
-            Cancel invite
-          </dp-button>
-
-          <dp-button variant="secondary" (click)="closeInviteSuccess()">Close</dp-button>
-        </div>
       </div>
     </dp-modal>
 
@@ -257,7 +308,8 @@
       [title]="confirmTitle()"
       [description]="confirmDescription(vm.currentUserId)"
       confirmLabel="Confirm"
-      [danger]="confirmAction === 'remove'"
+      cancelLabel="Cancel"
+      [danger]="confirmAction === 'remove' || confirmAction === 'block' || confirmAction === 'cancel'"
       [loading]="saving"
       (confirm)="confirmAction === 'role' ? confirmRoleChange(vm.accountId) : confirmActionRun(vm.accountId)"
       (cancel)="closeConfirm()"
