@@ -38,11 +38,36 @@ import {
   ToastService
 } from "../../shared/ui";
 
+type OnboardingStepId = "account" | "connection" | "invite" | "sync";
+
+type OnboardingStepStatus = "pending" | "active" | "done" | "skipped";
+
+type OnboardingStepActionHandler = "account" | "connection" | "invite" | "skipInvite" | "sync";
+
+interface OnboardingStepAction {
+  label: string;
+  variant: "primary" | "secondary" | "link";
+  handler: OnboardingStepActionHandler;
+  disabled?: boolean;
+}
+
 interface OnboardingStep {
-  id: "account" | "connection" | "invite";
+  id: OnboardingStepId;
   label: string;
   description: string;
   optional?: boolean;
+}
+
+interface OnboardingStepState extends OnboardingStep {
+  status: OnboardingStepStatus;
+  action?: OnboardingStepAction;
+  secondaryAction?: OnboardingStepAction;
+}
+
+interface OnboardingFlowState {
+  steps: OnboardingStepState[];
+  activeStepId: OnboardingStepId | null;
+  isLocked: boolean;
 }
 
 const SYNC_SUCCESS = AccountConnectionSyncStatus.Success;
@@ -95,6 +120,12 @@ export class GettingStartedPageComponent implements OnInit {
       label: "Invite teammates",
       description: "Пригласите коллег для совместной работы.",
       optional: true
+    },
+    {
+      id: "sync",
+      label: "Run first sync",
+      description:
+        "Запустите синхронизацию ALL_EVENTS, чтобы данные начали поступать в аналитику."
     }
   ];
 
@@ -115,14 +146,6 @@ export class GettingStartedPageComponent implements OnInit {
 
   private patchState(partial: Partial<OnboardingState>): void {
     this.onboardingState.patch(partial);
-  }
-
-  get currentStep(): number {
-    return this.snapshot.currentStep;
-  }
-
-  set currentStep(step: number) {
-    this.patchState({currentStep: step});
   }
 
   get accountId(): number | null {
@@ -242,7 +265,7 @@ export class GettingStartedPageComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.accountId != null) {
-      this.loadConnections(this.accountId, true);
+      this.loadConnections(this.accountId);
     }
   }
 
@@ -254,25 +277,43 @@ export class GettingStartedPageComponent implements OnInit {
     return this.connections.length > 0;
   }
 
-  get isInviteStepDone(): boolean {
-    return this.inviteCompleted || this.inviteSkipped;
-  }
-
   get canCreateConnection(): boolean {
-    return this.accountId != null && !this.isProcessing && !this.isConnectionReady;
+    return this.accountId != null && !this.isConnectionReady && !this.isFlowLocked;
   }
 
   get canStartSync(): boolean {
     return (
       this.accountId != null &&
       this.isConnectionReady &&
+      this.isInviteResolved &&
       !this.hasSuccessfulSync(this.connections) &&
       !this.hasInProgressSync(this.connections) &&
       !this.isProcessing
     );
   }
 
+  get isInviteResolved(): boolean {
+    return this.inviteCompleted || this.inviteSkipped;
+  }
+
+  get isFlowLocked(): boolean {
+    return (
+      this.isProcessing ||
+      this.inviteSaving ||
+      this.accountModalVisible ||
+      this.connectionModalVisible ||
+      this.inviteModalVisible
+    );
+  }
+
+  get flowState(): OnboardingFlowState {
+    return this.buildFlowState();
+  }
+
   openAccountModal(): void {
+    if (this.isAccountReady || this.isFlowLocked) {
+      return;
+    }
     this.accountModalVisible = true;
   }
 
@@ -284,6 +325,9 @@ export class GettingStartedPageComponent implements OnInit {
   }
 
   openConnectionModal(): void {
+    if (!this.canCreateConnection) {
+      return;
+    }
     this.connectionModalVisible = true;
   }
 
@@ -295,6 +339,9 @@ export class GettingStartedPageComponent implements OnInit {
   }
 
   openInviteModal(): void {
+    if (!this.canInviteMembers()) {
+      return;
+    }
     this.inviteModalVisible = true;
   }
 
@@ -328,7 +375,6 @@ export class GettingStartedPageComponent implements OnInit {
           this.invitedMembers = [];
           this.accountContext.setAccountId(account.id);
           this.accountCatalog.upsertAccount(account);
-          this.currentStep = 1;
           this.accountModalVisible = false;
           this.setStatusState("success", "Workspace создан.");
         }),
@@ -363,7 +409,7 @@ export class GettingStartedPageComponent implements OnInit {
         tap(() => {
           this.setStatusState("success", "Подключение создано.");
           this.connectionModalVisible = false;
-          this.loadConnections(this.accountId!, true);
+          this.loadConnections(this.accountId!);
         }),
         catchError((error: ApiError) => {
           this.tokenErrorMessage = this.mapErrorMessage(error);
@@ -376,7 +422,7 @@ export class GettingStartedPageComponent implements OnInit {
   }
 
   skipInvite(): void {
-    if (!this.isConnectionReady) {
+    if (!this.canInviteMembers()) {
       return;
     }
     this.inviteSkipped = true;
@@ -426,6 +472,10 @@ export class GettingStartedPageComponent implements OnInit {
     }
     if (!this.isConnectionReady) {
       this.setStatusState("error", "Сначала создайте подключение.");
+      return;
+    }
+    if (!this.isInviteResolved) {
+      this.setStatusState("error", "Завершите шаг с приглашением команды или пропустите его.");
       return;
     }
     this.syncError = null;
@@ -485,7 +535,7 @@ export class GettingStartedPageComponent implements OnInit {
     return error.message;
   }
 
-  private loadConnections(accountId: number, allowAutoAdvance: boolean): void {
+  private loadConnections(accountId: number): void {
     this.connectionApi
       .list(accountId)
       .pipe(
@@ -496,22 +546,9 @@ export class GettingStartedPageComponent implements OnInit {
         }),
         tap((connections) => {
           this.connections = connections;
-          if (allowAutoAdvance) {
-            this.currentStep = this.resolveStep(connections);
-          }
         })
       )
       .subscribe();
-  }
-
-  private resolveStep(connections: AccountConnection[]): number {
-    if (this.accountId == null) {
-      return 0;
-    }
-    if (connections.length === 0) {
-      return 1;
-    }
-    return 2;
   }
 
   private hasSuccessfulSync(connections: AccountConnection[]): boolean {
@@ -535,5 +572,123 @@ export class GettingStartedPageComponent implements OnInit {
 
   get existingMembers(): AccountMember[] {
     return this.invitedMembers;
+  }
+
+  handleAction(action: OnboardingStepAction): void {
+    if (action.disabled) {
+      return;
+    }
+    switch (action.handler) {
+      case "account":
+        this.openAccountModal();
+        break;
+      case "connection":
+        this.openConnectionModal();
+        break;
+      case "invite":
+        this.openInviteModal();
+        break;
+      case "skipInvite":
+        this.skipInvite();
+        break;
+      case "sync":
+        this.startSync();
+        break;
+      default:
+        break;
+    }
+  }
+
+  private canInviteMembers(): boolean {
+    return this.isConnectionReady && !this.isInviteResolved && !this.isFlowLocked;
+  }
+
+  private buildFlowState(): OnboardingFlowState {
+    const accountDone = this.isAccountReady;
+    const connectionDone = this.isConnectionReady;
+    const inviteDone = this.inviteCompleted;
+    const inviteSkipped = this.inviteSkipped;
+    const inviteResolved = inviteDone || inviteSkipped;
+    const syncDone = this.hasSuccessfulSync(this.connections);
+
+    const activeStepId: OnboardingStepId | null =
+      !accountDone
+        ? "account"
+        : !connectionDone
+          ? "connection"
+          : !inviteResolved
+            ? "invite"
+            : !syncDone
+              ? "sync"
+              : null;
+
+    const steps: OnboardingStepState[] = [
+      {
+        ...this.steps[0],
+        status: accountDone ? "done" : "active",
+        action: accountDone
+          ? undefined
+          : {
+              label: "Create workspace",
+              variant: "primary",
+              handler: "account",
+              disabled: this.isFlowLocked
+            }
+      },
+      {
+        ...this.steps[1],
+        status: connectionDone ? "done" : accountDone ? "active" : "pending",
+        action:
+          accountDone && !connectionDone
+            ? {
+                label: "Create connection",
+                variant: "primary",
+                handler: "connection",
+                disabled: this.isFlowLocked
+              }
+            : undefined
+      },
+      {
+        ...this.steps[2],
+        status: inviteDone ? "done" : inviteSkipped ? "skipped" : connectionDone ? "active" : "pending",
+        action:
+          connectionDone && !inviteResolved
+            ? {
+                label: "Invite teammates",
+                variant: "secondary",
+                handler: "invite",
+                disabled: this.isFlowLocked
+              }
+            : undefined,
+        secondaryAction:
+          connectionDone && !inviteResolved
+            ? {
+                label: "Skip",
+                variant: "link",
+                handler: "skipInvite",
+                disabled: this.isFlowLocked
+              }
+            : undefined
+      },
+      {
+        ...this.steps[3],
+        status: syncDone ? "done" : inviteResolved && connectionDone ? "active" : "pending",
+        action:
+          inviteResolved && connectionDone && !syncDone
+            ? {
+                label: "Run first sync",
+                variant: "primary",
+                handler: "sync",
+                disabled: !this.canStartSync || this.isFlowLocked
+              }
+            : undefined
+      }
+    ];
+
+    return {
+      steps,
+      activeStepId,
+      isLocked: this.isFlowLocked
+    };
   }
 }
