@@ -1,11 +1,9 @@
 <ng-container *ngIf="vm$ | async as vm">
   <dp-page-layout [accountId]="vm.selectedAccount?.id ?? null">
-    <dp-page-header title="Workspaces" subtitle="Выберите workspace, чтобы открыть данные.">
-      <div primary-action>
-        <dp-button variant="primary" (click)="goToCreateWorkspace()">
-          Create workspace
-        </dp-button>
-      </div>
+    <dp-page-header
+      title="Workspaces"
+      subtitle="Выберите workspace, чтобы открыть данные."
+    >
     </dp-page-header>
 
     <section class="card">
@@ -32,8 +30,23 @@
               <th class="col-sources">Data sources</th>
               <th class="col-members">Members</th>
               <th class="col-last-sync">Last sync</th>
-              <th class="col-issues">Issues</th>
-              <th class="col-actions">Actions</th>
+
+              <th class="col-actions th-actions">
+                <div class="th-actions__inner">
+                  <span>Actions</span>
+
+                  <button
+                    type="button"
+                    class="dp-icon-btn dp-icon-btn--accent"
+                    aria-label="Create workspace"
+                    title="Create workspace"
+                    [disabled]="saving"
+                    (click)="goToCreateWorkspace()"
+                  >
+                    +
+                  </button>
+                </div>
+              </th>
             </tr>
             </thead>
 
@@ -78,8 +91,12 @@
                         >
                           {{ badge.label }}
                         </span>
+
                       <div class="data-sources__popover">
-                        <div class="data-sources__popover-item" *ngFor="let connection of details.connections">
+                        <div
+                          class="data-sources__popover-item"
+                          *ngFor="let connection of details.connections"
+                        >
                           {{ connection.marketplace === 'WILDBERRIES' ? 'WB' : 'Ozon' }}
                           •
                           {{ getConnectionStatusLabel(connection.lastSyncStatus) }}
@@ -89,16 +106,7 @@
                   </ng-container>
 
                   <ng-template #noSources>
-                    <div class="empty-inline">
-                      <span class="muted">No data sources</span>
-                      <dp-button
-                        size="sm"
-                        variant="secondary"
-                        (click)="goToConnections(account.id); $event.stopPropagation()"
-                      >
-                        Add
-                      </dp-button>
-                    </div>
+                    <span class="muted">No data sources</span>
                   </ng-template>
                 </ng-container>
 
@@ -119,6 +127,7 @@
                       </div>
                     </div>
                   </div>
+
                   <ng-template #noMembers>
                     <span class="muted">No members</span>
                   </ng-template>
@@ -141,6 +150,7 @@
                         <span>{{ summary.statusLabel }}</span>
                       </div>
                     </ng-container>
+
                     <ng-template #noSyncReason>
                       <span class="muted">{{ summary.reason }}</span>
                     </ng-template>
@@ -152,21 +162,14 @@
                 </ng-template>
               </td>
 
-              <td class="col-issues">
-                <ng-container *ngIf="getDetailsForAccount(account.id, vm.detailsState) as details">
-                    <span *ngIf="getIssuesCount(details.connections) as issues">
-                      {{ issues ? (issues + ' alert' + (issues > 1 ? 's' : '')) : '' }}
-                    </span>
-                </ng-container>
-              </td>
-
-              <td class="col-actions">
+              <td class="col-actions td-actions">
                 <div class="row-actions">
                   <div class="row-menu">
                     <button
                       type="button"
-                      class="row-menu__trigger"
+                      class="dp-icon-btn"
                       aria-label="More actions"
+                      title="More"
                       (click)="toggleActionMenu(account.id, $event); $event.stopPropagation()"
                     >
                       ⋯

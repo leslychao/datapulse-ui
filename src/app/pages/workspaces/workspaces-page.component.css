@@ -4,7 +4,10 @@
   gap: 16px;
 }
 
-/* Только первая колонка кликабельна */
+/* =========================
+   Workspace link
+   ========================= */
+
 .workspace-link {
   width: 100%;
   text-align: left;
@@ -19,20 +22,50 @@
   text-decoration-color: rgba(42, 139, 242, 0.35);
 }
 
-/* Колонки: фиксируем “нормальную” влезаемость */
-.col-workspace { width: 22%; }
-.col-lifecycle { width: 12%; }
-.col-sources   { width: 20%; }
-.col-members   { width: 12%; }
-.col-last-sync { width: 16%; }
-.col-issues    { width: 8%; }
-.col-actions   { width: 10%; }
+/* =========================
+   Table columns layout
+   ========================= */
 
-/* Чтобы Actions выглядели аккуратно и не “прыгали” */
+.col-workspace { width: 24%; }
+.col-lifecycle { width: 12%; }
+.col-sources   { width: 22%; }
+.col-members   { width: 12%; }
+.col-last-sync { width: 18%; }
+.col-actions   { width: 12%; }
+
+/* Actions must never wrap */
 .col-actions,
-.col-issues {
+.th-actions,
+.td-actions {
   text-align: right;
+  white-space: nowrap;
 }
+
+th.col-actions,
+td.col-actions {
+  min-width: 120px;
+}
+
+/* =========================
+   Header: Actions + "+"
+   ========================= */
+
+.th-actions__inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.th-actions__inner > span {
+  white-space: nowrap;
+}
+
+/* =========================
+   Cell basics
+   ========================= */
 
 .cell-title {
   font-weight: 600;
@@ -45,6 +78,10 @@
   font-size: var(--font-size-sm);
   color: var(--muted);
 }
+
+/* =========================
+   Lifecycle pill
+   ========================= */
 
 .status-pill {
   display: inline-flex;
@@ -70,6 +107,10 @@
   padding: 2px 8px;
   border-radius: var(--radius-pill);
 }
+
+/* =========================
+   Data sources
+   ========================= */
 
 .data-sources {
   display: inline-flex;
@@ -136,6 +177,10 @@
   padding: 4px 0;
 }
 
+/* =========================
+   Members
+   ========================= */
+
 .members {
   position: relative;
   display: inline-flex;
@@ -171,6 +216,10 @@
   padding: 4px 0;
 }
 
+/* =========================
+   Last sync
+   ========================= */
+
 .last-sync {
   display: inline-flex;
   align-items: center;
@@ -182,7 +231,10 @@
   color: var(--muted);
 }
 
-/* Actions column */
+/* =========================
+   Actions / row menu
+   ========================= */
+
 .row-actions {
   display: flex;
   align-items: center;
@@ -194,48 +246,18 @@
   position: relative;
 }
 
-/* Кнопка "⋯" — ровная, квадратная, по центру */
-.row-menu__trigger {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border: 1px solid var(--line);
-  background: var(--panel);
-  border-radius: var(--radius-sm);
-
-  cursor: pointer;
-  font-size: 20px;
-  line-height: 1;
-  color: var(--text);
-}
-
-.row-menu__trigger:hover {
-  background: var(--surface-hover);
-}
-
-/* Меню: запрещаем внутренний скролл */
+/* Menu panel */
 .row-menu__panel {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-
   min-width: 180px;
   box-shadow: var(--shadow-menu);
-
   z-index: 20;
   padding: 6px;
-
-  overflow: visible;
-  max-height: none;
 }
 
 .row-menu__item {
@@ -243,11 +265,9 @@
   width: 100%;
   border: none;
   background: transparent;
-
   text-align: left;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-
   font-size: 13px;
   color: var(--text);
   cursor: pointer;
@@ -272,11 +292,7 @@
   padding: 6px 12px 10px;
 }
 
-.workspace-row:hover {
-  background: rgba(15, 23, 42, 0.03);
-}
-
-/* Backdrop должен быть под панелью, но над страницей */
+/* Backdrop */
 .row-menu__backdrop {
   position: fixed;
   inset: 0;
@@ -284,8 +300,10 @@
   z-index: 19;
 }
 
-.empty-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+/* =========================
+   Row hover
+   ========================= */
+
+.workspace-row:hover {
+  background: rgba(15, 23, 42, 0.03);
 }
