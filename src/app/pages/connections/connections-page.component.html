@@ -4,7 +4,6 @@
       title="Connections"
       subtitle="Управляйте подключениями и синхронизациями данных."
     >
-      <!-- Create connection перенесён в заголовок таблицы (Actions) -->
     </dp-page-header>
 
     <section class="card">
@@ -50,7 +49,7 @@
 
                   <button
                     type="button"
-                    class="th-actions__add"
+                    class="dp-icon-btn dp-icon-btn--accent"
                     aria-label="Create connection"
                     title="Create connection"
                     [disabled]="saving"
@@ -87,8 +86,9 @@
                   <div class="row-menu">
                     <button
                       type="button"
-                      class="row-menu__trigger"
+                      class="dp-icon-btn"
                       aria-label="More actions"
+                      title="More"
                       [disabled]="saving"
                       (click)="toggleActionMenu(connection.id, $event)"
                     >

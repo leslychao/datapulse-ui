@@ -4,7 +4,6 @@
       title="Users & Access"
       subtitle="Управляйте ролями и доступом в workspace."
     >
-      <!-- primary-action intentionally empty: invite moved to summary -->
       <ng-container primary-action></ng-container>
     </dp-page-header>
 
@@ -65,7 +64,7 @@
 
           <button
             type="button"
-            class="tg-invite-icon"
+            class="dp-icon-btn dp-icon-btn--accent"
             (click)="openInvite()"
             [disabled]="
               vm.state.status !== 'ready' ||
@@ -74,7 +73,6 @@
             aria-label="Invite user"
             title="Invite user"
           >
-            <!-- minimal inline icon: user + plus -->
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path
                 d="M15 19.5c0-2.5-2.5-4.5-6-4.5S3 17 3 19.5V21h12v-1.5Z"
@@ -95,7 +93,6 @@
 
         <ng-container *ngIf="filteredMembers(vm.state.data).length; else emptyState">
           <div class="tg-list">
-            <!-- HEADER -->
             <div class="tg-head" role="row">
               <div class="tg-head__cell" role="columnheader">User</div>
               <div class="tg-head__cell" role="columnheader">Role</div>
@@ -103,9 +100,7 @@
               <div class="tg-head__cell tg-head__cell--actions" role="columnheader">Actions</div>
             </div>
 
-            <!-- ROWS -->
             <div class="tg-row" *ngFor="let member of filteredMembers(vm.state.data)" role="row">
-              <!-- Col 1: User (status bound to profile) -->
               <div class="tg-cell tg-cell--user" role="cell">
                 <div class="tg-avatar" aria-hidden="true">
                   {{ memberInitials(member) }}
@@ -133,7 +128,6 @@
                 </div>
               </div>
 
-              <!-- Col 2: Role -->
               <div class="tg-cell tg-cell--role" role="cell" (click)="$event.stopPropagation()">
                 <dp-select
                   class="role-select"
@@ -156,7 +150,6 @@
                 </div>
               </div>
 
-              <!-- Col 3: Last activity -->
               <div class="tg-cell tg-cell--activity" role="cell">
                 <div class="tg-activity__value">
                   {{ member.lastActiveAt ? (member.lastActiveAt | date:'dd.MM.yyyy, HH:mm') : '—' }}
@@ -166,7 +159,6 @@
                 </div>
               </div>
 
-              <!-- Col 4: Actions -->
               <div class="tg-cell tg-cell--actions" role="cell" (click)="$event.stopPropagation()">
                 <dp-button
                   size="sm"
@@ -179,16 +171,16 @@
                   Resend
                 </dp-button>
 
-                <dp-button
-                  size="sm"
-                  variant="secondary"
-                  class="tg-more"
+                <button
+                  type="button"
+                  class="dp-icon-btn"
                   (click)="toggleMenu(member)"
                   [disabled]="menuDisabled(vm.state.data, vm.currentUserId)"
                   aria-label="Open actions"
+                  title="More"
                 >
                   ⋯
-                </dp-button>
+                </button>
 
                 <div class="menu" *ngIf="isMenuOpenFor(member)">
                   <button
@@ -244,7 +236,7 @@
           >
             <button
               type="button"
-              class="tg-invite-icon"
+              class="dp-icon-btn dp-icon-btn--accent"
               (click)="openInvite()"
               [disabled]="
                 vm.state.status !== 'ready' ||

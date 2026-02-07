@@ -65,10 +65,14 @@ export class WorkspaceSettingsPageComponent {
   saving = false;
   deleteDialogVisible = false;
 
+  showSaved = false;
+  showSaveError = false;
+
   private readonly refresh$ = new Subject<void>();
   private readonly accountId$ = accountIdFromRoute(this.route);
 
   private lastLoadedAccount: AccountResponse | null = null;
+  private savedTimerId: number | null = null;
 
   readonly form: FormGroup<{
     name: FormControl<string>;
@@ -127,6 +131,9 @@ export class WorkspaceSettingsPageComponent {
         });
         this.form.markAsPristine();
         this.form.markAsUntouched();
+
+        this.showSaveError = false;
+        this.hideSavedNow();
         return;
       }
 
@@ -149,7 +156,7 @@ export class WorkspaceSettingsPageComponent {
     return accountId != null && !this.saving && this.form.valid && !this.form.pristine;
   }
 
-  save(accountId: number | null): void {
+  save(accountId: number): void {
     if (!this.canSave(accountId)) {
       this.form.markAllAsTouched();
       return;
@@ -168,17 +175,21 @@ export class WorkspaceSettingsPageComponent {
     };
 
     this.saving = true;
+    this.showSaveError = false;
+    this.hideSavedNow();
+    this.form.disable({emitEvent: false});
 
     this.accountsApi
-    .update(accountId as number, update)
+    .update(accountId, update)
     .pipe(
       takeUntilDestroyed(this.destroyRef),
       tap(() => {
-        this.toastService.success("Workspace обновлён.");
         this.refresh$.next();
+        this.showSavedWithTimeout();
       }),
       tap({
         error: (error: ApiError) => {
+          this.showSaveError = true;
           this.toastService.error("Не удалось обновить workspace.", {
             details: error.details,
             correlationId: error.correlationId
@@ -187,10 +198,26 @@ export class WorkspaceSettingsPageComponent {
       }),
       finalize(() => {
         this.saving = false;
+        this.form.enable({emitEvent: false});
         this.cdr.markForCheck();
       })
     )
     .subscribe();
+  }
+
+  cancelEdit(): void {
+    if (this.saving) {
+      return;
+    }
+
+    const fallbackName = this.lastLoadedAccount?.name ?? "";
+    this.form.reset({name: fallbackName});
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
+
+    this.showSaveError = false;
+    this.hideSavedNow();
+    this.cdr.markForCheck();
   }
 
   canDelete(totalWorkspaces: number): boolean {
@@ -243,5 +270,26 @@ export class WorkspaceSettingsPageComponent {
 
   goToWorkspaces(): void {
     this.router.navigateByUrl(APP_PATHS.workspaces);
+  }
+
+  private showSavedWithTimeout(): void {
+    this.showSaved = true;
+    if (this.savedTimerId != null) {
+      window.clearTimeout(this.savedTimerId);
+    }
+    this.savedTimerId = window.setTimeout(() => {
+      this.showSaved = false;
+      this.savedTimerId = null;
+      this.cdr.markForCheck();
+    }, 1200);
+    this.cdr.markForCheck();
+  }
+
+  private hideSavedNow(): void {
+    this.showSaved = false;
+    if (this.savedTimerId != null) {
+      window.clearTimeout(this.savedTimerId);
+      this.savedTimerId = null;
+    }
   }
 }

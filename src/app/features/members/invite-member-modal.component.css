@@ -1,28 +1,63 @@
-.modal-content {
+.modal-content{
   display: grid;
   gap: 16px;
-  min-width: min(520px, 90vw);
+
+  /* было: min-width: min(520px, 90vw);  <-- ломает адаптив и вызывает overflow */
+  width: min(520px, calc(100vw - 32px));
+  max-width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
 }
 
-.form {
+/* чтобы заголовок/контент не распирал контейнер */
+.modal-content h3{
+  margin: 0;
+  min-width: 0;
+}
+
+.form{
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
-.modal-actions {
+.modal-actions{
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  flex-wrap: wrap;     /* на очень узких экранах кнопки не вылезут */
 }
 
-.field-error {
+.field-error{
   color: var(--danger);
   font-size: 12px;
   margin-top: 6px;
 }
 
-@media (max-width: 600px) {
-  .modal-content {
-    min-width: auto;
+/* страховка: вложенные контролы должны уметь сжиматься */
+dp-form-field,
+dp-input,
+dp-select{
+  min-width: 0;
+}
+
+dp-input,
+dp-select{
+  width: 100%;
+}
+
+/* мобилка */
+@media (max-width: 600px){
+  .modal-content{
+    width: 100%;
+  }
+
+  .modal-actions{
+    justify-content: stretch;
+  }
+
+  .modal-actions dp-button{
+    width: 100%;
   }
 }

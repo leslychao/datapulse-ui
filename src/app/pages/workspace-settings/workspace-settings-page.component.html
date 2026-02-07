@@ -12,44 +12,30 @@
       <form
         class="form"
         [formGroup]="form"
-        (ngSubmit)="save(vm.accountId)"
+        (ngSubmit)="vm.accountId != null && save(vm.accountId)"
       >
         <div class="form-grid">
           <dp-form-field label="Workspace name" [required]="true">
             <dp-input
               formControlName="name"
               placeholder="Workspace name"
+              (keydown.escape)="cancelEdit()"
             ></dp-input>
-          </dp-form-field>
-        </div>
 
-        <!-- actions: silent icon -->
-        <div class="form-actions">
-          <dp-button
-            class="icon-action"
-            variant="secondary"
-            type="submit"
-            [loading]="saving"
-            [disabled]="!canSave(vm.accountId)"
-          >
-            <svg
-              class="icon"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                fill="currentColor"
-                d="M9.0 16.2 4.8 12.0 3.4 13.4 9.0 19.0 21.0 7.0 19.6 5.6z"
-              />
-            </svg>
-            <span class="sr-only">Save changes</span>
-          </dp-button>
+            <div class="field-hint" [class.field-hint--saving]="saving" [class.field-hint--saved]="showSaved" [class.field-hint--error]="showSaveError">
+              <ng-container *ngIf="saving">Saving…</ng-container>
+              <ng-container *ngIf="!saving && showSaved">Saved</ng-container>
+              <ng-container *ngIf="!saving && showSaveError">Не удалось сохранить. Нажмите Enter ещё раз.</ng-container>
+              <ng-container *ngIf="!saving && !showSaved && !showSaveError">&nbsp;</ng-container>
+            </div>
+
+            <span class="sr-only">Press Enter to save. Press Escape to cancel.</span>
+          </dp-form-field>
         </div>
       </form>
 
       <div class="divider"></div>
 
-      <!-- destructive action -->
       <div class="delete-row">
         <div class="delete-row__text">
           <div class="delete-row__title">Delete workspace</div>
