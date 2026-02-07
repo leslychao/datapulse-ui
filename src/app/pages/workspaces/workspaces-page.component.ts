@@ -319,8 +319,23 @@ export class WorkspacesPageComponent {
   }
 
   goToWorkspace(accountId: number): void {
-    this.accountContext.setAccountId(accountId);
-    this.router.navigateByUrl(APP_PATHS.overview(accountId));
+    this.accountContext
+      .setCurrentWorkspace(accountId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        tap(() => {
+          this.router.navigateByUrl(APP_PATHS.overview(accountId));
+        }),
+        tap({
+          error: (error: ApiError) => {
+            this.toastService.error("Не удалось переключить workspace.", {
+              details: error.details,
+              correlationId: error.correlationId
+            });
+          }
+        })
+      )
+      .subscribe();
   }
 
   goToSettings(accountId: number): void {
