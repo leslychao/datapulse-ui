@@ -1,3 +1,4 @@
+// connections-page.component.ts
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {HttpClient} from "@angular/common/http";
@@ -39,7 +40,7 @@ interface ConnectionsViewModel {
   state: LoadState<AccountConnection[], ApiError>;
 }
 
-type WizardStep = "marketplace" | "credentials" | "validate" | "sync" | "success";
+type WizardStep = "marketplace" | "credentials";
 
 type EtlEventCode =
   | "WAREHOUSE_DICT"
@@ -96,6 +97,8 @@ export class ConnectionsPageComponent {
   wizardStep: WizardStep = "marketplace";
   wizardError: string | null = null;
   createdConnection: AccountConnection | null = null;
+
+  isValidating = false;
 
   editVisible = false;
   detailsVisible = false;
@@ -201,12 +204,6 @@ export class ConnectionsPageComponent {
         return "Select marketplace";
       case "credentials":
         return "Enter credentials";
-      case "validate":
-        return "Validate connection";
-      case "sync":
-        return "Initial sync";
-      case "success":
-        return "Success";
       default:
         return "";
     }
@@ -238,43 +235,41 @@ export class ConnectionsPageComponent {
     this.wizardStep = "marketplace";
     this.wizardError = null;
     this.createdConnection = null;
+    this.isValidating = false;
     this.wizardVisible = true;
+    this.cdr.markForCheck();
   }
 
   closeWizard(): void {
-    if (this.saving) {
+    if (this.isValidating) {
       return;
     }
     this.wizardVisible = false;
+    this.cdr.markForCheck();
   }
 
   nextWizardStep(): void {
     if (this.wizardStep === "marketplace") {
       this.wizardStep = "credentials";
+      this.cdr.markForCheck();
       return;
     }
+
     if (this.wizardStep === "credentials") {
       if (this.wizardForm.invalid) {
         this.wizardForm.markAllAsTouched();
+        this.cdr.markForCheck();
         return;
       }
-      this.wizardStep = "validate";
       this.validateCredentials();
-      return;
-    }
-    if (this.wizardStep === "sync") {
-      this.wizardStep = "success";
-      return;
-    }
-    if (this.wizardStep === "success") {
-      this.closeWizard();
     }
   }
 
   validateCredentials(): void {
-    if (this.saving) {
+    if (this.isValidating || this.saving) {
       return;
     }
+
     const accountId = this.getAccountId();
     if (accountId == null) {
       return;
@@ -286,8 +281,10 @@ export class ConnectionsPageComponent {
       credentials: marketplace === Marketplace.Wildberries ? {token} : {clientId, apiKey}
     };
 
+    this.isValidating = true;
     this.saving = true;
     this.wizardError = null;
+    this.cdr.markForCheck();
 
     this.connectionApi
     .create(accountId, request)
@@ -295,8 +292,8 @@ export class ConnectionsPageComponent {
       takeUntilDestroyed(this.destroyRef),
       tap((connection) => {
         this.createdConnection = connection;
-        this.wizardStep = "sync";
-        this.toastService.success("Подключение создано. Запускаем первичную синхронизацию.");
+        this.toastService.success("Подключение создано.");
+        this.wizardVisible = false;
         this.refresh$.next();
       }),
       tap({
@@ -305,15 +302,12 @@ export class ConnectionsPageComponent {
         }
       }),
       finalize(() => {
+        this.isValidating = false;
         this.saving = false;
         this.cdr.markForCheck();
       })
     )
     .subscribe();
-  }
-
-  finishWizard(): void {
-    this.closeWizard();
   }
 
   openEditModal(connection: AccountConnection): void {
@@ -325,16 +319,19 @@ export class ConnectionsPageComponent {
     });
     this.applyCredentialValidators(this.editForm, connection.marketplace, false);
     this.editVisible = true;
+    this.cdr.markForCheck();
   }
 
   closeEditModal(): void {
     this.editVisible = false;
     this.editingConnection = null;
+    this.cdr.markForCheck();
   }
 
   submitEdit(): void {
     if (!this.editingConnection || this.editForm.invalid || this.saving) {
       this.editForm.markAllAsTouched();
+      this.cdr.markForCheck();
       return;
     }
     const accountId = this.getAccountId();
@@ -352,6 +349,7 @@ export class ConnectionsPageComponent {
     };
 
     this.saving = true;
+    this.cdr.markForCheck();
 
     this.connectionApi
     .update(accountId, this.editingConnection.id, request)
@@ -382,26 +380,31 @@ export class ConnectionsPageComponent {
     this.detailsConnection = connection;
     this.detailsVisible = true;
     this.detailsExpanded = false;
+    this.cdr.markForCheck();
   }
 
   closeDetails(): void {
     this.detailsVisible = false;
     this.detailsConnection = null;
     this.detailsExpanded = false;
+    this.cdr.markForCheck();
   }
 
   toggleDetails(): void {
     this.detailsExpanded = !this.detailsExpanded;
+    this.cdr.markForCheck();
   }
 
   requestDelete(connection: AccountConnection): void {
     this.deletingConnection = connection;
     this.deleteDialogVisible = true;
+    this.cdr.markForCheck();
   }
 
   closeDeleteDialog(): void {
     this.deleteDialogVisible = false;
     this.deletingConnection = null;
+    this.cdr.markForCheck();
   }
 
   deleteConnection(): void {
@@ -414,6 +417,7 @@ export class ConnectionsPageComponent {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
 
     this.connectionApi
     .remove(accountId, this.deletingConnection.id)
@@ -443,11 +447,13 @@ export class ConnectionsPageComponent {
   requestDisable(connection: AccountConnection): void {
     this.disablingConnection = connection;
     this.disableDialogVisible = true;
+    this.cdr.markForCheck();
   }
 
   closeDisableDialog(): void {
     this.disableDialogVisible = false;
     this.disablingConnection = null;
+    this.cdr.markForCheck();
   }
 
   disableConnection(): void {
@@ -460,6 +466,7 @@ export class ConnectionsPageComponent {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
 
     const request: AccountConnectionUpdateRequest = {
       active: false
@@ -493,11 +500,13 @@ export class ConnectionsPageComponent {
   requestEnable(connection: AccountConnection): void {
     this.enablingConnection = connection;
     this.enableDialogVisible = true;
+    this.cdr.markForCheck();
   }
 
   closeEnableDialog(): void {
     this.enableDialogVisible = false;
     this.enablingConnection = null;
+    this.cdr.markForCheck();
   }
 
   enableConnection(): void {
@@ -510,6 +519,7 @@ export class ConnectionsPageComponent {
     }
 
     this.saving = true;
+    this.cdr.markForCheck();
 
     const request: AccountConnectionUpdateRequest = {
       active: true
@@ -584,6 +594,7 @@ export class ConnectionsPageComponent {
     };
 
     this.saving = true;
+    this.cdr.markForCheck();
 
     this.http
     .post<void>("/api/etl/scenario/run", request)

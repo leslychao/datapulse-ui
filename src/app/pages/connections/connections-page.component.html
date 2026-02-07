@@ -1,3 +1,4 @@
+<!-- connections-page.component.html -->
 <ng-container *ngIf="vm$ | async as vm">
   <dp-page-layout [accountId]="vm.accountId">
     <dp-page-header
@@ -187,57 +188,53 @@
 
           <div *ngIf="wizardStep === 'credentials'" class="wizard-step">
             <p class="muted">Введите credentials. Мы проверим доступ перед запуском.</p>
+
             <ng-container *ngIf="wizardIsWildberries; else ozonCredentials">
               <dp-form-field
                 label="Token"
                 [required]="true"
                 hint="Где взять: WB seller → API access."
               >
-                <dp-input type="password" formControlName="token"></dp-input>
+                <dp-input type="password" formControlName="token" [disabled]="isValidating"></dp-input>
               </dp-form-field>
             </ng-container>
+
             <ng-template #ozonCredentials>
               <dp-form-field label="Client ID" [required]="true" hint="Ozon → API keys.">
-                <dp-input formControlName="clientId"></dp-input>
+                <dp-input formControlName="clientId" [disabled]="isValidating"></dp-input>
               </dp-form-field>
               <dp-form-field label="API Key" [required]="true">
-                <dp-input type="password" formControlName="apiKey"></dp-input>
+                <dp-input type="password" formControlName="apiKey" [disabled]="isValidating"></dp-input>
               </dp-form-field>
             </ng-template>
+
+            <dp-loading-state *ngIf="isValidating" label="Checking credentials"></dp-loading-state>
+
+            <p class="error-text" *ngIf="wizardError">{{ wizardError }}</p>
+
+            <dp-button
+              variant="secondary"
+              *ngIf="wizardError && !isValidating"
+              (click)="validateCredentials()"
+            >
+              Retry validation
+            </dp-button>
           </div>
         </form>
 
-        <div *ngIf="wizardStep === 'validate'">
-          <dp-loading-state label="Checking credentials"></dp-loading-state>
-          <p class="error-text" *ngIf="wizardError">{{ wizardError }}</p>
-          <dp-button variant="secondary" *ngIf="wizardError" (click)="validateCredentials()">
-            Retry validation
-          </dp-button>
-        </div>
-
-        <div *ngIf="wizardStep === 'sync'" class="wizard-step">
-          <h4>Initial sync started</h4>
-          <p class="muted">Мы запускаем первую синхронизацию. Это может занять несколько минут.</p>
-          <dp-loading-state label="Sync in progress"></dp-loading-state>
-        </div>
-
-        <div *ngIf="wizardStep === 'success'" class="wizard-step">
-          <h4>Connection ready</h4>
-          <p class="muted">Подключение создано и синхронизация запущена.</p>
-          <dp-button variant="primary" (click)="finishWizard()">Go to connections</dp-button>
-        </div>
-
         <div class="modal-actions">
-          <dp-button variant="secondary" (click)="closeWizard()">Cancel</dp-button>
+          <dp-button variant="secondary" (click)="closeWizard()" [disabled]="isValidating">
+            Cancel
+          </dp-button>
+
           <dp-button
             variant="primary"
             *ngIf="wizardStep === 'marketplace' || wizardStep === 'credentials'"
             (click)="nextWizardStep()"
+            [loading]="isValidating"
+            [disabled]="isValidating"
           >
             Next
-          </dp-button>
-          <dp-button variant="primary" *ngIf="wizardStep === 'sync'" (click)="nextWizardStep()">
-            Continue
           </dp-button>
         </div>
       </div>
