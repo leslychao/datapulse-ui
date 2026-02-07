@@ -39,6 +39,7 @@ describe("GettingStartedPageComponent", () => {
   });
 
   it("redirects to overview after successful sync start", () => {
+    // @ts-ignore
     etlScenarioApi.run.and.returnValue(of(new HttpResponse({status: 200})));
 
     const fixture = TestBed.createComponent(GettingStartedPageComponent);
@@ -65,6 +66,7 @@ describe("GettingStartedPageComponent", () => {
   });
 
   it("redirects to overview after sync start returns 202", () => {
+    // @ts-ignore
     etlScenarioApi.run.and.returnValue(of(new HttpResponse({status: 202})));
 
     const fixture = TestBed.createComponent(GettingStartedPageComponent);
