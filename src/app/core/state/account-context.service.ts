@@ -1,5 +1,5 @@
 import {Injectable} from "@angular/core";
-import {BehaviorSubject} from "rxjs";
+import {BehaviorSubject, defer, Observable, of} from "rxjs";
 
 const STORAGE_KEY = "datapulse.accountId";
 
@@ -19,6 +19,13 @@ export class AccountContextService {
       return;
     }
     localStorage.setItem(STORAGE_KEY, String(accountId));
+  }
+
+  setCurrentWorkspace(accountId: number): Observable<void> {
+    return defer(() => {
+      this.setAccountId(accountId);
+      return of(void 0);
+    });
   }
 
   clear(): void {

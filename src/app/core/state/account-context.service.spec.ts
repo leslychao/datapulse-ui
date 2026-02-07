@@ -1,4 +1,5 @@
 import {TestBed} from "@angular/core/testing";
+import {firstValueFrom, skip, take} from "rxjs";
 
 import {AccountContextService} from "./account-context.service";
 
@@ -22,5 +23,15 @@ describe("AccountContextService", () => {
 
     expect(service.snapshot).toBeNull();
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
+
+  it("emits updated account id after switching workspace", async () => {
+    const service = TestBed.inject(AccountContextService);
+
+    const nextValue = firstValueFrom(service.accountId$.pipe(skip(1), take(1)));
+
+    await firstValueFrom(service.setCurrentWorkspace(101));
+
+    await expectAsync(nextValue).toBeResolvedTo(101);
   });
 });

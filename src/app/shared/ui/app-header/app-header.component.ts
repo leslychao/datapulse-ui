@@ -8,6 +8,7 @@ import {
 } from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {NavigationStart, Router, RouterModule} from "@angular/router";
+import {combineLatest, map} from "rxjs";
 import {filter} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
@@ -46,48 +47,42 @@ export class AppHeaderComponent {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
 
   readonly userProfile$ = this.authUser.userProfile$;
+  private readonly currentAccountId$ = this.accountContext.accountId$;
+  readonly homePath$ = combineLatest([this.authSession.state$, this.currentAccountId$]).pipe(
+    map(([state, accountId]) => {
+      if (!state.authenticated) {
+        return APP_PATHS.login;
+      }
+      return accountId != null ? APP_PATHS.overview(accountId) : APP_PATHS.workspaces;
+    })
+  );
+  readonly profilePath$ = this.currentAccountId$.pipe(
+    map((accountId) =>
+      accountId != null ? APP_PATHS.settingsProfile(accountId) : APP_PATHS.workspaces
+    )
+  );
+  readonly currentWorkspaceBreadcrumb$ = this.currentAccountId$.pipe(
+    map((accountId) => (accountId == null ? null : `Workspaces ▸ Workspace #${accountId}`))
+  );
+  readonly currentWorkspaceTree$ = this.currentAccountId$.pipe(
+    map((accountId) => {
+      if (accountId == null) {
+        return null;
+      }
+      const leaf = `Workspace #${accountId}`;
+      return {
+        full: `Workspaces ▸ ${leaf}`,
+        leaf
+      };
+    })
+  );
 
   isLoginRedirecting = false;
   isLogoutRedirecting = false;
   isMenuOpen = false;
 
-  get homePath(): string {
-    if (!this.authSession.snapshot().authenticated) {
-      return APP_PATHS.login;
-    }
-
-    const accountId = this.accountContext.snapshot;
-    return accountId != null ? APP_PATHS.overview(accountId) : APP_PATHS.workspaces;
-  }
-
-  get profilePath(): string {
-    const accountId = this.accountContext.snapshot;
-    return accountId != null ? APP_PATHS.settingsProfile(accountId) : APP_PATHS.workspaces;
-  }
-
   get workspacesPath(): string {
     return APP_PATHS.workspaces;
-  }
-
-  get currentWorkspaceBreadcrumb(): string | null {
-    const accountId = this.accountContext.snapshot;
-    if (accountId == null) {
-      return null;
-    }
-    return `Workspaces ▸ Workspace #${accountId}`;
-  }
-
-  get currentWorkspaceTree(): WorkspaceTree | null {
-    const accountId = this.accountContext.snapshot;
-    if (accountId == null) {
-      return null;
-    }
-
-    const leaf = `Workspace #${accountId}`;
-    return {
-      full: `Workspaces ▸ ${leaf}`,
-      leaf
-    };
   }
 
   constructor() {

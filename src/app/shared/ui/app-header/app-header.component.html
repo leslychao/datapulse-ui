@@ -1,5 +1,5 @@
 <header class="app-header">
-  <a class="brand-link" [routerLink]="homePath" aria-label="Datapulse — на главную">
+  <a class="brand-link" [routerLink]="homePath$ | async" aria-label="Datapulse — на главную">
     <img class="brand-icon" src="assets/logo.svg" alt=""/>
     <span class="brand">Datapulse</span>
   </a>
@@ -19,7 +19,7 @@
           <span class="profile-trigger__name">
             {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
           </span>
-          <span class="profile-trigger__workspace" *ngIf="currentWorkspaceBreadcrumb as crumb">
+          <span class="profile-trigger__workspace" *ngIf="currentWorkspaceBreadcrumb$ | async as crumb">
             {{ crumb }}
           </span>
         </span>
@@ -39,7 +39,7 @@
               {{ profile.email }}
             </div>
 
-            <div class="profile-menu__workspace" *ngIf="currentWorkspaceTree as tree">
+            <div class="profile-menu__workspace" *ngIf="currentWorkspaceTree$ | async as tree">
               <a
                 class="workspace-chip"
                 [routerLink]="workspacesPath"
@@ -56,7 +56,7 @@
 
           <a
             class="profile-menu__item"
-            [routerLink]="profilePath"
+            [routerLink]="profilePath$ | async"
             (click)="closeMenu()"
             role="menuitem"
           >
