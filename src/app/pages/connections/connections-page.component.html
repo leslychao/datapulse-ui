@@ -4,9 +4,7 @@
       title="Connections"
       subtitle="Управляйте подключениями и синхронизациями данных."
     >
-      <div primary-action>
-        <dp-button variant="primary" (click)="openWizard()">Create connection</dp-button>
-      </div>
+      <!-- Create connection перенесён в заголовок таблицы (Actions) -->
     </dp-page-header>
 
     <section class="card">
@@ -45,7 +43,23 @@
               <th>Status</th>
               <th>Last sync</th>
               <th>Freshness</th>
-              <th class="th-actions">Actions</th>
+
+              <th class="th-actions">
+                <div class="th-actions__inner">
+                  <span>Actions</span>
+
+                  <button
+                    type="button"
+                    class="th-actions__add"
+                    aria-label="Create connection"
+                    title="Create connection"
+                    [disabled]="saving"
+                    (click)="openWizard()"
+                  >
+                    +
+                  </button>
+                </div>
+              </th>
             </tr>
             </thead>
 

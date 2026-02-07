@@ -13,6 +13,41 @@
   text-align: right;
 }
 
+.th-actions__inner {
+  display: inline-flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Header create icon button */
+.th-actions__add {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.th-actions__add:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.th-actions__add:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .cell-title {
   font-weight: 600;
 }
