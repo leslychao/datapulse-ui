@@ -1,24 +1,76 @@
 :root {
-  /* Telegram-like soft neutral (not snow-white) */
+  /* Surfaces */
   --bg: #f2f3f5;
   --panel: #ffffff;
 
+  /* Text */
   --text: #111827;
   --muted: #6b7280;
 
-  --line: rgba(17, 24, 39, .08);
+  /* Lines */
+  --line: rgba(17, 24, 39, 0.08);
+  --line-strong: rgba(17, 24, 39, 0.12);
 
+  /* Inputs */
+  --field-bg: rgba(17, 24, 39, 0.04);
+  --field-bg-focus: #ffffff;
+  --field-border: rgba(17, 24, 39, 0.10);
+  --field-border-focus: rgba(42, 139, 242, 0.55);
+
+  /* Brand / semantic */
   --accent: #2a8bf2;
   --danger: #ef4444;
 
-  --radius: 12px;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* Semantic "ink" colors for pills/menus (slightly deeper for readability) */
+  --success-ink: #027a48;
+  --warning-ink: #b45309;
+  --danger-ink: #b91c1c;
 
-  --field-bg: rgba(17, 24, 39, .04);
-  --field-bg-focus: #ffffff;
+  /* Semantic "bg" tints */
+  --accent-bg: rgba(42, 139, 242, 0.12);
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --success-bg: rgba(2, 122, 72, 0.10);
+  --warning-bg: rgba(245, 158, 11, 0.12);
+  --muted-bg: rgba(107, 114, 128, 0.12);
 
-  --shadow: none;
-  --focus-ring: 0 0 0 3px rgba(42, 139, 242, .10);
+  /* Interaction surfaces */
+  --surface-hover: rgba(17, 24, 39, 0.04);
+  --surface-hover-strong: rgba(15, 23, 42, 0.06);
+  --icon-hover-accent: rgba(42, 139, 242, 0.08);
+  --icon-hover-danger: rgba(239, 68, 68, 0.08);
+
+  /* Typography */
+  --font-family-base: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-base: 14px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-base: 1.5;
+  --line-height-compact: 1.35;
+  --line-height-tight: 1.2;
+
+  /* Radii */
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+
+  /* Focus */
+  --focus-ring: 0 0 0 3px rgba(42, 139, 242, 0.10);
+  --focus-ring-danger: 0 0 0 3px rgba(239, 68, 68, 0.12);
+
+  /* Shadows */
+  --shadow-popover: 0 12px 24px rgba(15, 23, 42, 0.12);
+  --shadow-menu: 0 16px 32px rgba(15, 23, 42, 0.12);
 
   /* Layout */
   --layout-max-width: 1280px;
@@ -31,16 +83,16 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-family: var(--font-family-base);
   background: var(--bg);
   color: var(--text);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
 }
 
 .muted {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .shell {
@@ -80,7 +132,7 @@ body {
   padding: 16px 16px;
   background: var(--panel);
   border: none;
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   box-shadow: none;
 }
 
@@ -98,7 +150,7 @@ body {
 
 label {
   display: block;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--muted);
   margin-bottom: 6px;
 }
@@ -107,28 +159,30 @@ label {
 input, select {
   width: 100%;
   padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--field-border);
   background: var(--field-bg);
   color: var(--text);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-compact);
   outline: none;
-  transition: background .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
 
 input::placeholder {
-  color: rgba(107, 114, 128, .85)
+  color: rgba(107, 114, 128, 0.85);
 }
 
 input:focus, select:focus {
   background: var(--field-bg-focus);
-  border-color: rgba(42, 139, 242, .35);
+  border-color: var(--field-border-focus);
   box-shadow: var(--focus-ring);
 }
+
 
 /* Buttons */
 button {
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   background: transparent;
   color: var(--text);
@@ -137,7 +191,7 @@ button {
 }
 
 button:hover {
-  background: rgba(17, 24, 39, .04)
+  background: var(--surface-hover)
 }
 
 button:active {
@@ -145,7 +199,7 @@ button:active {
 }
 
 button.primary {
-  background: rgba(42, 139, 242, .12);
+  background: var(--accent-bg);
   color: var(--accent);
 }
 
@@ -154,12 +208,12 @@ button.primary:hover {
 }
 
 button.danger {
-  background: rgba(239, 68, 68, .10);
+  background: var(--danger-bg);
   color: var(--danger);
 }
 
 button.danger:hover {
-  background: rgba(239, 68, 68, .14)
+  background: rgba(239, 68, 68, 0.14)
 }
 
 button.link {
@@ -183,7 +237,7 @@ button.link:hover {
   overflow: visible;
 
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--panel);
 }
 
@@ -203,7 +257,7 @@ table {
 th, td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--line);
-  font-size: 13px;
+  font-size: var(--font-size-md);
   line-height: 1.35;
   vertical-align: top;
 
@@ -213,7 +267,8 @@ th, td {
 
 th {
   color: var(--muted);
-  font-weight: 600;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
   text-align: left;
   position: sticky;
   top: 0;
@@ -231,7 +286,7 @@ tbody tr:hover td {
   align-items: flex-start;
   gap: 8px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--font-size-md);
   margin: 10px 0 14px;
 }
 
@@ -267,7 +322,7 @@ tbody tr:hover td {
 
 /* Utilities */
 .mono {
-  font-family: var(--mono);
+  font-family: var(--font-family-mono);
   font-size: 12px;
   color: rgba(17, 24, 39, .80)
 }

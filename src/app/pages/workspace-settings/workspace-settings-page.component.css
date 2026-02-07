@@ -57,7 +57,7 @@
 .muted {
   margin: 6px 0 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 16px;
 }
 

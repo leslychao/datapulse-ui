@@ -44,14 +44,14 @@
 }
 
 .tg-stat__label{
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--muted);
 }
 
 .tg-stat__value{
-  font-size: 13px;
+  font-size: var(--font-size-md);
   font-weight: 700;
-  color: var(--text, #111827);
+  color: var(--text);
 }
 
 /* invite icon button: no bg/border by default */
@@ -64,7 +64,7 @@
   border: 0;
   background: transparent;
   color: var(--accent);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   padding: 0;
 }
@@ -76,7 +76,7 @@
 }
 
 .tg-invite-icon:hover{
-  background: rgba(42, 139, 242, 0.08);
+  background: var(--icon-hover-accent);
 }
 
 .tg-invite-icon:disabled{
@@ -95,7 +95,9 @@
   gap: 12px;
   padding: 10px 12px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-transform: none;
   border-bottom: 1px solid var(--line);
 }
 
@@ -114,11 +116,11 @@
   gap: 12px;
   align-items: center;
   padding: 12px 12px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
 }
 
 .tg-row:hover{
-  background: #f6f7f9;
+  background: var(--surface-hover);
 }
 
 .tg-cell{
@@ -136,14 +138,14 @@
 .tg-avatar{
   width: 40px;
   height: 40px;
-  border-radius: 14px;
-  background: rgba(42, 139, 242, 0.12);
+  border-radius: var(--radius-lg);
+  background: var(--accent-bg);
   color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   flex: 0 0 40px;
   user-select: none;
 }
@@ -160,7 +162,7 @@
   gap: 10px;
   font-weight: 600;
   line-height: 1.2;
-  color: var(--text, #111827);
+  color: var(--text);
   min-width: 0;
 }
 
@@ -173,7 +175,7 @@
 
 .tg-subtitle{
   margin-top: 4px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -201,13 +203,13 @@
 }
 
 .tg-activity__value{
-  font-size: 13px;
+  font-size: var(--font-size-md);
   font-weight: 500;
-  color: var(--text, #111827);
+  color: var(--text);
 }
 
 .tg-activity__hint{
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--muted);
 }
 
@@ -234,31 +236,31 @@
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  background: rgba(42, 139, 242, 0.10);
+  background: var(--accent-bg);
   color: var(--accent);
   flex: 0 0 auto;
 }
 
 .status-pill--active{
-  background: rgba(2, 122, 72, 0.10);
-  color: #027a48;
+  background: var(--success-bg);
+  color: var(--success-ink);
 }
 
 .status-pill--invited{
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
+  background: var(--warning-bg);
+  color: var(--warning-ink);
 }
 
 .status-pill--blocked{
-  background: rgba(180, 35, 24, 0.10);
-  color: #b42318;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
 }
 
 .hint{
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--muted);
 }
 
@@ -268,10 +270,10 @@
   top: 34px;
   right: 0;
   min-width: 220px;
-  background: #fff;
-  border: 1px solid #e1e5ea;
-  border-radius: 12px;
-  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.14);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
   padding: 6px;
   z-index: 30;
 }
@@ -280,11 +282,11 @@
   width: 100%;
   text-align: left;
   padding: 10px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   user-select: none;
-  color: var(--text, #111827);
-  font-size: 13px;
+  color: var(--text);
+  font-size: var(--font-size-md);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -294,7 +296,7 @@
 }
 
 .menu-item:hover{
-  background: #f3f5f7;
+  background: var(--surface-hover);
 }
 
 .menu-item:disabled{
@@ -303,11 +305,11 @@
 }
 
 .menu-danger{
-  color: #b42318;
+  color: var(--danger-ink);
 }
 
 .menu-hint{
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--muted);
   margin-top: 6px;
   padding: 0 4px 4px;
