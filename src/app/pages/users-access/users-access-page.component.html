@@ -135,7 +135,7 @@
 
                   <div class="tg-subtitle">
                     {{ member.email || 'No email on file' }}
-                    <ng-container *ngIf="member.username"> · &#64;{{ member.username }}</ng-container>
+                    <ng-container *ngIf="member.email"></ng-container>
                   </div>
                 </div>
               </div>
@@ -183,7 +183,8 @@
                 <div class="tg-activity__hint" *ngIf="member.recentlyActive">
                   within activity window
                 </div>
-                <div class="tg-activity__hint" *ngIf="!member.recentlyActive && member.lastActivityAt">
+                <div class="tg-activity__hint"
+                     *ngIf="!member.recentlyActive && member.lastActivityAt">
                   local time
                 </div>
               </div>
