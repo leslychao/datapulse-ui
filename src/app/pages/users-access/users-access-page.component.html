@@ -20,7 +20,7 @@
           </dp-form-field>
 
           <dp-form-field label="Search">
-            <dp-input placeholder="Email or name" [formControl]="searchControl"></dp-input>
+            <dp-input placeholder="Email, username or name" [formControl]="searchControl"></dp-input>
           </dp-form-field>
         </div>
       </div>
@@ -52,13 +52,8 @@
             </div>
 
             <div class="tg-stat">
-              <div class="tg-stat__label">Invited</div>
-              <div class="tg-stat__value">{{ countByStatus(vm.state.data, statusEnum.Invited) }}</div>
-            </div>
-
-            <div class="tg-stat">
-              <div class="tg-stat__label">Blocked</div>
-              <div class="tg-stat__value">{{ countByStatus(vm.state.data, statusEnum.Blocked) }}</div>
+              <div class="tg-stat__label">Inactive</div>
+              <div class="tg-stat__value">{{ countByStatus(vm.state.data, statusEnum.Inactive) }}</div>
             </div>
           </div>
 
@@ -109,14 +104,13 @@
                 <div class="tg-meta">
                   <div class="tg-title">
                     <span class="tg-title__text">
-                      {{ member.fullName || member.email || ('User #' + member.userId) }}
+                      {{ displayName(member) }}
                     </span>
 
                     <span
                       class="status-pill"
                       [class.status-pill--active]="member.status === statusEnum.Active"
-                      [class.status-pill--invited]="member.status === statusEnum.Invited"
-                      [class.status-pill--blocked]="member.status === statusEnum.Blocked"
+                      [class.status-pill--inactive]="member.status === statusEnum.Inactive"
                     >
                       {{ statusLabel(member.status) }}
                     </span>
@@ -124,6 +118,7 @@
 
                   <div class="tg-subtitle">
                     {{ member.email || 'No email on file' }}
+                    <ng-container *ngIf="member.username"> · &#64;{{ member.username }}</ng-container>
                   </div>
                 </div>
               </div>
@@ -152,25 +147,24 @@
 
               <div class="tg-cell tg-cell--activity" role="cell">
                 <div class="tg-activity__value">
-                  {{ member.lastActiveAt ? (member.lastActiveAt | date:'dd.MM.yyyy, HH:mm') : '—' }}
+                  <ng-container *ngIf="member.recentlyActive; else activityTime">
+                    Recently active
+                  </ng-container>
+
+                  <ng-template #activityTime>
+                    {{ member.lastActivityAt ? (member.lastActivityAt | date:'dd.MM.yyyy, HH:mm') : '—' }}
+                  </ng-template>
                 </div>
-                <div class="tg-activity__hint" *ngIf="member.lastActiveAt">
+
+                <div class="tg-activity__hint" *ngIf="member.recentlyActive">
+                  within activity window
+                </div>
+                <div class="tg-activity__hint" *ngIf="!member.recentlyActive && member.lastActivityAt">
                   local time
                 </div>
               </div>
 
               <div class="tg-cell tg-cell--actions" role="cell" (click)="$event.stopPropagation()">
-                <dp-button
-                  size="sm"
-                  variant="secondary"
-                  class="tg-action-resend"
-                  *ngIf="member.status === statusEnum.Invited"
-                  (click)="resendInvite(vm.accountId, member)"
-                  [disabled]="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)"
-                >
-                  Resend
-                </dp-button>
-
                 <button
                   type="button"
                   class="dp-icon-btn"
@@ -186,29 +180,19 @@
                   <button
                     type="button"
                     class="menu-item"
-                    (click)="onMenuBlock(member, vm.accountId, vm.state.data, vm.currentUserId)"
-                    [disabled]="blockDisabled(member, vm.state.data, vm.currentUserId)"
+                    (click)="onMenuDeactivate(member, vm.accountId, vm.state.data, vm.currentUserId)"
+                    [disabled]="deactivateDisabled(member, vm.state.data, vm.currentUserId)"
                   >
-                    Block
+                    Deactivate
                   </button>
 
                   <button
                     type="button"
                     class="menu-item"
-                    (click)="onMenuUnblock(member, vm.accountId, vm.state.data, vm.currentUserId)"
-                    [disabled]="unblockDisabled(member, vm.currentUserId, vm.state.data)"
+                    (click)="onMenuActivate(member, vm.accountId, vm.state.data, vm.currentUserId)"
+                    [disabled]="activateDisabled(member, vm.currentUserId, vm.state.data)"
                   >
-                    Unblock
-                  </button>
-
-                  <button
-                    type="button"
-                    class="menu-item"
-                    *ngIf="member.status === statusEnum.Invited"
-                    (click)="onMenuCancelInvite(member, vm.accountId, vm.currentUserId)"
-                    [disabled]="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)"
-                  >
-                    Cancel invite
+                    Activate
                   </button>
 
                   <button
@@ -232,7 +216,7 @@
         <ng-template #emptyState>
           <dp-empty-state
             title="Нет пользователей"
-            description="Пригласите коллег, чтобы работать вместе."
+            description="Добавьте коллег, чтобы работать вместе."
           >
             <button
               type="button"
@@ -280,7 +264,7 @@
       [description]="confirmDescription(vm.currentUserId)"
       confirmLabel="Confirm"
       cancelLabel="Cancel"
-      [danger]="confirmAction === 'remove' || confirmAction === 'block' || confirmAction === 'cancel'"
+      [danger]="confirmAction === 'remove' || confirmAction === 'deactivate'"
       [loading]="saving"
       (confirm)="confirmAction === 'role' ? confirmRoleChange(vm.accountId) : confirmActionRun(vm.accountId)"
       (cancel)="closeConfirm()"

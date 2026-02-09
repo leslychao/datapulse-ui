@@ -17,11 +17,17 @@ export interface AccountMemberResponse {
   id: number;
   accountId: number;
   userId: number;
-  email?: string | null;
-  fullName?: string | null;
-  lastActiveAt?: string | null;
-  status: AccountMemberStatus;
+
+  email: string | null;
+  username: string | null;
+  fullName: string | null;
+
+  recentlyActive: boolean;
+  lastActivityAt: string | null;
+
   role: AccountMemberRole;
+  status: AccountMemberStatus;
+
   createdAt: string;
   updatedAt: string;
 }
