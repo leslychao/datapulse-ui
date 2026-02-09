@@ -249,17 +249,35 @@ export class UsersAccessPageComponent {
     return members.filter((member) => member.status === status).length;
   }
 
-  onRoleSelectChange(member: AccountMember, event: Event): void {
+  onRoleSelectChange(member: AccountMember, event: Event, members: AccountMember[]): void {
     const selectElement = event.target as HTMLSelectElement | null;
     const rawValue = selectElement?.value ?? null;
+
+    // Ключевой UX-фикс: селект не должен "залипать" на выбранном значении
+    // до подтверждения/успешного сохранения. Всегда возвращаем на текущее server-truth.
+    if (selectElement) {
+      selectElement.value = member.role;
+    }
+
     if (!rawValue) {
       return;
     }
+
     const role = this.parseRole(rawValue);
     if (role == null) {
       this.toastService.error("Некорректная роль.");
       return;
     }
+
+    if (role === member.role) {
+      return;
+    }
+
+    if (this.isLastOwner(member, members)) {
+      this.toastService.error("Нельзя понизить последнего OWNER.");
+      return;
+    }
+
     this.openRoleConfirm(member, role);
   }
 
@@ -268,13 +286,6 @@ export class UsersAccessPageComponent {
   }
 
   openRoleConfirm(member: AccountMember, role: AccountMemberRole): void {
-    if (role === member.role) {
-      return;
-    }
-    if (this.isLastOwner(member, this.latestMembersSnapshot())) {
-      this.toastService.error("Нельзя понизить последнего OWNER.");
-      return;
-    }
     this.selectedMember = member;
     this.pendingRole = role;
     this.confirmAction = "role";
@@ -285,12 +296,19 @@ export class UsersAccessPageComponent {
     if (!this.selectedMember || !this.pendingRole || accountId == null) {
       return;
     }
+
+    const members = this.latestMembersSnapshot();
+    if (this.isLastOwner(this.selectedMember, members) && this.pendingRole !== AccountMemberRole.Owner) {
+      this.toastService.error("Нельзя понизить последнего OWNER.");
+      return;
+    }
+
     this.updateMember(accountId, this.selectedMember, {role: this.pendingRole, status: this.selectedMember.status});
     this.closeConfirm();
   }
 
-  requestRemove(member: AccountMember): void {
-    if (this.isLastOwner(member, this.latestMembersSnapshot())) {
+  requestRemove(member: AccountMember, members: AccountMember[]): void {
+    if (this.isLastOwner(member, members)) {
       this.toastService.error("Нельзя удалить последнего OWNER.");
       return;
     }
@@ -299,8 +317,8 @@ export class UsersAccessPageComponent {
     this.confirmDialogVisible = true;
   }
 
-  requestDeactivate(member: AccountMember): void {
-    if (this.isLastOwner(member, this.latestMembersSnapshot())) {
+  requestDeactivate(member: AccountMember, members: AccountMember[]): void {
+    if (this.isLastOwner(member, members)) {
       this.toastService.error("Нельзя деактивировать последнего OWNER.");
       return;
     }
@@ -328,21 +346,35 @@ export class UsersAccessPageComponent {
     return !this.canManageUsers(this.currentMember(members, currentUserId)?.role ?? null);
   }
 
-  deactivateDisabled(member: AccountMember, members: AccountMember[], currentUserId: number | null): boolean {
-    if (!this.canManageUsers(this.currentMember(members, currentUserId)?.role ?? null)) {
-      return true;
-    }
-    if (member.status === AccountMemberStatus.Inactive) {
-      return true;
-    }
-    return this.isLastOwner(member, members);
+  toggleStatusLabel(member: AccountMember): string {
+    return member.status === AccountMemberStatus.Active ? "Deactivate" : "Activate";
   }
 
-  activateDisabled(member: AccountMember, currentUserId: number | null, members: AccountMember[]): boolean {
+  toggleStatusDisabled(member: AccountMember, members: AccountMember[], currentUserId: number | null): boolean {
     if (!this.canManageUsers(this.currentMember(members, currentUserId)?.role ?? null)) {
       return true;
     }
+
+    if (member.status === AccountMemberStatus.Active) {
+      return this.isLastOwner(member, members);
+    }
+
     return member.status !== AccountMemberStatus.Inactive;
+  }
+
+  onMenuToggleStatus(member: AccountMember, accountId: number | null, members: AccountMember[], currentUserId: number | null): void {
+    if (accountId == null || this.toggleStatusDisabled(member, members, currentUserId)) {
+      return;
+    }
+
+    this.openMenuMemberId = null;
+
+    if (member.status === AccountMemberStatus.Active) {
+      this.requestDeactivate(member, members);
+      return;
+    }
+
+    this.requestActivate(member);
   }
 
   removeDisabled(member: AccountMember, members: AccountMember[], currentUserId: number | null): boolean {
@@ -362,28 +394,12 @@ export class UsersAccessPageComponent {
     return null;
   }
 
-  onMenuDeactivate(member: AccountMember, accountId: number | null, members: AccountMember[], currentUserId: number | null): void {
-    if (accountId == null || this.deactivateDisabled(member, members, currentUserId)) {
-      return;
-    }
-    this.openMenuMemberId = null;
-    this.requestDeactivate(member);
-  }
-
-  onMenuActivate(member: AccountMember, accountId: number | null, members: AccountMember[], currentUserId: number | null): void {
-    if (accountId == null || this.activateDisabled(member, currentUserId, members)) {
-      return;
-    }
-    this.openMenuMemberId = null;
-    this.requestActivate(member);
-  }
-
   onMenuRemove(member: AccountMember, accountId: number | null, members: AccountMember[], currentUserId: number | null): void {
     if (accountId == null || this.removeDisabled(member, members, currentUserId)) {
       return;
     }
     this.openMenuMemberId = null;
-    this.requestRemove(member);
+    this.requestRemove(member, members);
   }
 
   closeConfirm(): void {
@@ -398,15 +414,29 @@ export class UsersAccessPageComponent {
       return;
     }
 
+    const members = this.latestMembersSnapshot();
+
     if (this.confirmAction === "remove") {
+      if (this.isLastOwner(this.selectedMember, members)) {
+        this.toastService.error("Нельзя удалить последнего OWNER.");
+        return;
+      }
       this.removeMember(accountId, this.selectedMember);
+      this.closeConfirm();
+      return;
     }
 
     if (this.confirmAction === "deactivate") {
+      if (this.isLastOwner(this.selectedMember, members)) {
+        this.toastService.error("Нельзя деактивировать последнего OWNER.");
+        return;
+      }
       this.updateMember(accountId, this.selectedMember, {
         role: this.selectedMember.role,
         status: AccountMemberStatus.Inactive
       });
+      this.closeConfirm();
+      return;
     }
 
     if (this.confirmAction === "activate") {
@@ -414,9 +444,8 @@ export class UsersAccessPageComponent {
         role: this.selectedMember.role,
         status: AccountMemberStatus.Active
       });
+      this.closeConfirm();
     }
-
-    this.closeConfirm();
   }
 
   private latestMembersSnapshot(): AccountMember[] {
@@ -441,6 +470,8 @@ export class UsersAccessPageComponent {
             details: error.details,
             correlationId: error.correlationId
           });
+          // UI уже не "залипает" на новом значении, потому что селект контролируется member.role,
+          // а селект при change мы возвращаем на member.role сразу.
         }
       }),
       finalize(() => {

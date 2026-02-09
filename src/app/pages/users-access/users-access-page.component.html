@@ -20,7 +20,10 @@
           </dp-form-field>
 
           <dp-form-field label="Search">
-            <dp-input placeholder="Email, username or name" [formControl]="searchControl"></dp-input>
+            <dp-input
+              placeholder="Email, username or name"
+              [formControl]="searchControl"
+            ></dp-input>
           </dp-form-field>
         </div>
       </div>
@@ -48,12 +51,16 @@
 
             <div class="tg-stat">
               <div class="tg-stat__label">Active</div>
-              <div class="tg-stat__value">{{ countByStatus(vm.state.data, statusEnum.Active) }}</div>
+              <div class="tg-stat__value">
+                {{ countByStatus(vm.state.data, statusEnum.Active) }}
+              </div>
             </div>
 
             <div class="tg-stat">
               <div class="tg-stat__label">Inactive</div>
-              <div class="tg-stat__value">{{ countByStatus(vm.state.data, statusEnum.Inactive) }}</div>
+              <div class="tg-stat__value">
+                {{ countByStatus(vm.state.data, statusEnum.Inactive) }}
+              </div>
             </div>
           </div>
 
@@ -92,10 +99,16 @@
               <div class="tg-head__cell" role="columnheader">User</div>
               <div class="tg-head__cell" role="columnheader">Role</div>
               <div class="tg-head__cell" role="columnheader">Last activity</div>
-              <div class="tg-head__cell tg-head__cell--actions" role="columnheader">Actions</div>
+              <div class="tg-head__cell tg-head__cell--actions" role="columnheader">
+                Actions
+              </div>
             </div>
 
-            <div class="tg-row" *ngFor="let member of filteredMembers(vm.state.data)" role="row">
+            <div
+              class="tg-row"
+              *ngFor="let member of filteredMembers(vm.state.data)"
+              role="row"
+            >
               <div class="tg-cell tg-cell--user" role="cell">
                 <div class="tg-avatar" aria-hidden="true">
                   {{ memberInitials(member) }}
@@ -105,6 +118,10 @@
                   <div class="tg-title">
                     <span class="tg-title__text">
                       {{ displayName(member) }}
+                    </span>
+
+                    <span class="you-pill" *ngIf="isSelf(member, vm.currentUserId)">
+                      Вы
                     </span>
 
                     <span
@@ -127,7 +144,7 @@
                 <dp-select
                   class="role-select"
                   [value]="member.role"
-                  (change)="onRoleSelectChange(member, $event)"
+                  (change)="onRoleSelectChange(member, $event, vm.state.data)"
                   [disabled]="
                     !canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null) ||
                     isLastOwner(member, vm.state.data)
@@ -140,7 +157,10 @@
                   Нельзя изменить роль последнего OWNER.
                 </div>
 
-                <div class="hint" *ngIf="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)">
+                <div
+                  class="hint"
+                  *ngIf="!canManageUsers(currentMember(vm.state.data, vm.currentUserId)?.role ?? null)"
+                >
                   Недостаточно прав для управления пользователями.
                 </div>
               </div>
@@ -152,7 +172,11 @@
                   </ng-container>
 
                   <ng-template #activityTime>
-                    {{ member.lastActivityAt ? (member.lastActivityAt | date:'dd.MM.yyyy, HH:mm') : '—' }}
+                    {{
+                    member.lastActivityAt
+                      ? (member.lastActivityAt | date:'dd.MM.yyyy, HH:mm')
+                      : '—'
+                    }}
                   </ng-template>
                 </div>
 
@@ -180,19 +204,10 @@
                   <button
                     type="button"
                     class="menu-item"
-                    (click)="onMenuDeactivate(member, vm.accountId, vm.state.data, vm.currentUserId)"
-                    [disabled]="deactivateDisabled(member, vm.state.data, vm.currentUserId)"
+                    (click)="onMenuToggleStatus(member, vm.accountId, vm.state.data, vm.currentUserId)"
+                    [disabled]="toggleStatusDisabled(member, vm.state.data, vm.currentUserId)"
                   >
-                    Deactivate
-                  </button>
-
-                  <button
-                    type="button"
-                    class="menu-item"
-                    (click)="onMenuActivate(member, vm.accountId, vm.state.data, vm.currentUserId)"
-                    [disabled]="activateDisabled(member, vm.currentUserId, vm.state.data)"
-                  >
-                    Activate
+                    {{ toggleStatusLabel(member) }}
                   </button>
 
                   <button
@@ -204,7 +219,10 @@
                     Remove from workspace
                   </button>
 
-                  <div class="menu-hint" *ngIf="menuHint(member, vm.state.data, vm.currentUserId) as hint">
+                  <div
+                    class="menu-hint"
+                    *ngIf="menuHint(member, vm.state.data, vm.currentUserId) as hint"
+                  >
                     {{ hint }}
                   </div>
                 </div>

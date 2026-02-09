@@ -173,6 +173,18 @@
   white-space: nowrap;
 }
 
+/* "Вы" badge — red text only */
+.you-pill{
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--danger-ink);
+  flex: 0 0 auto;
+}
+
 .tg-subtitle{
   margin-top: 4px;
   font-size: var(--font-size-sm);
@@ -249,6 +261,12 @@
   color: var(--success-ink);
 }
 
+.status-pill--inactive{
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+}
+
+/* legacy variants (if used elsewhere) */
 .status-pill--invited{
   background: var(--warning-bg);
   color: var(--warning-ink);
