@@ -15,40 +15,53 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
 
-  padding: 12px var(--layout-gutter);
+  padding: 14px var(--layout-gutter);
 }
 
-/* Brand */
+/* =========================
+   Brand (PRIMARY ANCHOR)
+   ========================= */
+
 .brand-link {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+
+  padding: 8px 12px;
+  border-radius: 14px;
+
   text-decoration: none;
   color: var(--text);
-  border-radius: 12px;
-  padding: 6px 10px;
 }
 
+/* no hover — brand is not a button */
 .brand-link:hover {
-  background: rgba(17, 24, 39, 0.04);
+  background: none;
 }
 
+/* accessibility */
+.brand-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.18);
+}
+
+/*
+  SVG contains:
+  - circular icon
+  - DataPulse wordmark
+*/
 .brand-icon {
-  width: 20px;
-  height: 20px;
+  height: 28px;   /* ⬅ ключевое изменение */
+  width: auto;
   display: block;
-  transform: translateY(1px);
 }
 
-.brand {
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-}
+/* =========================
+   Profile
+   ========================= */
 
-/* Profile */
 .app-header__profile {
   display: flex;
   align-items: center;
@@ -58,7 +71,7 @@
   position: relative;
 }
 
-/* Profile trigger — ghost */
+/* Profile trigger — intentionally smaller than brand */
 .profile-trigger {
   display: inline-flex;
   align-items: center;
@@ -93,6 +106,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
+
   background: rgba(15, 23, 42, 0.08);
   font-size: 12px;
   font-weight: 800;
@@ -167,7 +181,6 @@
   font-weight: 600;
   color: var(--accent);
   text-decoration: none;
-  background: transparent;
 }
 
 .workspace-tree__parent:hover {
@@ -177,6 +190,7 @@
 .workspace-tree__child {
   margin-left: 10px;
   margin-top: 4px;
+
   display: flex;
   align-items: center;
   gap: 8px;
@@ -200,6 +214,7 @@
 .profile-menu__item {
   padding: 9px 10px;
   border-radius: 10px;
+
   text-decoration: none;
   color: var(--text);
   font-size: 13px;

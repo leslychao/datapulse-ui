@@ -1,8 +1,7 @@
 <header class="app-header">
   <div class="app-header__inner">
     <a class="brand-link" [routerLink]="homePath" aria-label="Datapulse — на главную">
-      <img class="brand-icon" src="assets/logo.svg" alt="" />
-      <span class="brand">Datapulse</span>
+      <img class="brand-icon" src="assets/logo.svg" alt="DataPulse" />
     </a>
 
     <div class="app-header__profile" *ngIf="userProfile$ | async as profile; else loginTemplate">
