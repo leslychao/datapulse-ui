@@ -67,17 +67,17 @@
                   <div class="cell-title">
                     {{ account.name }}
                     <span class="current-pill" *ngIf="vm.currentAccountId === account.id">
-                        Current
-                      </span>
+                      Current
+                    </span>
                   </div>
                   <div class="cell-subtitle">ID: {{ account.id }}</div>
                 </button>
               </td>
 
               <td class="col-lifecycle">
-                  <span class="status-pill" [class.is-disabled]="!account.active">
-                    {{ getWorkspaceLabel(account) }}
-                  </span>
+                <span class="status-pill" [class.is-disabled]="!account.active">
+                  {{ getWorkspaceLabel(account) }}
+                </span>
               </td>
 
               <td class="col-sources">
@@ -86,16 +86,16 @@
                 >
                   <ng-container *ngIf="details.connections.length; else noSources">
                     <div class="data-sources">
-                        <span
-                          class="data-sources__chip"
-                          *ngFor="let badge of getDataSourceBadges(details.connections)"
-                          [class.is-ok]="badge.tone === 'ok'"
-                          [class.is-warning]="badge.tone === 'warning'"
-                          [class.is-error]="badge.tone === 'error'"
-                          [class.is-muted]="badge.tone === 'muted'"
-                        >
-                          {{ badge.label }}
-                        </span>
+                      <span
+                        class="data-sources__chip"
+                        *ngFor="let badge of getDataSourceBadges(details.connections)"
+                        [class.is-ok]="badge.tone === 'ok'"
+                        [class.is-warning]="badge.tone === 'warning'"
+                        [class.is-error]="badge.tone === 'error'"
+                        [class.is-muted]="badge.tone === 'muted'"
+                      >
+                        {{ badge.label }}
+                      </span>
 
                       <div class="data-sources__popover">
                         <div
@@ -202,10 +202,10 @@
                       <button
                         type="button"
                         class="row-menu__item"
-                        (click)="openArchiveDialog(account); closeActionMenu(); $event.stopPropagation()"
-                        [disabled]="!account.active"
+                        (click)="openLifecycleDialog(account); closeActionMenu(); $event.stopPropagation()"
+                        [disabled]="saving"
                       >
-                        Archive
+                        {{ account.active ? "Archive" : "Restore" }}
                       </button>
 
                       <button
@@ -243,13 +243,13 @@
     </section>
 
     <dp-confirm-dialog
-      [visible]="archiveDialogVisible"
-      title="Archive workspace?"
-      description="Workspace станет недоступен для синхронизаций и пользователей."
-      confirmLabel="Archive"
+      [visible]="lifecycleDialogVisible"
+      [title]="lifecycleDialogTitle"
+      [description]="lifecycleDialogDescription"
+      [confirmLabel]="lifecycleDialogConfirmLabel"
       [loading]="saving"
-      (confirm)="archiveWorkspace()"
-      (cancel)="closeArchiveDialog()"
+      (confirm)="applyLifecycleChange()"
+      (cancel)="closeLifecycleDialog()"
     ></dp-confirm-dialog>
 
     <dp-confirm-dialog

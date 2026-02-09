@@ -58,6 +58,8 @@ interface WorkspacesViewModel {
   currentAccountId: number | null;
 }
 
+type LifecycleAction = "archive" | "restore";
+
 @Component({
   selector: "dp-workspaces-page",
   standalone: true,
@@ -90,8 +92,12 @@ export class WorkspacesPageComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   saving = false;
+
   deleteDialogVisible = false;
-  archiveDialogVisible = false;
+
+  lifecycleDialogVisible = false;
+  lifecycleAction: LifecycleAction | null = null;
+
   selectedActionWorkspace: AccountResponse | null = null;
   openActionMenuId: number | null = null;
 
@@ -210,6 +216,26 @@ export class WorkspacesPageComponent {
     });
   }
 
+  get lifecycleDialogTitle(): string {
+    if (!this.selectedActionWorkspace || !this.lifecycleAction) {
+      return "Change workspace status?";
+    }
+    return this.lifecycleAction === "archive" ? "Archive workspace?" : "Restore workspace?";
+  }
+
+  get lifecycleDialogDescription(): string {
+    if (!this.selectedActionWorkspace || !this.lifecycleAction) {
+      return "Изменить статус workspace.";
+    }
+    return this.lifecycleAction === "archive"
+      ? "Workspace станет недоступен для синхронизаций и пользователей."
+      : "Workspace снова станет доступен для синхронизаций и пользователей.";
+  }
+
+  get lifecycleDialogConfirmLabel(): string {
+    return this.lifecycleAction === "restore" ? "Restore" : "Archive";
+  }
+
   private waitUntilAccountAccessible(accountId: number) {
     return timer(0, 250).pipe(
       switchMap(() => this.iamApi.getAccessibleAccounts()),
@@ -237,13 +263,18 @@ export class WorkspacesPageComponent {
     this.router.navigateByUrl(APP_PATHS.workspacesCreate);
   }
 
-  openArchiveDialog(account: AccountResponse): void {
+  openLifecycleDialog(account: AccountResponse): void {
+    if (this.saving) {
+      return;
+    }
     this.selectedActionWorkspace = account;
-    this.archiveDialogVisible = true;
+    this.lifecycleAction = account.active ? "archive" : "restore";
+    this.lifecycleDialogVisible = true;
   }
 
-  closeArchiveDialog(): void {
-    this.archiveDialogVisible = false;
+  closeLifecycleDialog(): void {
+    this.lifecycleDialogVisible = false;
+    this.lifecycleAction = null;
     this.selectedActionWorkspace = null;
   }
 
@@ -267,29 +298,39 @@ export class WorkspacesPageComponent {
     this.openActionMenuId = null;
   }
 
-  archiveWorkspace(): void {
-    if (!this.selectedActionWorkspace || this.saving) {
+  applyLifecycleChange(): void {
+    if (!this.selectedActionWorkspace || !this.lifecycleAction || this.saving) {
       return;
     }
+
     const account = this.selectedActionWorkspace;
+    const shouldBeActive = this.lifecycleAction === "restore";
+
     const update: AccountUpdateRequest = {
       name: account.name,
-      active: false
+      active: shouldBeActive
     };
+
     this.saving = true;
+
     this.accountsApi
     .update(account.id, update)
     .pipe(
       takeUntilDestroyed(this.destroyRef),
       tap(() => {
-        this.toastService.success("Workspace архивирован.");
+        this.toastService.success(shouldBeActive ? "Workspace восстановлен." : "Workspace архивирован.");
         this.refreshAccounts$.next();
         this.refreshDetails$.next();
-        this.closeArchiveDialog();
+
+        if (!shouldBeActive && this.accountContext.snapshot === account.id) {
+          this.accountContext.clear();
+        }
+
+        this.closeLifecycleDialog();
       }),
       tap({
         error: (error: ApiError) => {
-          this.toastService.error("Не удалось архивировать workspace.", {
+          this.toastService.error(shouldBeActive ? "Не удалось восстановить workspace." : "Не удалось архивировать workspace.", {
             details: error.details,
             correlationId: error.correlationId
           });
@@ -340,7 +381,7 @@ export class WorkspacesPageComponent {
 
   goToWorkspace(account: AccountResponse): void {
     if (!account.active) {
-      this.toastService.info("Workspace архивирован. Откройте Settings, чтобы восстановить доступ.");
+      this.toastService.info("Workspace архивирован. Откройте Settings или Restore, чтобы восстановить доступ.");
       return;
     }
 

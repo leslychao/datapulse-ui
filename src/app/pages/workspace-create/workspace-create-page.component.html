@@ -11,6 +11,13 @@
         Название увидят участники workspace. Можно изменить позже.
       </p>
 
+      <div *ngIf="backendMessages?.length" class="form-errors" role="alert" aria-live="polite">
+        <div class="form-errors__title">Исправьте ошибки:</div>
+        <ul class="form-errors__list">
+          <li *ngFor="let message of backendMessages">{{ message }}</li>
+        </ul>
+      </div>
+
       <dp-form-field label="Workspace name" [required]="true">
         <dp-input
           placeholder="e.g. North Star Marketplace"

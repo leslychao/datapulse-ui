@@ -23,3 +23,36 @@
   gap: 8px;
   justify-content: flex-end;
 }
+
+/* =========================
+   Backend validation errors
+   ========================= */
+
+.form-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  padding: 12px 14px;
+  border-radius: 12px;
+
+  background: var(--danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+
+  color: var(--danger-ink);
+}
+
+.form-errors__title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.form-errors__list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.form-errors__list li {
+  font-size: var(--font-size-sm);
+  line-height: 1.35;
+}
