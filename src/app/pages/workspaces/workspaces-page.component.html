@@ -51,12 +51,17 @@
             </thead>
 
             <tbody>
-            <tr *ngFor="let account of vm.accountsState.data" class="workspace-row">
+            <tr
+              *ngFor="let account of vm.accountsState.data"
+              class="workspace-row"
+              [class.is-archived]="!account.active"
+            >
               <td class="col-workspace">
                 <button
                   type="button"
                   class="workspace-link"
-                  (click)="goToWorkspace(account.id)"
+                  (click)="goToWorkspace(account)"
+                  [disabled]="!account.active"
                   aria-label="Open workspace"
                 >
                   <div class="cell-title">

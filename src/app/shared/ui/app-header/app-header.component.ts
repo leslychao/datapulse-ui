@@ -66,9 +66,9 @@ export class AppHeaderComponent {
       : APP_PATHS.workspaces;
   }
 
+  // ✅ Профиль теперь в корне: /profile
   get profilePath(): string {
-    const accountId = this.accountContext.snapshot;
-    return accountId != null ? APP_PATHS.settingsProfile(accountId) : APP_PATHS.workspaces;
+    return APP_PATHS.profile;
   }
 
   get workspacesPath(): string {
@@ -97,7 +97,6 @@ export class AppHeaderComponent {
   }
 
   constructor() {
-    // 1) Закрываем меню при навигации
     this.router.events
     .pipe(
       filter((event) => event instanceof NavigationStart),
@@ -107,7 +106,6 @@ export class AppHeaderComponent {
       this.closeMenu();
     });
 
-    // 2) Ключевой фикс: при смене workspace триггерим OnPush-перерисовку
     this.accountContext.accountId$
     .pipe(takeUntilDestroyed(this.destroyRef))
     .subscribe(() => {

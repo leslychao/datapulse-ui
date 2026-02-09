@@ -21,6 +21,15 @@ export const appRoutes: Routes = [
     loadComponent: () =>
       import("./pages/login/login-page.component").then((m) => m.LoginPageComponent)
   },
+
+  // ✅ Profile в корне (вне workspace/:accountId)
+  {
+    path: APP_ROUTE_SEGMENTS.profile,
+    canMatch: [authGuard, iamResolvedGuard],
+    loadComponent: () =>
+      import("./pages/profile/profile-page.component").then((m) => m.ProfilePageComponent)
+  },
+
   {
     path: APP_ROUTE_SEGMENTS.workspaces,
     canMatch: [authGuard, iamResolvedGuard, accountsPresentGuard],
@@ -96,7 +105,7 @@ export const appRoutes: Routes = [
                 loadComponent: () =>
                   import(
                     "./pages/finance-unit-economics/finance-unit-economics-page.component"
-                  ).then((m) => m.FinanceUnitEconomicsPageComponent)
+                    ).then((m) => m.FinanceUnitEconomicsPageComponent)
               }
             ]
           },
@@ -108,21 +117,21 @@ export const appRoutes: Routes = [
                 loadComponent: () =>
                   import(
                     "./pages/operations-inventory/operations-inventory-page.component"
-                  ).then((m) => m.OperationsInventoryPageComponent)
+                    ).then((m) => m.OperationsInventoryPageComponent)
               },
               {
                 path: APP_ROUTE_SEGMENTS.returnsBuyout,
                 loadComponent: () =>
                   import(
                     "./pages/operations-returns/operations-returns-page.component"
-                  ).then((m) => m.OperationsReturnsPageComponent)
+                    ).then((m) => m.OperationsReturnsPageComponent)
               },
               {
                 path: APP_ROUTE_SEGMENTS.salesMonitoring,
                 loadComponent: () =>
                   import(
                     "./pages/operations-sales/operations-sales-page.component"
-                  ).then((m) => m.OperationsSalesPageComponent)
+                    ).then((m) => m.OperationsSalesPageComponent)
               }
             ]
           },
@@ -159,13 +168,16 @@ export const appRoutes: Routes = [
                 (m) => m.UsersAccessPageComponent
               )
           },
-          {
-            path: `${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.profile}`,
-            loadComponent: () =>
-              import("./pages/profile/profile-page.component").then(
-                (m) => m.ProfilePageComponent
-              )
-          },
+
+          // ❌ УДАЛЕНО: профиль больше не живёт в settings под accountId
+          // {
+          //   path: `${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.profile}`,
+          //   loadComponent: () =>
+          //     import("./pages/profile/profile-page.component").then(
+          //       (m) => m.ProfilePageComponent
+          //     )
+          // },
+
           {
             path: APP_ROUTE_SEGMENTS.settings,
             loadComponent: () =>

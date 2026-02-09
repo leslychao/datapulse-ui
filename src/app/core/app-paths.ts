@@ -25,11 +25,19 @@ export const APP_PATHS = {
   login: `/${APP_ROUTE_SEGMENTS.login}`,
   root: `/${APP_ROUTE_SEGMENTS.app}`,
   workspaces: `/${APP_ROUTE_SEGMENTS.workspaces}`,
-  workspacesAccount: (accountId: number) => `/${APP_ROUTE_SEGMENTS.workspaces}/${accountId}`,
+
+  // ✅ NEW: профиль в корне приложения
+  profile: `/${APP_ROUTE_SEGMENTS.profile}`,
+
+  workspacesAccount: (accountId: number) =>
+    `/${APP_ROUTE_SEGMENTS.workspaces}/${accountId}`,
   workspacesCreate: `/${APP_ROUTE_SEGMENTS.workspaces}/${APP_ROUTE_SEGMENTS.workspacesCreate}`,
   gettingStarted: `/${APP_ROUTE_SEGMENTS.gettingStarted}`,
+
+  // ⚠️ legacy / workspace-scoped profile (оставляем, но больше не используем в UI)
   settingsProfile: (accountId: number) =>
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.settings}/${APP_ROUTE_SEGMENTS.profile}`,
+
   overview: (accountId: number) =>
     `/${APP_ROUTE_SEGMENTS.app}/${accountId}/${APP_ROUTE_SEGMENTS.overview}`,
   financePnl: (accountId: number) =>

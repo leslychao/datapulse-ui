@@ -204,10 +204,10 @@ export class WorkspacesPageComponent {
 
   constructor() {
     this.accountContext.accountId$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.cdr.markForCheck();
-      });
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe(() => {
+      this.cdr.markForCheck();
+    });
   }
 
   private waitUntilAccountAccessible(accountId: number) {
@@ -278,29 +278,29 @@ export class WorkspacesPageComponent {
     };
     this.saving = true;
     this.accountsApi
-      .update(account.id, update)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Workspace архивирован.");
-          this.refreshAccounts$.next();
-          this.refreshDetails$.next();
-          this.closeArchiveDialog();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error("Не удалось архивировать workspace.", {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+    .update(account.id, update)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success("Workspace архивирован.");
+        this.refreshAccounts$.next();
+        this.refreshDetails$.next();
+        this.closeArchiveDialog();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error("Не удалось архивировать workspace.", {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
   deleteWorkspace(): void {
@@ -310,34 +310,42 @@ export class WorkspacesPageComponent {
     const account = this.selectedActionWorkspace;
     this.saving = true;
     this.accountsApi
-      .remove(account.id)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Workspace удалён.");
-          if (this.accountContext.snapshot === account.id) {
-            this.accountContext.clear();
-          }
-          this.refreshAccounts$.next();
-          this.refreshDetails$.next();
-          this.closeDeleteDialog();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error("Не удалось удалить workspace.", {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.saving = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+    .remove(account.id)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success("Workspace удалён.");
+        if (this.accountContext.snapshot === account.id) {
+          this.accountContext.clear();
+        }
+        this.refreshAccounts$.next();
+        this.refreshDetails$.next();
+        this.closeDeleteDialog();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error("Не удалось удалить workspace.", {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
-  goToWorkspace(accountId: number): void {
+
+  goToWorkspace(account: AccountResponse): void {
+    if (!account.active) {
+      this.toastService.info("Workspace архивирован. Откройте Settings, чтобы восстановить доступ.");
+      return;
+    }
+
+    const accountId = account.id;
+
     this.waitUntilAccountAccessible(accountId).subscribe(() => {
       if (this.accountContext.snapshot !== accountId) {
         this.accountContext.setAccountId(accountId);
