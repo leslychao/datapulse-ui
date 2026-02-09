@@ -1,6 +1,6 @@
 <header class="app-header">
   <a class="brand-link" [routerLink]="homePath" aria-label="Datapulse — на главную">
-    <img class="brand-icon" src="assets/logo.svg" alt=""/>
+    <img class="brand-icon" src="assets/logo.svg" alt="" />
     <span class="brand">Datapulse</span>
   </a>
 
@@ -19,6 +19,7 @@
           <span class="profile-trigger__name">
             {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
           </span>
+
           <span class="profile-trigger__workspace" *ngIf="currentWorkspaceBreadcrumb as crumb">
             {{ crumb }}
           </span>
@@ -35,22 +36,29 @@
             <div class="profile-menu__name">
               {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
             </div>
+
             <div class="profile-menu__email" *ngIf="profile.email">
               {{ profile.email }}
             </div>
 
             <div class="profile-menu__workspace" *ngIf="currentWorkspaceTree as tree">
               <a
-                class="workspace-chip"
+                class="workspace-tree__parent"
                 [routerLink]="workspacesPath"
                 (click)="closeMenu()"
-                [title]="tree.full"
                 role="menuitem"
               >
-                <span class="workspace-chip__dot" aria-hidden="true"></span>
-                <span class="workspace-chip__text">{{ tree.leaf }}</span>
-                <span class="workspace-chip__hint" aria-hidden="true">Change</span>
+                Workspaces
               </a>
+
+              <div
+                class="workspace-tree__child"
+                [title]="tree.full"
+                aria-label="Current workspace"
+              >
+                <span class="workspace-tree__dot" aria-hidden="true"></span>
+                <span class="workspace-tree__name">{{ tree.leaf }}</span>
+              </div>
             </div>
           </div>
 

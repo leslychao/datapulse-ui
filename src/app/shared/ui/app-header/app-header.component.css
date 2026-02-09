@@ -50,7 +50,7 @@
 /* Trigger */
 .profile-trigger {
   display: grid;
-  grid-template-columns: 28px 1fr 14px; /* avatar | text | caret */
+  grid-template-columns: 28px minmax(0, 1fr) 12px;
   align-items: center;
   column-gap: 10px;
 
@@ -61,9 +61,12 @@
   border: 1px solid var(--line-strong);
   background: var(--panel);
 
-  min-width: 220px;
+  min-width: 240px;
+  max-width: 360px;
 
-  text-align: left; /* FIX: some global button styles center text */
+  text-align: left;
+  line-height: 1;
+  user-select: none;
 }
 
 .profile-trigger:hover {
@@ -72,6 +75,12 @@
 
 .profile-trigger:active {
   background: rgba(17, 24, 39, 0.05);
+}
+
+.profile-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.16);
+  border-color: rgba(42, 139, 242, 0.30);
 }
 
 .profile-avatar {
@@ -89,16 +98,14 @@
 
 .profile-trigger__text {
   display: grid;
-  row-gap: 2px;
+  row-gap: 3px;
   min-width: 0;
-
   text-align: left;
-  justify-items: start;
 }
 
 .profile-trigger__name {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -114,56 +121,12 @@
 }
 
 .profile-menu__caret {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
   justify-self: end;
   text-align: right;
-}
-
-/* Panel */
-.profile-menu__panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-
-  background: var(--panel);
-  border: 1px solid var(--line-strong);
-  border-radius: 14px;
-
-  min-width: 260px;
-  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
-  z-index: 4;
-}
-
-.profile-menu__panel-content {
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.profile-menu__meta {
-  padding: 10px 10px 8px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 4px;
-}
-
-.profile-menu__name {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.profile-menu__email {
-  margin-top: 2px;
-  font-size: 12px;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  transform: translateY(-0.5px);
+  opacity: 0.9;
 }
 
 /* Backdrop */
@@ -174,25 +137,180 @@
   z-index: 3;
 }
 
+/* Panel */
+.profile-menu__panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+
+  width: 320px;
+  max-width: calc(100vw - 24px);
+
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.14);
+  z-index: 4;
+
+  overflow: hidden;
+}
+
+.profile-menu__panel-content {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Meta header */
+.profile-menu__meta {
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.profile-menu__name {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-menu__email {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Workspace tree block */
+.profile-menu__workspace {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+/* parent node — ghost button with hover fill */
+.workspace-tree__parent {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 12px;
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+  text-decoration: none;
+
+  background: transparent;
+  border: none;
+
+  cursor: pointer;
+
+  transition:
+    background 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.workspace-tree__parent:hover {
+  background: rgba(42, 139, 242, 0.12);
+}
+
+.workspace-tree__parent:active {
+  background: rgba(42, 139, 242, 0.18);
+}
+
+.workspace-tree__parent:focus-visible {
+  outline: none;
+  background: rgba(42, 139, 242, 0.14);
+  box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.18);
+}
+
+/* child node (non-clickable) */
+.workspace-tree__child {
+  position: relative;
+
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+
+  margin-top: 6px;
+  margin-left: 10px;
+
+  padding: 6px 8px 6px 14px;
+  border-radius: 10px;
+
+  background: transparent;
+}
+
+/* connector line */
+.workspace-tree__child::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: -6px;
+  bottom: -6px;
+
+  width: 1px;
+  background: var(--line);
+}
+
+/* node dot */
+.workspace-tree__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* workspace name */
+.workspace-tree__name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
 /* Menu items */
 .profile-menu__item {
+  display: flex;
+  align-items: center;
+
   background: transparent;
   border: none;
   text-align: left;
 
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 12px;
 
   color: var(--text);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
 
   cursor: pointer;
   text-decoration: none;
+
+  transition: background 120ms ease;
 }
 
 .profile-menu__item:hover {
   background: rgba(15, 23, 42, 0.06);
+}
+
+.profile-menu__item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.16);
 }
 
 .profile-menu__divider {
@@ -201,66 +319,12 @@
   margin: 4px 6px;
 }
 
+/* Danger — спокойно по умолчанию, красный только на hover */
 .profile-menu__item--danger {
-  color: var(--danger-ink);
+  color: var(--text);
 }
 
 .profile-menu__item--danger:hover {
   background: var(--danger-bg);
   color: var(--danger-ink);
-}
-
-/* Current workspace (chip) */
-.profile-menu__workspace {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
-}
-
-.workspace-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-
-  padding: 7px 10px;
-  border-radius: 999px;
-
-  border: 1px solid var(--line);
-  background: rgba(42, 139, 242, 0.08);
-
-  text-decoration: none;
-  color: var(--text);
-
-  max-width: 170px;
-  min-width: 0;
-}
-
-.workspace-chip:hover {
-  background: rgba(42, 139, 242, 0.12);
-  border-color: rgba(42, 139, 242, 0.24);
-}
-
-.workspace-chip__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex: 0 0 auto;
-}
-
-.workspace-chip__text {
-  font-size: 12px;
-  font-weight: 700;
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  min-width: 0;
-}
-
-.workspace-chip__hint {
-  font-size: 11px;
-  color: var(--muted);
-  flex: 0 0 auto;
 }
