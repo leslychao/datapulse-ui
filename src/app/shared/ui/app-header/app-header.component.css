@@ -38,11 +38,14 @@
 .brand-icon {
   width: 20px;
   height: 20px;
+  display: block;
+  transform: translateY(1px);
 }
 
 .brand {
   font-size: 16px;
   font-weight: 700;
+  line-height: 1;
 }
 
 /* Profile */
@@ -71,6 +74,7 @@
   color: var(--text);
   font-size: 13px;
   font-weight: 700;
+  line-height: 1;
 
   transition: background 120ms ease;
 }

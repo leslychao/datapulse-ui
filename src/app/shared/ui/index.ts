@@ -1,5 +1,6 @@
 export {ButtonComponent} from "./button/button.component";
 export {AppHeaderComponent} from "./app-header/app-header.component";
+export {BreadcrumbBarComponent} from "./breadcrumb-bar/breadcrumb-bar.component";
 export {InputComponent} from "./input/input.component";
 export {SelectComponent} from "./select/select.component";
 export {TableComponent} from "./table/table.component";

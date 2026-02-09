@@ -356,3 +356,27 @@ tbody tr:hover td{
   height:20px;
   display:block;
 }
+
+/* =========================================================
+   TABLE HEADERS: FIX UNEVEN HEADER HEIGHTS (Actions + button)
+   ========================================================= */
+
+/* 1) Важно: заголовки выравниваем по центру по вертикали (только th) */
+dp-table th{
+  vertical-align:middle;
+}
+
+/* 2) Общий контейнер внутри th, даёт единый layout-контракт */
+dp-table th .th-inner{
+  display:flex;
+  align-items:center;
+  min-height:44px;
+  line-height:var(--line-height-tight);
+}
+
+/* 3) Actions — прижимаем вправо и держим кнопку в одной строке */
+dp-table th.th-actions .th-inner{
+  justify-content:flex-end;
+  gap:10px;
+  width:100%;
+}

@@ -5,12 +5,18 @@ import {RouterOutlet} from "@angular/router";
 import {IamService} from "./core/state";
 import {LastVisitedPathService} from "./core/routing/last-visited-path.service";
 import {AppHeaderComponent} from "./shared/ui/app-header/app-header.component";
-import {ToastContainerComponent} from "./shared/ui";
+import {BreadcrumbBarComponent, ToastContainerComponent} from "./shared/ui";
 
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [CommonModule, RouterOutlet, AppHeaderComponent, ToastContainerComponent],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    AppHeaderComponent,
+    BreadcrumbBarComponent,
+    ToastContainerComponent
+  ],
   templateUrl: "./app.component.html"
 })
 export class AppComponent {
