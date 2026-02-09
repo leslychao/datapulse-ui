@@ -2,10 +2,11 @@ import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, injec
 import {CommonModule} from "@angular/common";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {Router} from "@angular/router";
-import {finalize, tap} from "rxjs/operators";
+import {EMPTY, Observable, of, timer} from "rxjs";
+import {catchError, filter, finalize, map, switchMap, take, tap, timeout} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
-import {AccountsApiClient, ApiError} from "../../core/api";
+import {AccountsApiClient, ApiError, IamApiClient} from "../../core/api";
 import {AccountContextService} from "../../core/state";
 import {APP_PATHS} from "../../core/app-paths";
 import {
@@ -35,6 +36,7 @@ import {
 })
 export class WorkspaceCreatePageComponent {
   private readonly accountsApi = inject(AccountsApiClient);
+  private readonly iamApi = inject(IamApiClient);
   private readonly accountContext = inject(AccountContextService);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
@@ -50,6 +52,26 @@ export class WorkspaceCreatePageComponent {
     name: ["", [Validators.required, Validators.maxLength(32)]]
   });
 
+
+  private waitUntilWorkspaceAccessible(accountId: number): Observable<void> {
+    const attempts = 20;
+    const intervalMs = 250;
+
+    return timer(0, intervalMs).pipe(
+      take(attempts),
+      switchMap(() =>
+        this.iamApi.getAccessibleAccounts().pipe(
+          map((accounts) => accounts.some((account) => account.id === accountId)),
+          catchError(() => of(false))
+        )
+      ),
+      filter((isAccessible) => isAccessible),
+      take(1),
+      map(() => void 0),
+      timeout({first: attempts * intervalMs})
+    );
+  }
+
   submit(): void {
     if (this.form.invalid || this.saving) {
       this.form.markAllAsTouched();
@@ -61,6 +83,18 @@ export class WorkspaceCreatePageComponent {
       .create({name: name.trim(), active: true})
       .pipe(
         takeUntilDestroyed(this.destroyRef),
+        switchMap((account) =>
+          this.waitUntilWorkspaceAccessible(account.id).pipe(
+            map(() => account),
+            catchError(() => {
+              this.toastService.error("Workspace создан, но ещё не доступен. Обновите список рабочих пространств.", {
+                details: "Новый workspace может появиться в доступных рабочих пространствах с небольшой задержкой.",
+                              });
+              this.router.navigateByUrl(APP_PATHS.workspaces);
+              return EMPTY;
+            })
+          )
+        ),
         tap((account) => {
           this.accountContext.setAccountId(account.id);
           this.toastService.success("Workspace создан.");

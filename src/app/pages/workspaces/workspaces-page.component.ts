@@ -1,8 +1,8 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute, Router} from "@angular/router";
-import {combineLatest, forkJoin, of, Subject, switchMap} from "rxjs";
-import {finalize, map, shareReplay, startWith, tap} from "rxjs/operators";
+import {combineLatest, forkJoin, of, Subject, switchMap, timer} from "rxjs";
+import {catchError, filter, finalize, map, shareReplay, startWith, take, tap, timeout} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {
@@ -210,6 +210,24 @@ export class WorkspacesPageComponent {
       });
   }
 
+  private waitUntilAccountAccessible(accountId: number) {
+    return timer(0, 250).pipe(
+      switchMap(() => this.iamApi.getAccessibleAccounts()),
+      map((accounts) => accounts.some((account) => account.id === accountId)),
+      filter((isAccessible) => isAccessible),
+      take(1),
+      timeout({first: 5_000}),
+      map(() => void 0),
+      catchError(() => {
+        this.toastService.error(
+          "Не удалось переключиться на workspace: доступ ещё не обновился. Обновите список и попробуйте снова."
+        );
+        this.refreshAccounts();
+        return of(void 0);
+      })
+    );
+  }
+
   refreshAccounts(): void {
     this.refreshAccounts$.next();
     this.refreshDetails$.next();
@@ -319,10 +337,13 @@ export class WorkspacesPageComponent {
       )
       .subscribe();
   }
-
   goToWorkspace(accountId: number): void {
-    this.accountContext.setAccountId(accountId);
-    this.router.navigateByUrl(this.lastVisitedPathService.resolveAfterWorkspaceSwitch(accountId));
+    this.waitUntilAccountAccessible(accountId).subscribe(() => {
+      if (this.accountContext.snapshot !== accountId) {
+        this.accountContext.setAccountId(accountId);
+      }
+      this.router.navigateByUrl(this.lastVisitedPathService.resolveAfterWorkspaceSwitch(accountId));
+    });
   }
 
   goToSettings(accountId: number): void {

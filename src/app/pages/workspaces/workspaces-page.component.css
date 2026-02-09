@@ -47,6 +47,22 @@ td.col-actions {
 }
 
 /* =========================
+   Table header alignment
+   ========================= */
+
+thead th {
+  vertical-align: middle;
+}
+
+.th-cell {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  line-height: 1.2;
+}
+
+
+/* =========================
    Header: Actions + "+"
    ========================= */
 
