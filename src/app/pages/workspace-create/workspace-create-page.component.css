@@ -4,6 +4,20 @@
   gap: 16px;
 }
 
+.form-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--font-size-md);
+  line-height: 1.35;
+}
+
+.form-counter {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: var(--font-size-sm);
+  text-align: right;
+}
+
 .form-actions {
   display: flex;
   gap: 8px;

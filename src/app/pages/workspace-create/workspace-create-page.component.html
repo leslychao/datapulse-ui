@@ -3,25 +3,36 @@
     title="Create workspace"
     subtitle="Создайте workspace, чтобы подключить данные и начать аналитику."
   >
-    <div secondary-actions>
-      <dp-button variant="secondary" (click)="goToWorkspaces()">Back</dp-button>
-    </div>
-    <div primary-action>
-      <dp-button variant="primary" (click)="submit()" [loading]="saving">Create</dp-button>
-    </div>
   </dp-page-header>
 
   <section class="card">
     <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+      <p class="form-hint">
+        Название увидят участники workspace. Можно изменить позже.
+      </p>
+
       <dp-form-field label="Workspace name" [required]="true">
-        <dp-input placeholder="e.g. North Star Marketplace" formControlName="name"></dp-input>
+        <dp-input
+          placeholder="e.g. North Star Marketplace"
+          formControlName="name"
+          maxlength="32"
+          autofocus
+        ></dp-input>
+        <div class="form-counter">{{ form.controls.name.value.length }}/32</div>
       </dp-form-field>
 
       <div class="form-actions">
-        <dp-button variant="secondary" type="button" (click)="goToWorkspaces()">
+        <dp-button variant="secondary" type="button" (click)="goToWorkspaces()" [disabled]="saving">
           Cancel
         </dp-button>
-        <dp-button variant="primary" type="submit" [loading]="saving">Create workspace</dp-button>
+        <dp-button
+          variant="primary"
+          type="submit"
+          [loading]="saving"
+          [disabled]="form.invalid || saving"
+        >
+          Create workspace
+        </dp-button>
       </div>
     </form>
   </section>

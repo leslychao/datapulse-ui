@@ -52,7 +52,6 @@ export class WorkspaceCreatePageComponent {
     name: ["", [Validators.required, Validators.maxLength(32)]]
   });
 
-
   private waitUntilWorkspaceAccessible(accountId: number): Observable<void> {
     const attempts = 20;
     const intervalMs = 250;
@@ -77,8 +76,10 @@ export class WorkspaceCreatePageComponent {
       this.form.markAllAsTouched();
       return;
     }
+
     const {name} = this.form.getRawValue();
     this.saving = true;
+
     this.accountsApi
       .create({name: name.trim(), active: true})
       .pipe(
@@ -87,9 +88,10 @@ export class WorkspaceCreatePageComponent {
           this.waitUntilWorkspaceAccessible(account.id).pipe(
             map(() => account),
             catchError(() => {
-              this.toastService.error("Workspace создан, но ещё не доступен. Обновите список рабочих пространств.", {
-                details: "Новый workspace может появиться в доступных рабочих пространствах с небольшой задержкой.",
-                              });
+              this.toastService.error("Workspace создан, но ещё не доступен.", {
+                details:
+                  "Новый workspace может появиться в доступных рабочих пространствах с небольшой задержкой. Откройте список и попробуйте снова."
+              });
               this.router.navigateByUrl(APP_PATHS.workspaces);
               return EMPTY;
             })
@@ -97,8 +99,8 @@ export class WorkspaceCreatePageComponent {
         ),
         tap((account) => {
           this.accountContext.setAccountId(account.id);
-          this.toastService.success("Workspace создан.");
-          this.router.navigateByUrl(APP_PATHS.workspaceSettings(account.id));
+          this.toastService.success("Workspace создан и выбран текущим.");
+          this.router.navigateByUrl(APP_PATHS.workspaces);
         }),
         tap({
           error: (error: ApiError) => {
