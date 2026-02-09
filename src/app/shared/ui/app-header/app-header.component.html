@@ -14,22 +14,22 @@
           [attr.aria-expanded]="isMenuOpen"
           aria-haspopup="menu"
         >
-          <span class="profile-avatar" aria-hidden="true">{{ getInitial(profile) }}</span>
+          <span class="profile-avatar" aria-hidden="true">
+            {{ getInitial(profile) }}
+          </span>
 
-          <span class="profile-trigger__text">
-            <span class="profile-trigger__name">
-              {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
-            </span>
-
-            <span class="profile-trigger__workspace" *ngIf="currentWorkspaceBreadcrumb as crumb">
-              {{ crumb }}
-            </span>
+          <span class="profile-trigger__name">
+            {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
           </span>
 
           <span class="profile-menu__caret" aria-hidden="true">▾</span>
         </button>
 
-        <div class="profile-menu__backdrop" *ngIf="isMenuOpen" (click)="closeMenu()"></div>
+        <div
+          class="profile-menu__backdrop"
+          *ngIf="isMenuOpen"
+          (click)="closeMenu()"
+        ></div>
 
         <div class="profile-menu__panel" *ngIf="isMenuOpen" role="menu">
           <div class="profile-menu__panel-content">
