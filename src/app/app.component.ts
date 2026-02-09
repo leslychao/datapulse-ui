@@ -1,8 +1,11 @@
 import {Component, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {RouterOutlet} from "@angular/router";
-import {AppHeaderComponent, ToastContainerComponent} from "./shared/ui";
+
 import {IamService} from "./core/state";
+import {LastVisitedPathService} from "./core/routing/last-visited-path.service";
+import {AppHeaderComponent} from "./shared/ui/app-header/app-header.component";
+import {ToastContainerComponent} from "./shared/ui";
 
 @Component({
   selector: "app-root",
@@ -12,6 +15,7 @@ import {IamService} from "./core/state";
 })
 export class AppComponent {
   private readonly iamService = inject(IamService);
+  private readonly lastVisitedPathService = inject(LastVisitedPathService);
 
   readonly iamState$ = this.iamService.state$;
 }

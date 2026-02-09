@@ -1,9 +1,6 @@
 <ng-container *ngIf="vm$ | async as vm">
   <dp-page-layout [accountId]="vm.accountId">
-    <dp-page-header
-      title="Workspace"
-      subtitle="Workspace settings"
-    ></dp-page-header>
+    <dp-page-header title="Workspace" subtitle="Workspace settings"></dp-page-header>
 
     <section
       class="card"
@@ -22,11 +19,60 @@
               (keydown.escape)="cancelEdit()"
             ></dp-input>
 
-            <div class="field-hint" [class.field-hint--saving]="saving" [class.field-hint--saved]="showSaved" [class.field-hint--error]="showSaveError">
+            <!-- field-level errors (including backend errors) -->
+            <ng-container
+              *ngIf="form.controls.name.touched && form.controls.name.errors as errors"
+            >
+              <div class="field-error" *ngIf="errors['required']">
+                Workspace name is required.
+              </div>
+
+              <div class="field-error" *ngIf="errors['maxlength']">
+                Max length is 32 characters.
+              </div>
+
+              <ng-container *ngIf="errors['backend'] as backendMessages">
+                <div class="field-error" *ngFor="let m of backendMessages">
+                  {{ m }}
+                </div>
+              </ng-container>
+            </ng-container>
+
+            <div
+              class="field-hint"
+              [class.field-hint--saving]="saving"
+              [class.field-hint--saved]="showSaved"
+              [class.field-hint--error]="showSaveError"
+            >
               <ng-container *ngIf="saving">Saving…</ng-container>
+
               <ng-container *ngIf="!saving && showSaved">Saved</ng-container>
-              <ng-container *ngIf="!saving && showSaveError">Не удалось сохранить. Нажмите Enter ещё раз.</ng-container>
-              <ng-container *ngIf="!saving && !showSaved && !showSaveError">&nbsp;</ng-container>
+
+              <!-- backend message from API (form-level) -->
+              <ng-container *ngIf="!saving && showSaveError">
+                <ng-container
+                  *ngIf="saveBackendMessages.length > 0; else genericSaveError"
+                >
+                  <ng-container
+                    *ngIf="saveBackendMessages.length === 1; else manySaveErrors"
+                  >
+                    {{ saveBackendMessages[0] }}
+                  </ng-container>
+
+                  <ng-template #manySaveErrors>
+                    <span>Не удалось сохранить:</span>
+                    <ul class="field-error-list">
+                      <li *ngFor="let m of saveBackendMessages">{{ m }}</li>
+                    </ul>
+                  </ng-template>
+                </ng-container>
+
+                <ng-template #genericSaveError>Не удалось сохранить.</ng-template>
+              </ng-container>
+
+              <ng-container *ngIf="!saving && !showSaved && !showSaveError">
+                &nbsp;
+              </ng-container>
             </div>
 
             <span class="sr-only">Press Enter to save. Press Escape to cancel.</span>
@@ -44,10 +90,7 @@
             Это действие необратимо и удалит подключения и доступы.
           </div>
 
-          <div
-            class="delete-row__hint muted"
-            *ngIf="!canDelete(vm.totalWorkspaces)"
-          >
+          <div class="delete-row__hint muted" *ngIf="!canDelete(vm.totalWorkspaces)">
             Нельзя удалить последний workspace.
           </div>
         </div>
@@ -59,11 +102,7 @@
             (click)="openDeleteDialog(vm.totalWorkspaces)"
             [disabled]="saving || !canDelete(vm.totalWorkspaces)"
           >
-            <svg
-              class="icon"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 fill="currentColor"
                 d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 7h2v9h-2v-9zm4 0h2v9h-2v-9zM7 10h2v9H7v-9z"
@@ -85,26 +124,15 @@
           title="Workspace не найден"
           [description]="vm.accountState.error.message"
         >
-          <dp-button
-            variant="secondary"
-            (click)="goToWorkspaces()"
-          >
+          <dp-button variant="secondary" (click)="goToWorkspaces()">
             Back to workspaces
           </dp-button>
         </dp-error-state>
       </ng-container>
 
-      <ng-container
-        *ngIf="vm.accountState.status === 'ready' && !vm.accountState.data"
-      >
-        <dp-empty-state
-          title="Workspace не найден"
-          description="Выберите workspace снова."
-        >
-          <dp-button
-            variant="secondary"
-            (click)="goToWorkspaces()"
-          >
+      <ng-container *ngIf="vm.accountState.status === 'ready' && !vm.accountState.data">
+        <dp-empty-state title="Workspace не найден" description="Выберите workspace снова.">
+          <dp-button variant="secondary" (click)="goToWorkspaces()">
             Back to workspaces
           </dp-button>
         </dp-empty-state>

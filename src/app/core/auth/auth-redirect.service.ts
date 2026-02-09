@@ -4,6 +4,7 @@ import {APP_PATHS} from "../app-paths";
 import {AuthSessionService} from "./auth-session.service";
 import {AUTH_SESSION_FLAG} from "./auth-storage";
 import {AccountCatalogService, AccountContextService} from "../state";
+import {LastVisitedPathService} from "../routing/last-visited-path.service";
 
 
 @Injectable({providedIn: "root"})
@@ -11,7 +12,8 @@ export class AuthRedirectService {
   constructor(
     private readonly authSession: AuthSessionService,
     private readonly accountContext: AccountContextService,
-    private readonly accountCatalog: AccountCatalogService
+    private readonly accountCatalog: AccountCatalogService,
+    private readonly lastVisitedPathService: LastVisitedPathService
   ) {}
 
   login(returnUrl: string = APP_PATHS.workspaces): void {
@@ -24,6 +26,7 @@ export class AuthRedirectService {
     this.authSession.clear();
     sessionStorage.removeItem(AUTH_SESSION_FLAG);
     localStorage.removeItem("datapulse.accountId");
+    this.lastVisitedPathService.clear();
     this.accountContext.clear();
     this.accountCatalog.reset();
     window.location.assign(this.buildLogoutUrl());

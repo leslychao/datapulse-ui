@@ -3,6 +3,7 @@ import {CommonModule} from "@angular/common";
 import {ActivatedRoute, Router} from "@angular/router";
 
 import {AccountCatalogService, AccountContextService} from "../../core/state";
+import {LastVisitedPathService} from "../../core/routing/last-visited-path.service";
 import {take} from "rxjs";
 import {APP_PATHS, APP_ROUTE_SEGMENTS} from "../../core/app-paths";
 import {LoaderComponent} from "../../shared/ui";
@@ -20,7 +21,8 @@ export class AccountlessRedirectPageComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly accountContext: AccountContextService,
-    private readonly accountCatalog: AccountCatalogService
+    private readonly accountCatalog: AccountCatalogService,
+    private readonly lastVisitedPathService: LastVisitedPathService
   ) {}
 
   ngOnInit(): void {
@@ -37,7 +39,15 @@ export class AccountlessRedirectPageComponent implements OnInit {
 
         this.accountContext.setAccountId(matched.id);
         const requestedSegments = this.route.snapshot.url.map((segment) => segment.path);
-        const target = `/${APP_ROUTE_SEGMENTS.app}/${matched.id}/${requestedSegments.join("/")}`;
+        if (requestedSegments.length === 0) {
+          this.router.navigateByUrl(this.lastVisitedPathService.resolveHomePath(matched.id), {
+            replaceUrl: true
+          });
+          return;
+        }
+
+        const suffix = requestedSegments.join("/");
+        const target = `/${APP_ROUTE_SEGMENTS.app}/${matched.id}/${suffix}`;
         this.router.navigateByUrl(target, {replaceUrl: true});
       },
       error: () => {

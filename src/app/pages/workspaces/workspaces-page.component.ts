@@ -23,6 +23,7 @@ import {
 import {AccountContextService} from "../../core/state";
 import {accountIdFromRoute} from "../../core/routing/account-id.util";
 import {APP_PATHS} from "../../core/app-paths";
+import {LastVisitedPathService} from "../../core/routing/last-visited-path.service";
 import {
   ButtonComponent,
   ConfirmDialogComponent,
@@ -81,6 +82,7 @@ export class WorkspacesPageComponent {
   private readonly connectionsApi = inject(AccountConnectionsApiClient);
   private readonly membersApi = inject(AccountMembersApiClient);
   private readonly accountContext = inject(AccountContextService);
+  private readonly lastVisitedPathService = inject(LastVisitedPathService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toastService = inject(ToastService);
@@ -320,7 +322,7 @@ export class WorkspacesPageComponent {
 
   goToWorkspace(accountId: number): void {
     this.accountContext.setAccountId(accountId);
-    this.router.navigateByUrl(APP_PATHS.overview(accountId));
+    this.router.navigateByUrl(this.lastVisitedPathService.resolveAfterWorkspaceSwitch(accountId));
   }
 
   goToSettings(accountId: number): void {

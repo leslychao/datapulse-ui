@@ -68,6 +68,9 @@ export class WorkspaceSettingsPageComponent {
   showSaved = false;
   showSaveError = false;
 
+  // Всегда массив (не null) — чтобы strict template не ругался
+  saveBackendMessages: string[] = [];
+
   private readonly refresh$ = new Subject<void>();
   private readonly accountId$ = accountIdFromRoute(this.route);
 
@@ -133,6 +136,8 @@ export class WorkspaceSettingsPageComponent {
         this.form.markAsUntouched();
 
         this.showSaveError = false;
+        this.saveBackendMessages = [];
+        this.clearBackendErrors(this.form.controls.name);
         this.hideSavedNow();
         return;
       }
@@ -151,6 +156,21 @@ export class WorkspaceSettingsPageComponent {
       }
     })
   );
+
+  constructor() {
+    // При любом изменении имени — убираем backend-ошибки и хинт ошибки
+    this.form.controls.name.valueChanges
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe(() => {
+      if (this.saving) {
+        return;
+      }
+      this.showSaveError = false;
+      this.saveBackendMessages = [];
+      this.clearBackendErrors(this.form.controls.name);
+      this.cdr.markForCheck();
+    });
+  }
 
   canSave(accountId: number | null): boolean {
     return accountId != null && !this.saving && this.form.valid && !this.form.pristine;
@@ -176,6 +196,8 @@ export class WorkspaceSettingsPageComponent {
 
     this.saving = true;
     this.showSaveError = false;
+    this.saveBackendMessages = [];
+    this.clearBackendErrors(this.form.controls.name);
     this.hideSavedNow();
     this.form.disable({emitEvent: false});
 
@@ -189,11 +211,15 @@ export class WorkspaceSettingsPageComponent {
       }),
       tap({
         error: (error: ApiError) => {
+          this.applyBackendSaveErrors(error);
           this.showSaveError = true;
+
           this.toastService.error("Не удалось обновить workspace.", {
             details: error.details,
             correlationId: error.correlationId
           });
+
+          this.cdr.markForCheck();
         }
       }),
       finalize(() => {
@@ -216,6 +242,8 @@ export class WorkspaceSettingsPageComponent {
     this.form.markAsUntouched();
 
     this.showSaveError = false;
+    this.saveBackendMessages = [];
+    this.clearBackendErrors(this.form.controls.name);
     this.hideSavedNow();
     this.cdr.markForCheck();
   }
@@ -270,6 +298,62 @@ export class WorkspaceSettingsPageComponent {
 
   goToWorkspaces(): void {
     this.router.navigateByUrl(APP_PATHS.workspaces);
+  }
+
+  private applyBackendSaveErrors(error: ApiError): void {
+    const messages = this.extractBackendMessages(error);
+    this.saveBackendMessages = messages;
+
+    if (messages.length > 0) {
+      // Красим поле и выводим рядом с полем (как field-error)
+      this.mergeBackendErrors(this.form.controls.name, messages);
+      this.form.controls.name.markAsTouched();
+    }
+  }
+
+  private extractBackendMessages(error: ApiError): string[] {
+    // Backend по GenericControllerAdvice возвращает ErrorResponse { message }
+    const rawMessage = typeof error.message === "string" ? error.message.trim() : "";
+    if (!rawMessage) {
+      return [];
+    }
+
+    // Валидационные ошибки могут быть склеены через "; "
+    return rawMessage
+    .split(";")
+    .map((m) => m.trim())
+    .filter((m) => m.length > 0)
+    .filter((m, i, a) => a.indexOf(m) === i);
+  }
+
+  private mergeBackendErrors(control: FormControl<string>, messages: string[]): void {
+    const current = control.errors ?? {};
+    const existing = this.isStringArray(current["backend"]) ? current["backend"] : [];
+    const merged = [...existing, ...messages].filter((m, i, a) => a.indexOf(m) === i);
+
+    control.setErrors({
+      ...current,
+      backend: merged
+    });
+  }
+
+  private clearBackendErrors(control: FormControl<string>): void {
+    const errors = control.errors;
+    if (!errors || !("backend" in errors)) {
+      return;
+    }
+
+    const backendValue = errors["backend"];
+    if (!this.isStringArray(backendValue)) {
+      return;
+    }
+
+    const { backend, ...rest } = errors;
+    control.setErrors(Object.keys(rest).length ? rest : null);
+  }
+
+  private isStringArray(value: unknown): value is string[] {
+    return Array.isArray(value) && value.every((x) => typeof x === "string");
   }
 
   private showSavedWithTimeout(): void {

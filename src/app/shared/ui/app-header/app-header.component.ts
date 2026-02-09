@@ -1,5 +1,6 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   DestroyRef,
   ElementRef,
@@ -14,6 +15,7 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {AuthRedirectService, AuthSessionService, AuthUserService} from "../../../core/auth";
 import {APP_PATHS} from "../../../core/app-paths";
 import {AccountContextService} from "../../../core/state";
+import {LastVisitedPathService} from "../../../core/routing/last-visited-path.service";
 import {ButtonComponent} from "../button/button.component";
 
 type UserProfileLike = {
@@ -41,9 +43,11 @@ export class AppHeaderComponent {
   private readonly authSession = inject(AuthSessionService);
   private readonly authRedirect = inject(AuthRedirectService);
   private readonly accountContext = inject(AccountContextService);
+  private readonly lastVisitedPathService = inject(LastVisitedPathService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly userProfile$ = this.authUser.userProfile$;
 
@@ -57,7 +61,9 @@ export class AppHeaderComponent {
     }
 
     const accountId = this.accountContext.snapshot;
-    return accountId != null ? APP_PATHS.overview(accountId) : APP_PATHS.workspaces;
+    return accountId != null
+      ? this.lastVisitedPathService.resolveHomePath(accountId)
+      : APP_PATHS.workspaces;
   }
 
   get profilePath(): string {
@@ -91,6 +97,7 @@ export class AppHeaderComponent {
   }
 
   constructor() {
+    // 1) Закрываем меню при навигации
     this.router.events
     .pipe(
       filter((event) => event instanceof NavigationStart),
@@ -98,6 +105,13 @@ export class AppHeaderComponent {
     )
     .subscribe(() => {
       this.closeMenu();
+    });
+
+    // 2) Ключевой фикс: при смене workspace триггерим OnPush-перерисовку
+    this.accountContext.accountId$
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe(() => {
+      this.cdr.markForCheck();
     });
   }
 
