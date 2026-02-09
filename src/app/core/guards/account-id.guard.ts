@@ -34,7 +34,8 @@ export const accountIdGuard: CanActivateChildFn = (route) => {
         accountContext.clear();
         return router.parseUrl(APP_PATHS.workspaces);
       }
-      accountContext.setAccountId(accountId);
+      const matched = accounts.find((account) => account.id === accountId);
+      accountContext.setWorkspace({id: accountId, name: matched ? matched.name : null});
       return true;
     }),
     catchError(() => of(true))

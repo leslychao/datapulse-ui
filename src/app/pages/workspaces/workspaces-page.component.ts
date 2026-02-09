@@ -115,7 +115,7 @@ export class WorkspacesPageComponent {
         const currentId = this.accountContext.snapshot;
         const hasSelection = state.data.some((account) => account.id === currentId);
         if (!hasSelection && state.data.length > 0) {
-          this.accountContext.setAccountId(state.data[0].id);
+          this.accountContext.setWorkspace({id: state.data[0].id, name: state.data[0].name});
         }
         if (state.data.length === 0) {
           this.accountContext.clear();
@@ -153,7 +153,7 @@ export class WorkspacesPageComponent {
         return;
       }
       if (this.accountContext.snapshot !== selected.id) {
-        this.accountContext.setAccountId(selected.id);
+        this.accountContext.setWorkspace({id: selected.id, name: selected.name});
       }
       const routeParam = this.route.snapshot.paramMap.get("accountId");
       if (routeParam !== String(selected.id)) {
@@ -386,10 +386,11 @@ export class WorkspacesPageComponent {
     }
 
     const accountId = account.id;
+    const accountName = account.name;
 
     this.waitUntilAccountAccessible(accountId).subscribe(() => {
       if (this.accountContext.snapshot !== accountId) {
-        this.accountContext.setAccountId(accountId);
+        this.accountContext.setWorkspace({id: accountId, name: accountName});
       }
       this.router.navigateByUrl(this.lastVisitedPathService.resolveAfterWorkspaceSwitch(accountId));
     });

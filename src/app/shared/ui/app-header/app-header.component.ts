@@ -27,7 +27,8 @@ type UserProfileLike = {
 
 type WorkspaceTree = {
   full: string;
-  leaf: string;
+  leafId: string;
+  leafName: string | null;
 };
 
 @Component({
@@ -80,6 +81,11 @@ export class AppHeaderComponent {
     if (accountId == null) {
       return null;
     }
+    const name = this.accountContext.nameSnapshot;
+    const normalizedName = name?.trim();
+    if (normalizedName) {
+      return `Workspaces ▸ ${normalizedName} (#${accountId})`;
+    }
     return `Workspaces ▸ Workspace #${accountId}`;
   }
 
@@ -89,11 +95,14 @@ export class AppHeaderComponent {
       return null;
     }
 
-    const leaf = `Workspace #${accountId}`;
-    return {
-      full: `Workspaces ▸ ${leaf}`,
-      leaf
-    };
+    const name = this.accountContext.nameSnapshot;
+    const normalizedName = name?.trim();
+
+    const leafId = `#${accountId}`;
+    const leafName = normalizedName && normalizedName.length ? normalizedName : null;
+    const full = leafName ? `Workspaces ▸ ${leafName} (${leafId})` : `Workspaces ▸ Workspace ${leafId}`;
+
+    return {full, leafId, leafName};
   }
 
   constructor() {
@@ -107,6 +116,12 @@ export class AppHeaderComponent {
     });
 
     this.accountContext.accountId$
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe(() => {
+      this.cdr.markForCheck();
+    });
+
+    this.accountContext.accountName$
     .pipe(takeUntilDestroyed(this.destroyRef))
     .subscribe(() => {
       this.cdr.markForCheck();

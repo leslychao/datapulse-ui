@@ -58,7 +58,14 @@
                   aria-label="Current workspace"
                 >
                   <span class="workspace-tree__dot" aria-hidden="true"></span>
-                  <span class="workspace-tree__name">{{ tree.leaf }}</span>
+                  <span class="workspace-tree__name">
+                    <ng-container *ngIf="tree.leafName; else workspaceIdOnly">
+                      {{ tree.leafName }}
+                    </ng-container>
+                    <ng-template #workspaceIdOnly>
+                      Workspace {{ tree.leafId }}
+                    </ng-template>
+                  </span>
                 </div>
               </div>
             </div>

@@ -144,7 +144,7 @@
 
 .profile-menu__name {
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .profile-menu__email {
@@ -164,7 +164,7 @@
   padding: 6px 10px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--accent);
   text-decoration: none;
   background: transparent;
@@ -183,15 +183,17 @@
 }
 
 .workspace-tree__dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--accent);
+
+  box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.14);
 }
 
 .workspace-tree__name {
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 /* Menu items */
@@ -201,7 +203,7 @@
   text-decoration: none;
   color: var(--text);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .profile-menu__item:hover {

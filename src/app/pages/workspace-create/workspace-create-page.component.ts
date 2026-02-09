@@ -103,7 +103,7 @@ export class WorkspaceCreatePageComponent {
         )
       ),
       tap((account) => {
-        this.accountContext.setAccountId(account.id);
+        this.accountContext.setWorkspace({id: account.id, name: account.name});
         this.toastService.success("Workspace создан и выбран текущим.");
         this.router.navigateByUrl(APP_PATHS.workspaces);
       }),

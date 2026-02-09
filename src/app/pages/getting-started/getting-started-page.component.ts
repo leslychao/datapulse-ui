@@ -368,7 +368,7 @@ export class GettingStartedPageComponent implements OnInit {
         this.inviteSkipped = false;
         this.invitedMembers = [];
 
-        this.accountContext.setAccountId(account.id);
+        this.accountContext.setWorkspace({id: account.id, name: account.name});
         this.accountCatalog.upsertAccount(account);
 
         this.accountModalVisible = false;

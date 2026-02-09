@@ -21,7 +21,7 @@ export const gettingStartedGuard: CanMatchFn = () => {
       const currentAccountId = accountContext.snapshot;
       const matched = accounts.find((account) => account.id === currentAccountId) ?? accounts[0];
       if (matched) {
-        accountContext.setAccountId(matched.id);
+        accountContext.setWorkspace({id: matched.id, name: matched.name});
         return router.parseUrl(APP_PATHS.overview(matched.id));
       }
 

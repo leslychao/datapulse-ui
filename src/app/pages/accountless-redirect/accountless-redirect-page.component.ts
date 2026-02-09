@@ -37,7 +37,7 @@ export class AccountlessRedirectPageComponent implements OnInit {
         const contextAccountId = this.accountContext.snapshot;
         const matched = accounts.find((account) => account.id === contextAccountId) ?? accounts[0];
 
-        this.accountContext.setAccountId(matched.id);
+        this.accountContext.setWorkspace({id: matched.id, name: matched.name});
         const requestedSegments = this.route.snapshot.url.map((segment) => segment.path);
         if (requestedSegments.length === 0) {
           this.router.navigateByUrl(this.lastVisitedPathService.resolveHomePath(matched.id), {
