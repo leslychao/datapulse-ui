@@ -27,3 +27,41 @@
   font-size: 13px;
   color: var(--muted);
 }
+
+/* =========================
+   Header back action
+   ========================= */
+
+.profile-header-actions {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.profile-back-button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.profile-back-button:hover {
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text);
+}
+
+.profile-back-button:active {
+  background: rgba(15, 23, 42, 0.10);
+}
+
+.profile-back-button__icon {
+  width: 20px;
+  height: 20px;
+}

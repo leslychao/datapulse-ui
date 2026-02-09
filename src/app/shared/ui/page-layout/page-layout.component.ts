@@ -1,8 +1,10 @@
-import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, DestroyRef, Input, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {RouterModule} from "@angular/router";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {APP_PATHS} from "../../../core/app-paths";
+import {AccountContextService} from "../../../core/state";
 
 interface SidebarItem {
   label: string;
@@ -24,7 +26,10 @@ interface SidebarSection {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PageLayoutComponent {
-  private cachedAccountId: number | null = null;
+  private readonly accountContext = inject(AccountContextService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  private cachedEffectiveAccountId: number | null = null;
   private cachedSections: SidebarSection[] = this.buildSections(null);
 
   private _accountId: number | null = null;
@@ -32,10 +37,7 @@ export class PageLayoutComponent {
   @Input()
   set accountId(value: number | null) {
     this._accountId = value;
-    if (this.cachedAccountId !== value) {
-      this.cachedAccountId = value;
-      this.cachedSections = this.buildSections(value);
-    }
+    this.rebuildIfNeeded();
   }
 
   get accountId(): number | null {
@@ -49,6 +51,27 @@ export class PageLayoutComponent {
   trackBySection = (_: number, section: SidebarSection): string => section.label;
 
   trackByItem = (_: number, item: SidebarItem): string => item.testId;
+
+  constructor() {
+    // Если страница не передала accountId (например, /profile), используем текущий workspace из контекста
+    // и обновляем меню при смене текущего workspace.
+    this.accountContext.accountId$
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe(() => {
+      if (this._accountId == null) {
+        this.rebuildIfNeeded();
+      }
+    });
+  }
+
+  private rebuildIfNeeded(): void {
+    const effectiveAccountId = this._accountId ?? this.accountContext.snapshot;
+    if (this.cachedEffectiveAccountId === effectiveAccountId) {
+      return;
+    }
+    this.cachedEffectiveAccountId = effectiveAccountId;
+    this.cachedSections = this.buildSections(effectiveAccountId);
+  }
 
   private buildSections(accountId: number | null): SidebarSection[] {
     if (accountId == null) {

@@ -45,6 +45,10 @@ export class BreadcrumbBarComponent {
       return null;
     }
 
+    if (canonicalUrl === "/profile") {
+      return {items: [{label: "Profile"}]};
+    }
+
     if (canonicalUrl.startsWith("/workspaces")) {
       const segments = canonicalUrl.split("/").filter(Boolean);
       if (segments.length >= 2 && segments[1] === "create") {

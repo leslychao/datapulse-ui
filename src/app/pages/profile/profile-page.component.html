@@ -1,10 +1,25 @@
 <ng-container *ngIf="profile$ | async as profile; else loading">
   <dp-page-layout [accountId]="null">
     <dp-page-header title="Profile" subtitle="Ваши данные аккаунта.">
-      <div secondary-actions>
-        <dp-button variant="secondary" type="button" (click)="goBack()">
-          Back
-        </dp-button>
+      <div secondary-actions class="profile-header-actions">
+        <button
+          type="button"
+          class="profile-back-button"
+          aria-label="Back"
+          title="Back"
+          (click)="goBack()"
+        >
+          <svg class="profile-back-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M15 18l-6-6 6-6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
       </div>
     </dp-page-header>
 
