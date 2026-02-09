@@ -1,13 +1,28 @@
+/* Shell: full width, but content aligned to layout container */
 .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Inner container: same as page-layout max width & gutter */
+.app-header__inner {
+  width: 100%;
+  max-width: var(--layout-max-width);
+  margin: 0 auto;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 24px;
-  background: transparent;
-  border-bottom: 1px solid var(--line);
+
+  padding: 12px var(--layout-gutter);
 }
 
+/* Brand */
 .brand-link {
   display: inline-flex;
   align-items: center;
@@ -35,6 +50,7 @@
   letter-spacing: 0.1px;
 }
 
+/* Right area */
 .app-header__profile {
   display: flex;
   align-items: center;
@@ -134,7 +150,7 @@
   position: fixed;
   inset: 0;
   background: transparent;
-  z-index: 3;
+  z-index: 19;
 }
 
 /* Panel */
@@ -151,7 +167,7 @@
   max-width: calc(100vw - 24px);
 
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.14);
-  z-index: 4;
+  z-index: 20;
 
   overflow: hidden;
 }
@@ -163,7 +179,7 @@
   gap: 6px;
 }
 
-/* Meta header */
+/* Meta */
 .profile-menu__meta {
   padding: 10px 10px 8px;
   border-bottom: 1px solid var(--line);
@@ -187,14 +203,14 @@
   text-overflow: ellipsis;
 }
 
-/* Workspace tree block */
+/* Workspace tree */
 .profile-menu__workspace {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--line);
 }
 
-/* parent node — ghost button with hover fill */
+/* Parent: ghost button (no bg, no border), hover fill */
 .workspace-tree__parent {
   display: inline-flex;
   align-items: center;
@@ -210,12 +226,9 @@
 
   background: transparent;
   border: none;
-
   cursor: pointer;
 
-  transition:
-    background 120ms ease,
-    box-shadow 120ms ease;
+  transition: background 120ms ease, box-shadow 120ms ease;
 }
 
 .workspace-tree__parent:hover {
@@ -232,7 +245,7 @@
   box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.18);
 }
 
-/* child node (non-clickable) */
+/* Child: non-clickable node */
 .workspace-tree__child {
   position: relative;
 
@@ -250,7 +263,6 @@
   background: transparent;
 }
 
-/* connector line */
 .workspace-tree__child::before {
   content: "";
   position: absolute;
@@ -262,7 +274,6 @@
   background: var(--line);
 }
 
-/* node dot */
 .workspace-tree__dot {
   width: 8px;
   height: 8px;
@@ -270,7 +281,6 @@
   background: var(--accent);
 }
 
-/* workspace name */
 .workspace-tree__name {
   font-size: 13px;
   font-weight: 800;
@@ -319,7 +329,7 @@
   margin: 4px 6px;
 }
 
-/* Danger — спокойно по умолчанию, красный только на hover */
+/* Danger: calm by default */
 .profile-menu__item--danger {
   color: var(--text);
 }

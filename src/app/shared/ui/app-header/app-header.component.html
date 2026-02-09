@@ -1,102 +1,104 @@
 <header class="app-header">
-  <a class="brand-link" [routerLink]="homePath" aria-label="Datapulse — на главную">
-    <img class="brand-icon" src="assets/logo.svg" alt="" />
-    <span class="brand">Datapulse</span>
-  </a>
+  <div class="app-header__inner">
+    <a class="brand-link" [routerLink]="homePath" aria-label="Datapulse — на главную">
+      <img class="brand-icon" src="assets/logo.svg" alt="" />
+      <span class="brand">Datapulse</span>
+    </a>
 
-  <div class="app-header__profile" *ngIf="userProfile$ | async as profile; else loginTemplate">
-    <div class="profile-menu">
-      <button
-        type="button"
-        class="profile-trigger"
-        (click)="toggleMenu()"
-        [attr.aria-expanded]="isMenuOpen"
-        aria-haspopup="menu"
-      >
-        <span class="profile-avatar" aria-hidden="true">{{ getInitial(profile) }}</span>
+    <div class="app-header__profile" *ngIf="userProfile$ | async as profile; else loginTemplate">
+      <div class="profile-menu">
+        <button
+          type="button"
+          class="profile-trigger"
+          (click)="toggleMenu()"
+          [attr.aria-expanded]="isMenuOpen"
+          aria-haspopup="menu"
+        >
+          <span class="profile-avatar" aria-hidden="true">{{ getInitial(profile) }}</span>
 
-        <span class="profile-trigger__text">
-          <span class="profile-trigger__name">
-            {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
-          </span>
-
-          <span class="profile-trigger__workspace" *ngIf="currentWorkspaceBreadcrumb as crumb">
-            {{ crumb }}
-          </span>
-        </span>
-
-        <span class="profile-menu__caret" aria-hidden="true">▾</span>
-      </button>
-
-      <div class="profile-menu__backdrop" *ngIf="isMenuOpen" (click)="closeMenu()"></div>
-
-      <div class="profile-menu__panel" *ngIf="isMenuOpen" role="menu">
-        <div class="profile-menu__panel-content">
-          <div class="profile-menu__meta">
-            <div class="profile-menu__name">
+          <span class="profile-trigger__text">
+            <span class="profile-trigger__name">
               {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
-            </div>
+            </span>
 
-            <div class="profile-menu__email" *ngIf="profile.email">
-              {{ profile.email }}
-            </div>
+            <span class="profile-trigger__workspace" *ngIf="currentWorkspaceBreadcrumb as crumb">
+              {{ crumb }}
+            </span>
+          </span>
 
-            <div class="profile-menu__workspace" *ngIf="currentWorkspaceTree as tree">
-              <a
-                class="workspace-tree__parent"
-                [routerLink]="workspacesPath"
-                (click)="closeMenu()"
-                role="menuitem"
-              >
-                Workspaces
-              </a>
+          <span class="profile-menu__caret" aria-hidden="true">▾</span>
+        </button>
 
-              <div
-                class="workspace-tree__child"
-                [title]="tree.full"
-                aria-label="Current workspace"
-              >
-                <span class="workspace-tree__dot" aria-hidden="true"></span>
-                <span class="workspace-tree__name">{{ tree.leaf }}</span>
+        <div class="profile-menu__backdrop" *ngIf="isMenuOpen" (click)="closeMenu()"></div>
+
+        <div class="profile-menu__panel" *ngIf="isMenuOpen" role="menu">
+          <div class="profile-menu__panel-content">
+            <div class="profile-menu__meta">
+              <div class="profile-menu__name">
+                {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
+              </div>
+
+              <div class="profile-menu__email" *ngIf="profile.email">
+                {{ profile.email }}
+              </div>
+
+              <div class="profile-menu__workspace" *ngIf="currentWorkspaceTree as tree">
+                <a
+                  class="workspace-tree__parent"
+                  [routerLink]="workspacesPath"
+                  (click)="closeMenu()"
+                  role="menuitem"
+                >
+                  Workspaces
+                </a>
+
+                <div
+                  class="workspace-tree__child"
+                  [title]="tree.full"
+                  aria-label="Current workspace"
+                >
+                  <span class="workspace-tree__dot" aria-hidden="true"></span>
+                  <span class="workspace-tree__name">{{ tree.leaf }}</span>
+                </div>
               </div>
             </div>
+
+            <a
+              class="profile-menu__item"
+              [routerLink]="profilePath"
+              (click)="closeMenu()"
+              role="menuitem"
+            >
+              Profile
+            </a>
+
+            <div class="profile-menu__divider"></div>
+
+            <button
+              type="button"
+              class="profile-menu__item profile-menu__item--danger"
+              (click)="logout(); closeMenu()"
+              [disabled]="isLogoutRedirecting"
+              role="menuitem"
+            >
+              Logout
+            </button>
           </div>
-
-          <a
-            class="profile-menu__item"
-            [routerLink]="profilePath"
-            (click)="closeMenu()"
-            role="menuitem"
-          >
-            Profile
-          </a>
-
-          <div class="profile-menu__divider"></div>
-
-          <button
-            type="button"
-            class="profile-menu__item profile-menu__item--danger"
-            (click)="logout(); closeMenu()"
-            [disabled]="isLogoutRedirecting"
-            role="menuitem"
-          >
-            Logout
-          </button>
         </div>
       </div>
     </div>
-  </div>
 
-  <ng-template #loginTemplate>
-    <div class="app-header__profile">
-      <dp-button
-        type="button"
-        variant="secondary"
-        (click)="login()"
-        [disabled]="isLoginRedirecting"
-      >
-        Войти
-      </dp-button>
-    </div>
-  </ng-template>
+    <ng-template #loginTemplate>
+      <div class="app-header__profile">
+        <dp-button
+          type="button"
+          variant="secondary"
+          (click)="login()"
+          [disabled]="isLoginRedirecting"
+        >
+          Войти
+        </dp-button>
+      </div>
+    </ng-template>
+  </div>
 </header>
