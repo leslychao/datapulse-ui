@@ -2,7 +2,7 @@
   <dp-page-layout [accountId]="vm.accountId">
     <dp-page-header
       title="Monitoring"
-      subtitle="Состояние синхронизаций и актуальность данных по подключениям."
+      subtitle="Состояние подключений и управление синхронизациями."
     >
       <div secondary-actions>
         <dp-button variant="secondary" (click)="refresh()">Refresh</dp-button>
@@ -29,42 +29,48 @@
         <dp-table *ngIf="vm.state.data.length; else emptyState">
           <table>
             <thead>
-              <tr>
-                <th>Connection</th>
-                <th>Status</th>
-                <th>Last sync</th>
-                <th>Freshness</th>
-                <th>Action</th>
-              </tr>
+            <tr>
+              <th>Connection</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
             </thead>
+
             <tbody>
-              <tr *ngFor="let connection of vm.state.data">
-                <td>
-                  <div class="cell-title">{{ connection.marketplace }}</div>
-                  <div class="cell-subtitle">ID: {{ connection.id }}</div>
-                </td>
-                <td>
-                  <div class="status-block">
-                    <div class="status-title">{{ statusLabel(connection) }}</div>
-                    <div class="status-desc">{{ statusDescription(connection) }}</div>
-                  </div>
-                </td>
-                <td>{{ connection.lastSyncAt ? (connection.lastSyncAt | date: 'short') : '—' }}</td>
-                <td>{{ freshnessLabel(connection) }}</td>
-                <td>
-                  <div class="actions">
-                    <dp-button size="sm" variant="secondary" (click)="openConnection(vm.accountId)">
-                      Fix connection
-                    </dp-button>
-                    <dp-button size="sm" variant="primary" (click)="retrySync(connection, vm.accountId)">
-                      Retry sync
-                    </dp-button>
-                  </div>
-                </td>
-              </tr>
+            <tr *ngFor="let connection of vm.state.data">
+              <td>
+                <div class="cell-title">{{ connection.marketplace }}</div>
+                <div class="cell-subtitle">ID: {{ connection.id }}</div>
+              </td>
+
+              <td>
+                <div class="status-block">
+                  <div class="status-title">{{ statusLabel(connection) }}</div>
+                  <div class="status-desc">{{ statusDescription(connection) }}</div>
+                </div>
+              </td>
+
+              <td>
+                <div class="actions">
+                  <dp-button size="sm" variant="secondary" (click)="openConnection(vm.accountId)">
+                    Fix connection
+                  </dp-button>
+
+                  <dp-button
+                    size="sm"
+                    variant="primary"
+                    (click)="runScenarioSync(vm.accountId)"
+                    [disabled]="!connection.active"
+                  >
+                    Run sync
+                  </dp-button>
+                </div>
+              </td>
+            </tr>
             </tbody>
           </table>
         </dp-table>
+
         <ng-template #emptyState>
           <dp-empty-state
             title="Нет подключений для мониторинга"

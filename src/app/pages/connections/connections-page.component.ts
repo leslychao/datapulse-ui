@@ -1,7 +1,6 @@
 // connections-page.component.ts
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
-import {HttpClient} from "@angular/common/http";
 import {ActivatedRoute} from "@angular/router";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {Subject, map, of, switchMap} from "rxjs";
@@ -12,7 +11,6 @@ import {AccountConnectionsApiClient, ApiError} from "../../core/api";
 import {
   AccountConnection,
   AccountConnectionCreateRequest,
-  AccountConnectionSyncStatus,
   AccountConnectionUpdateRequest,
   Marketplace
 } from "../../shared/models";
@@ -41,28 +39,7 @@ interface ConnectionsViewModel {
 }
 
 type WizardStep = "marketplace" | "credentials";
-
-type EtlEventCode =
-  | "WAREHOUSE_DICT"
-  | "CATEGORY_DICT"
-  | "TARIFF_DICT"
-  | "PRODUCT_DICT"
-  | "SALES_FACT"
-  | "INVENTORY_FACT"
-  | "FACT_FINANCE";
-
-type EtlDateMode = "LAST_DAYS";
-
-interface EtlScenarioRunEvent {
-  event: EtlEventCode;
-  dateMode: EtlDateMode;
-  lastDays: number;
-}
-
-interface EtlScenarioRunRequest {
-  accountId: number;
-  events: EtlScenarioRunEvent[];
-}
+type EditControlName = "token" | "clientId" | "apiKey";
 
 @Component({
   selector: "dp-connections-page",
@@ -89,20 +66,14 @@ interface EtlScenarioRunRequest {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConnectionsPageComponent {
-  readonly syncStatus = AccountConnectionSyncStatus;
-
   saving = false;
 
   wizardVisible = false;
   wizardStep: WizardStep = "marketplace";
   wizardError: string | null = null;
-  createdConnection: AccountConnection | null = null;
-
   isValidating = false;
 
   editVisible = false;
-  detailsVisible = false;
-  detailsExpanded = false;
 
   deleteDialogVisible = false;
   disableDialogVisible = false;
@@ -111,7 +82,6 @@ export class ConnectionsPageComponent {
   openActionMenuId: number | null = null;
 
   editingConnection: AccountConnection | null = null;
-  detailsConnection: AccountConnection | null = null;
 
   deletingConnection: AccountConnection | null = null;
   disablingConnection: AccountConnection | null = null;
@@ -119,15 +89,12 @@ export class ConnectionsPageComponent {
 
   private readonly route = inject(ActivatedRoute);
   private readonly connectionApi = inject(AccountConnectionsApiClient);
-  private readonly http = inject(HttpClient);
   private readonly toastService = inject(ToastService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly marketplaceOptions = Object.values(Marketplace);
-
-  private readonly syncRequestedConnectionIds = new Set<number>();
 
   readonly wizardForm: FormGroup<{
     marketplace: FormControl<Marketplace>;
@@ -231,10 +198,10 @@ export class ConnectionsPageComponent {
       clientId: "",
       apiKey: ""
     });
+
     this.applyCredentialValidators(this.wizardForm, Marketplace.Wildberries);
     this.wizardStep = "marketplace";
     this.wizardError = null;
-    this.createdConnection = null;
     this.isValidating = false;
     this.wizardVisible = true;
     this.cdr.markForCheck();
@@ -290,8 +257,7 @@ export class ConnectionsPageComponent {
     .create(accountId, request)
     .pipe(
       takeUntilDestroyed(this.destroyRef),
-      tap((connection) => {
-        this.createdConnection = connection;
+      tap(() => {
         this.toastService.success("Подключение создано.");
         this.wizardVisible = false;
         this.refresh$.next();
@@ -312,12 +278,7 @@ export class ConnectionsPageComponent {
 
   openEditModal(connection: AccountConnection): void {
     this.editingConnection = connection;
-    this.editForm.reset({
-      token: "",
-      clientId: "",
-      apiKey: ""
-    });
-    this.applyCredentialValidators(this.editForm, connection.marketplace, false);
+    this.resetEditFormHard();
     this.editVisible = true;
     this.cdr.markForCheck();
   }
@@ -325,28 +286,48 @@ export class ConnectionsPageComponent {
   closeEditModal(): void {
     this.editVisible = false;
     this.editingConnection = null;
+    this.resetEditFormHard();
     this.cdr.markForCheck();
   }
 
+  clearEditControl(controlName: EditControlName): void {
+    const control = this.editForm.controls[controlName];
+    control.setValue("");
+    control.markAsPristine();
+    control.markAsUntouched();
+    control.updateValueAndValidity();
+    this.cdr.markForCheck();
+  }
+
+  private resetEditFormHard(): void {
+    this.editForm.reset({
+      token: "",
+      clientId: "",
+      apiKey: ""
+    });
+
+    this.editForm.markAsPristine();
+    this.editForm.markAsUntouched();
+
+    this.editForm.controls.token.updateValueAndValidity();
+    this.editForm.controls.clientId.updateValueAndValidity();
+    this.editForm.controls.apiKey.updateValueAndValidity();
+  }
+
   submitEdit(): void {
-    if (!this.editingConnection || this.editForm.invalid || this.saving) {
-      this.editForm.markAllAsTouched();
-      this.cdr.markForCheck();
+    if (!this.editingConnection || this.saving) {
       return;
     }
+
     const accountId = this.getAccountId();
     if (accountId == null) {
       return;
     }
 
-    const {token, clientId, apiKey} = this.editForm.getRawValue();
-    const request: AccountConnectionUpdateRequest = {
-      marketplace: this.editingConnection.marketplace,
-      credentials:
-        this.editingConnection.marketplace === Marketplace.Wildberries
-          ? {token}
-          : {clientId, apiKey}
-    };
+    const request = this.buildEditUpdateRequest(this.editingConnection);
+    if (request == null) {
+      return;
+    }
 
     this.saving = true;
     this.cdr.markForCheck();
@@ -376,23 +357,44 @@ export class ConnectionsPageComponent {
     .subscribe();
   }
 
-  openDetails(connection: AccountConnection): void {
-    this.detailsConnection = connection;
-    this.detailsVisible = true;
-    this.detailsExpanded = false;
-    this.cdr.markForCheck();
+  private buildEditUpdateRequest(connection: AccountConnection): AccountConnectionUpdateRequest | null {
+    const token = this.trimToNull(this.editForm.controls.token.value);
+    const clientId = this.trimToNull(this.editForm.controls.clientId.value);
+    const apiKey = this.trimToNull(this.editForm.controls.apiKey.value);
+
+    if (connection.marketplace === Marketplace.Wildberries) {
+      if (token == null) {
+        this.toastService.info("Нечего обновлять.");
+        return null;
+      }
+      return {
+        marketplace: connection.marketplace,
+        credentials: {token}
+      };
+    }
+
+    const hasClientId = clientId != null;
+    const hasApiKey = apiKey != null;
+
+    if (!hasClientId && !hasApiKey) {
+      this.toastService.info("Нечего обновлять.");
+      return null;
+    }
+
+    if (hasClientId !== hasApiKey) {
+      this.toastService.error("Для Ozon заполните Client ID и API Key.");
+      return null;
+    }
+
+    return {
+      marketplace: connection.marketplace,
+      credentials: {clientId: clientId as string, apiKey: apiKey as string}
+    };
   }
 
-  closeDetails(): void {
-    this.detailsVisible = false;
-    this.detailsConnection = null;
-    this.detailsExpanded = false;
-    this.cdr.markForCheck();
-  }
-
-  toggleDetails(): void {
-    this.detailsExpanded = !this.detailsExpanded;
-    this.cdr.markForCheck();
+  private trimToNull(value: string): string | null {
+    const trimmed = value.trim();
+    return trimmed.length ? trimmed : null;
   }
 
   requestDelete(connection: AccountConnection): void {
@@ -411,6 +413,7 @@ export class ConnectionsPageComponent {
     if (!this.deletingConnection || this.saving) {
       return;
     }
+
     const accountId = this.getAccountId();
     if (accountId == null) {
       return;
@@ -460,6 +463,7 @@ export class ConnectionsPageComponent {
     if (!this.disablingConnection || this.saving) {
       return;
     }
+
     const accountId = this.getAccountId();
     if (accountId == null) {
       return;
@@ -513,6 +517,7 @@ export class ConnectionsPageComponent {
     if (!this.enablingConnection || this.saving) {
       return;
     }
+
     const accountId = this.getAccountId();
     if (accountId == null) {
       return;
@@ -550,113 +555,12 @@ export class ConnectionsPageComponent {
     .subscribe();
   }
 
-  requestRunSync(connection: AccountConnection): void {
-    if (!this.canRunSync(connection)) {
-      return;
-    }
-    this.syncRequestedConnectionIds.add(connection.id);
-    this.cdr.markForCheck();
-    this.runEtlScenario();
-  }
-
-  canRunSync(connection: AccountConnection): boolean {
-    if (this.saving) {
-      return false;
-    }
-    if (!connection.active) {
-      return false;
-    }
-    if (this.syncRequestedConnectionIds.has(connection.id)) {
-      return false;
-    }
-    return true;
-  }
-
-  private runEtlScenario(): void {
-    const accountId = this.getAccountId();
-    if (accountId == null) {
-      this.syncRequestedConnectionIds.clear();
-      this.cdr.markForCheck();
-      return;
-    }
-
-    const request: EtlScenarioRunRequest = {
-      accountId,
-      events: [
-        {event: "WAREHOUSE_DICT", dateMode: "LAST_DAYS", lastDays: 30},
-        {event: "CATEGORY_DICT", dateMode: "LAST_DAYS", lastDays: 30},
-        {event: "TARIFF_DICT", dateMode: "LAST_DAYS", lastDays: 30},
-        {event: "PRODUCT_DICT", dateMode: "LAST_DAYS", lastDays: 7},
-        {event: "SALES_FACT", dateMode: "LAST_DAYS", lastDays: 7},
-        {event: "INVENTORY_FACT", dateMode: "LAST_DAYS", lastDays: 7},
-        {event: "FACT_FINANCE", dateMode: "LAST_DAYS", lastDays: 7}
-      ]
-    };
-
-    this.saving = true;
-    this.cdr.markForCheck();
-
-    this.http
-    .post<void>("/api/etl/scenario/run", request)
-    .pipe(
-      takeUntilDestroyed(this.destroyRef),
-      tap(() => {
-        this.toastService.success("Синхронизация запущена.");
-        this.refresh$.next();
-      }),
-      tap({
-        error: () => {
-          this.toastService.error("Не удалось запустить синхронизацию.");
-        }
-      }),
-      finalize(() => {
-        this.saving = false;
-        this.syncRequestedConnectionIds.clear();
-        this.cdr.markForCheck();
-      })
-    )
-    .subscribe();
-  }
-
   getStatusLabel(connection: AccountConnection): string {
-    if (!connection.active) {
-      return "Disabled";
-    }
-    if (connection.lastSyncStatus === AccountConnectionSyncStatus.Failed) {
-      return "Error";
-    }
-    if (!connection.lastSyncAt) {
-      return "Not synced yet";
-    }
-    return "Connected";
+    return connection.active ? "Enabled" : "Disabled";
   }
 
   getStatusClass(connection: AccountConnection): string {
-    if (!connection.active) {
-      return "status-pill is-disabled";
-    }
-    if (connection.lastSyncStatus === AccountConnectionSyncStatus.Failed) {
-      return "status-pill is-error";
-    }
-    if (!connection.lastSyncAt) {
-      return "status-pill is-syncing";
-    }
-    return "status-pill";
-  }
-
-  getFreshness(connection: AccountConnection): string {
-    if (!connection.lastSyncAt) {
-      return "No sync yet";
-    }
-    const last = new Date(connection.lastSyncAt).getTime();
-    const hours = Math.floor((Date.now() - last) / 3600000);
-    if (hours < 6) {
-      return "Fresh";
-    }
-    if (hours < 24) {
-      return `Updated ${hours}h ago`;
-    }
-    return "Stale";
+    return connection.active ? "status-pill" : "status-pill is-disabled";
   }
 
   filteredConnections(connections: AccountConnection[]): AccountConnection[] {

@@ -12,7 +12,7 @@ import {
   EtlScenarioApi
 } from "../../core/api";
 import {AccountCatalogService, AccountContextService} from "../../core/state";
-import {AccountConnection, AccountConnectionSyncStatus, Marketplace} from "../../shared/models";
+import {AccountConnection, Marketplace} from "../../shared/models";
 import {GettingStartedPageComponent} from "./getting-started-page.component";
 
 describe("GettingStartedPageComponent", () => {
@@ -50,8 +50,6 @@ describe("GettingStartedPageComponent", () => {
       accountId: 11,
       marketplace: Marketplace.Wildberries,
       active: true,
-      lastSyncAt: "",
-      lastSyncStatus: AccountConnectionSyncStatus.New,
       createdAt: "",
       updatedAt: "",
       maskedCredentials: ""
@@ -59,6 +57,8 @@ describe("GettingStartedPageComponent", () => {
 
     component.accountId = 11;
     component.connections = [connection];
+
+    component.inviteSkipped = true;
 
     component.startSync();
 
@@ -77,8 +77,6 @@ describe("GettingStartedPageComponent", () => {
       accountId: 12,
       marketplace: Marketplace.Wildberries,
       active: true,
-      lastSyncAt: "",
-      lastSyncStatus: AccountConnectionSyncStatus.New,
       createdAt: "",
       updatedAt: "",
       maskedCredentials: ""
@@ -86,6 +84,8 @@ describe("GettingStartedPageComponent", () => {
 
     component.accountId = 12;
     component.connections = [connection];
+
+    component.inviteSkipped = true;
 
     component.startSync();
 

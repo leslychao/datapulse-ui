@@ -7,9 +7,9 @@
     >
     </dp-page-header>
 
-    <section class="card">
+    <section class="card connections-card">
       <dp-table-toolbar>
-        <div filters>
+        <div filters class="toolbar">
           <dp-form-field label="Marketplace">
             <dp-select [formControl]="marketplaceFilterControl">
               <option value="">All marketplaces</option>
@@ -36,32 +36,32 @@
 
       <ng-container *ngIf="vm.state.status === 'ready'">
         <dp-table *ngIf="filteredConnections(vm.state.data).length; else emptyState">
-          <table>
+          <table class="connections-table">
             <thead>
             <tr>
               <th>
                 <div class="th-inner">Connection</div>
               </th>
 
-              <th>
+              <th class="th-status">
                 <div class="th-inner">Status</div>
               </th>
 
-              <th>
-                <div class="th-inner">Last sync</div>
+              <th class="th-date">
+                <div class="th-inner">Created at</div>
               </th>
 
-              <th>
-                <div class="th-inner">Freshness</div>
+              <th class="th-date">
+                <div class="th-inner">Updated at</div>
               </th>
 
               <th class="th-actions">
-                <div class="th-inner">
-                  <span>Actions</span>
+                <div class="th-inner th-inner--actions">
+                  <span class="th-actions__label">Actions</span>
 
                   <button
                     type="button"
-                    class="dp-icon-btn dp-icon-btn--accent"
+                    class="dp-icon-btn dp-icon-btn--accent dp-icon-btn--plus"
                     aria-label="Create connection"
                     title="Create connection"
                     [disabled]="saving"
@@ -85,20 +85,25 @@
                 <span [class]="getStatusClass(connection)">{{ getStatusLabel(connection) }}</span>
               </td>
 
-              <td>{{ connection.lastSyncAt ? (connection.lastSyncAt | date: 'short') : '—' }}</td>
+              <td class="td-date">
+                <span class="cell-date">{{ connection.createdAt | date: 'short' }}</span>
+              </td>
 
-              <td>{{ getFreshness(connection) }}</td>
+              <td class="td-date">
+                <span class="cell-date" *ngIf="connection.updatedAt; else noUpdatedAt">
+                  {{ connection.updatedAt | date: 'short' }}
+                </span>
+                <ng-template #noUpdatedAt>
+                  <span class="cell-date cell-date--empty">—</span>
+                </ng-template>
+              </td>
 
               <td class="td-actions">
                 <div class="actions">
-                  <dp-button size="sm" variant="link" (click)="openDetails(connection)">
-                    View details
-                  </dp-button>
-
                   <div class="row-menu">
                     <button
                       type="button"
-                      class="dp-icon-btn"
+                      class="dp-icon-btn dp-icon-btn--ghost"
                       aria-label="More actions"
                       title="More"
                       [disabled]="saving"
@@ -122,15 +127,6 @@
                         Edit
                       </button>
 
-                      <button
-                        type="button"
-                        class="row-menu__item"
-                        (click)="requestRunSync(connection); closeActionMenu()"
-                        [disabled]="!canRunSync(connection)"
-                      >
-                        Run sync
-                      </button>
-
                       <div class="row-menu__divider"></div>
 
                       <button
@@ -151,6 +147,8 @@
                           Enable
                         </button>
                       </ng-template>
+
+                      <div class="row-menu__divider"></div>
 
                       <button
                         type="button"
@@ -179,6 +177,7 @@
       </ng-container>
     </section>
 
+    <!-- Create wizard -->
     <dp-modal [visible]="wizardVisible" (close)="closeWizard()">
       <div class="modal-content">
         <div class="wizard-header">
@@ -198,7 +197,7 @@
           </div>
 
           <div *ngIf="wizardStep === 'credentials'" class="wizard-step">
-            <p class="muted">Введите credentials. Мы проверим доступ перед запуском.</p>
+            <p class="muted">Введите credentials. Мы проверим доступ перед созданием подключения.</p>
 
             <ng-container *ngIf="wizardIsWildberries; else ozonCredentials">
               <dp-form-field
@@ -206,16 +205,34 @@
                 [required]="true"
                 hint="Где взять: WB seller → API access."
               >
-                <dp-input type="password" formControlName="token" [disabled]="isValidating"></dp-input>
+                <dp-input
+                  name="wizard-wb-token"
+                  type="password"
+                  formControlName="token"
+                  [disabled]="isValidating"
+                  [attr.autocomplete]="'new-password'"
+                ></dp-input>
               </dp-form-field>
             </ng-container>
 
             <ng-template #ozonCredentials>
               <dp-form-field label="Client ID" [required]="true" hint="Ozon → API keys.">
-                <dp-input formControlName="clientId" [disabled]="isValidating"></dp-input>
+                <dp-input
+                  name="wizard-ozon-clientId"
+                  formControlName="clientId"
+                  [disabled]="isValidating"
+                  [attr.autocomplete]="'off'"
+                ></dp-input>
               </dp-form-field>
+
               <dp-form-field label="API Key" [required]="true">
-                <dp-input type="password" formControlName="apiKey" [disabled]="isValidating"></dp-input>
+                <dp-input
+                  name="wizard-ozon-apiKey"
+                  type="password"
+                  formControlName="apiKey"
+                  [disabled]="isValidating"
+                  [attr.autocomplete]="'new-password'"
+                ></dp-input>
               </dp-form-field>
             </ng-template>
 
@@ -251,24 +268,46 @@
       </div>
     </dp-modal>
 
+    <!-- Edit -->
     <dp-modal [visible]="editVisible" (close)="closeEditModal()">
       <div class="modal-content">
         <h3>Edit connection</h3>
-        <p class="muted">Введите новые credentials для обновления подключения.</p>
+        <p class="muted">Поля пустые — значит значение не меняем. Обновим только то, что заполнено.</p>
 
         <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="form">
           <ng-container *ngIf="editIsWildberries; else editOzon">
-            <dp-form-field label="Token" [required]="true">
-              <dp-input type="password" formControlName="token"></dp-input>
+            <dp-form-field label="Token">
+              <dp-input
+                [name]="'edit-wb-token-' + (editingConnection?.id ?? 0)"
+                type="password"
+                formControlName="token"
+                placeholder="Leave empty to keep current"
+                (focus)="clearEditControl('token')"
+                [attr.autocomplete]="'new-password'"
+              ></dp-input>
             </dp-form-field>
           </ng-container>
 
           <ng-template #editOzon>
-            <dp-form-field label="Client ID" [required]="true">
-              <dp-input formControlName="clientId"></dp-input>
+            <dp-form-field label="Client ID">
+              <dp-input
+                [name]="'edit-ozon-clientId-' + (editingConnection?.id ?? 0)"
+                formControlName="clientId"
+                placeholder="Leave empty to keep current"
+                (focus)="clearEditControl('clientId')"
+                [attr.autocomplete]="'off'"
+              ></dp-input>
             </dp-form-field>
-            <dp-form-field label="API Key" [required]="true">
-              <dp-input type="password" formControlName="apiKey"></dp-input>
+
+            <dp-form-field label="API Key">
+              <dp-input
+                [name]="'edit-ozon-apiKey-' + (editingConnection?.id ?? 0)"
+                type="password"
+                formControlName="apiKey"
+                placeholder="Leave empty to keep current"
+                (focus)="clearEditControl('apiKey')"
+                [attr.autocomplete]="'new-password'"
+              ></dp-input>
             </dp-form-field>
           </ng-template>
 
@@ -282,52 +321,7 @@
       </div>
     </dp-modal>
 
-    <dp-modal [visible]="detailsVisible" (close)="closeDetails()">
-      <div class="modal-content" *ngIf="detailsConnection as connection">
-        <h3>Connection details</h3>
-
-        <div class="details-grid">
-          <div>
-            <div class="detail-label">Marketplace</div>
-            <div>{{ connection.marketplace }}</div>
-          </div>
-
-          <div>
-            <div class="detail-label">Status</div>
-            <div>{{ getStatusLabel(connection) }}</div>
-          </div>
-
-          <div>
-            <div class="detail-label">Last sync</div>
-            <div>{{ connection.lastSyncAt ? (connection.lastSyncAt | date: 'short') : '—' }}</div>
-          </div>
-        </div>
-
-        <div class="diagnostic" *ngIf="connection.lastSyncStatus === syncStatus.Failed">
-          <h4>Needs attention</h4>
-          <p class="muted">Проверьте credentials и повторите синхронизацию.</p>
-          <dp-button variant="secondary" (click)="openEditModal(connection)">
-            Re-check credentials
-          </dp-button>
-          <dp-button
-            variant="primary"
-            (click)="requestRunSync(connection)"
-            [disabled]="!canRunSync(connection)"
-          >
-            Retry sync
-          </dp-button>
-        </div>
-
-        <div class="details-toggle">
-          <dp-button variant="link" (click)="toggleDetails()">
-            {{ detailsExpanded ? "Hide details" : "Details" }}
-          </dp-button>
-        </div>
-
-        <pre class="details-meta" *ngIf="detailsExpanded">{{ connection | json }}</pre>
-      </div>
-    </dp-modal>
-
+    <!-- Confirm dialogs -->
     <dp-confirm-dialog
       [visible]="deleteDialogVisible"
       title="Delete connection?"

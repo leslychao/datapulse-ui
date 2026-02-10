@@ -64,8 +64,7 @@
   position: relative;
 }
 
-/* trigger — TEXT ONLY, NO HOVER */
-
+/* trigger — no hover background (as you requested) */
 .profile-trigger {
   display: inline-flex;
   align-items: center;
@@ -83,16 +82,13 @@
   font-weight: 700;
   line-height: 1;
 
-  /* ВАЖНО: никакого hover-перехода */
   transition: none;
 }
 
-/* hover убран полностью */
 .profile-trigger:hover {
   background: transparent;
 }
 
-/* accessibility — оставляем */
 .profile-trigger:focus-visible {
   outline: none;
   box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.18);
@@ -141,125 +137,91 @@
   border: 1px solid var(--line-strong);
   border-radius: 14px;
 
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
   z-index: 20;
 }
 
 .profile-menu__panel-content {
-  padding: 6px;
+  padding: 6px; /* было много — оставляем плотнее */
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px; /* плотнее, чтобы не было “пустоты” */
 }
 
 /* =========================
-   Meta
-   ========================= */
-
-.profile-menu__meta {
-  padding: 8px;
-  border-bottom: 1px solid var(--line);
-}
-
-.profile-menu__name {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.profile-menu__email {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-/* =========================
-   Workspace tree
-   ========================= */
-
-.profile-menu__workspace {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-}
-
-/* Workspaces — plain text */
-
-.workspace-tree__parent {
-  display: inline;
-  padding: 0;
-  margin: 0;
-
-  background: transparent;
-  border-radius: 0;
-
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.2;
-
-  color: var(--accent);
-  text-decoration: none;
-
-  cursor: pointer;
-}
-
-.workspace-tree__parent:hover {
-  background: transparent;
-}
-
-.workspace-tree__parent:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.18);
-  border-radius: 8px;
-}
-
-.workspace-tree__child {
-  margin-left: 10px;
-  margin-top: 4px;
-
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.workspace-tree__dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--accent);
-
-  box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.14);
-}
-
-.workspace-tree__name {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-/* =========================
-   Menu items
+   Menu items (unified)
    ========================= */
 
 .profile-menu__item {
-  padding: 9px 10px;
+  width: 100%;
+  text-align: left;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  padding: 10px 10px;
   border-radius: 10px;
+
+  background: transparent;
+  border: none;
 
   text-decoration: none;
   color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
+
+  cursor: pointer;
 }
 
 .profile-menu__item:hover {
   background: rgba(17, 24, 39, 0.06);
 }
 
+.profile-menu__item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.18);
+}
+
+.profile-menu__item-title {
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.profile-menu__item-subtitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--muted);
+}
+
+.profile-menu__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.14);
+}
+
 .profile-menu__divider {
   height: 1px;
   background: var(--line);
-  margin: 3px 6px;
+  margin: 4px 6px; /* компактно, без воздуха */
 }
 
 .profile-menu__item--danger:hover {
   background: var(--danger-bg);
   color: var(--danger-ink);
+}
+
+.profile-menu__item--danger:hover .profile-menu__item-title {
+  color: var(--danger-ink);
+}
+
+.profile-menu__item--danger:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }

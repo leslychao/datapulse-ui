@@ -3,20 +3,11 @@ export enum Marketplace {
   Ozon = "OZON"
 }
 
-export enum AccountConnectionSyncStatus {
-  New = "NEW",
-  Success = "SUCCESS",
-  NoData = "NO_DATA",
-  Failed = "FAILED"
-}
-
 export interface AccountConnectionResponse {
   id: number;
   accountId: number;
   marketplace: Marketplace;
   active: boolean;
-  lastSyncAt: string | null;
-  lastSyncStatus: AccountConnectionSyncStatus;
   createdAt: string;
   updatedAt: string;
   maskedCredentials: string | null;

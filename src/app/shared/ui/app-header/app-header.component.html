@@ -1,7 +1,7 @@
 <header class="app-header">
   <div class="app-header__inner app-container">
     <a class="brand-link" [routerLink]="homePath" aria-label="Datapulse — на главную">
-      <img class="brand-icon" src="assets/logo.svg" alt="DataPulse" />
+      <img class="brand-icon" src="assets/logo.svg" alt="DataPulse"/>
     </a>
 
     <div class="app-header__profile" *ngIf="userProfile$ | async as profile; else loginTemplate">
@@ -32,53 +32,27 @@
 
         <div class="profile-menu__panel" *ngIf="isMenuOpen" role="menu">
           <div class="profile-menu__panel-content">
-            <div class="profile-menu__meta">
-              <div class="profile-menu__name">
-                {{ profile.fullName || profile.username || profile.email || profile.keycloakSub }}
-              </div>
-
-              <div class="profile-menu__email" *ngIf="profile.email">
-                {{ profile.email }}
-              </div>
-
-              <div class="profile-menu__workspace" *ngIf="currentWorkspaceTree as tree">
-                <a
-                  class="workspace-tree__parent"
-                  [routerLink]="workspacesPath"
-                  (click)="closeMenu()"
-                  role="menuitem"
-                >
-                  Workspaces
-                </a>
-
-                <div
-                  class="workspace-tree__child"
-                  [title]="tree.full"
-                  aria-label="Current workspace"
-                >
-                  <span class="workspace-tree__dot" aria-hidden="true"></span>
-                  <span class="workspace-tree__name">
-                    <ng-container *ngIf="tree.leafName; else workspaceIdOnly">
-                      {{ tree.leafName }}
-                    </ng-container>
-                    <ng-template #workspaceIdOnly>
-                      Workspace {{ tree.leafId }}
-                    </ng-template>
-                  </span>
-                </div>
-              </div>
-            </div>
-
             <a
               class="profile-menu__item"
               [routerLink]="profilePath"
               (click)="closeMenu()"
               role="menuitem"
             >
-              Profile
+              <span class="profile-menu__item-title">Profile</span>
             </a>
 
-            <div class="profile-menu__divider"></div>
+            <a
+              class="profile-menu__item"
+              *ngIf="currentWorkspaceTree as tree"
+              [routerLink]="workspacesPath"
+              (click)="closeMenu()"
+              role="menuitem"
+            >
+              <span class="profile-menu__item-title">Workspaces</span>
+
+            </a>
+
+            <div class="profile-menu__divider" role="separator" aria-hidden="true"></div>
 
             <button
               type="button"
@@ -87,7 +61,7 @@
               [disabled]="isLogoutRedirecting"
               role="menuitem"
             >
-              Logout
+              <span class="profile-menu__item-title">Logout</span>
             </button>
           </div>
         </div>

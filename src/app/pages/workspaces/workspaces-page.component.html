@@ -29,7 +29,6 @@
               <th class="col-lifecycle"><div class="th-cell">Lifecycle</div></th>
               <th class="col-sources"><div class="th-cell">Data sources</div></th>
               <th class="col-members"><div class="th-cell">Members</div></th>
-              <th class="col-last-sync"><div class="th-cell">Last sync</div></th>
 
               <th class="col-actions th-actions">
                 <div class="th-actions__inner">
@@ -90,8 +89,6 @@
                         class="data-sources__chip"
                         *ngFor="let badge of getDataSourceBadges(details.connections)"
                         [class.is-ok]="badge.tone === 'ok'"
-                        [class.is-warning]="badge.tone === 'warning'"
-                        [class.is-error]="badge.tone === 'error'"
                         [class.is-muted]="badge.tone === 'muted'"
                       >
                         {{ badge.label }}
@@ -103,8 +100,6 @@
                           *ngFor="let connection of details.connections"
                         >
                           {{ connection.marketplace === 'WILDBERRIES' ? 'WB' : 'Ozon' }}
-                          •
-                          {{ getConnectionStatusLabel(connection.lastSyncStatus) }}
                         </div>
                       </div>
                     </div>
@@ -139,30 +134,6 @@
                 </ng-container>
 
                 <ng-template #loadingMembers>
-                  <span class="muted">—</span>
-                </ng-template>
-              </td>
-
-              <td class="col-last-sync">
-                <ng-container
-                  *ngIf="getDetailsForAccount(account.id, vm.detailsState) as details; else loadingSync"
-                >
-                  <ng-container *ngIf="getLastSyncSummary(details.connections) as summary">
-                    <ng-container *ngIf="summary.timestamp; else noSyncReason">
-                      <div class="last-sync">
-                        <span>{{ summary.timestamp | date: 'short' }}</span>
-                        <span class="dot">•</span>
-                        <span>{{ summary.statusLabel }}</span>
-                      </div>
-                    </ng-container>
-
-                    <ng-template #noSyncReason>
-                      <span class="muted">{{ summary.reason }}</span>
-                    </ng-template>
-                  </ng-container>
-                </ng-container>
-
-                <ng-template #loadingSync>
                   <span class="muted">—</span>
                 </ng-template>
               </td>

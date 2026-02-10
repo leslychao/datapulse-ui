@@ -1,12 +1,13 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute, Router} from "@angular/router";
+import {HttpClient} from "@angular/common/http";
 import {Subject, map, of, switchMap} from "rxjs";
 import {finalize, startWith, tap} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountConnectionsApiClient, ApiError} from "../../core/api";
-import {AccountConnection, AccountConnectionSyncStatus} from "../../shared/models";
+import {AccountConnection} from "../../shared/models";
 import {accountIdFromRoute} from "../../core/routing/account-id.util";
 import {APP_PATHS} from "../../core/app-paths";
 import {
@@ -25,6 +26,28 @@ import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
 interface MonitoringViewModel {
   accountId: number | null;
   state: LoadState<AccountConnection[], ApiError>;
+}
+
+type EtlEventCode =
+  | "WAREHOUSE_DICT"
+  | "CATEGORY_DICT"
+  | "TARIFF_DICT"
+  | "PRODUCT_DICT"
+  | "SALES_FACT"
+  | "INVENTORY_FACT"
+  | "FACT_FINANCE";
+
+type EtlDateMode = "LAST_DAYS";
+
+interface EtlScenarioRunEvent {
+  event: EtlEventCode;
+  dateMode: EtlDateMode;
+  lastDays: number;
+}
+
+interface EtlScenarioRunRequest {
+  accountId: number;
+  events: EtlScenarioRunEvent[];
 }
 
 @Component({
@@ -48,6 +71,7 @@ interface MonitoringViewModel {
 export class MonitoringPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
   private readonly connectionsApi = inject(AccountConnectionsApiClient);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -86,31 +110,45 @@ export class MonitoringPageComponent {
     this.refresh$.next();
   }
 
-  retrySync(connection: AccountConnection, accountId: number | null): void {
+  runScenarioSync(accountId: number | null): void {
     if (accountId == null) {
       return;
     }
-    this.connectionsApi
-      .update(accountId, connection.id, {active: true})
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.toastService.success("Повтор синхронизации запущен.");
-          this.refresh$.next();
-        }),
-        tap({
-          error: (error: ApiError) => {
-            this.toastService.error("Не удалось повторить синхронизацию.", {
-              details: error.details,
-              correlationId: error.correlationId
-            });
-          }
-        }),
-        finalize(() => {
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe();
+
+    const request: EtlScenarioRunRequest = {
+      accountId,
+      events: [
+        {event: "WAREHOUSE_DICT", dateMode: "LAST_DAYS", lastDays: 30},
+        {event: "CATEGORY_DICT", dateMode: "LAST_DAYS", lastDays: 30},
+        {event: "TARIFF_DICT", dateMode: "LAST_DAYS", lastDays: 30},
+        {event: "PRODUCT_DICT", dateMode: "LAST_DAYS", lastDays: 7},
+        {event: "SALES_FACT", dateMode: "LAST_DAYS", lastDays: 7},
+        {event: "INVENTORY_FACT", dateMode: "LAST_DAYS", lastDays: 7},
+        {event: "FACT_FINANCE", dateMode: "LAST_DAYS", lastDays: 7}
+      ]
+    };
+
+    this.http
+    .post<void>("/api/etl/scenario/run", request)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(() => {
+        this.toastService.success("Синхронизация запущена.");
+        this.refresh$.next();
+      }),
+      tap({
+        error: (error: ApiError) => {
+          this.toastService.error("Не удалось запустить синхронизацию.", {
+            details: error.details,
+            correlationId: error.correlationId
+          });
+        }
+      }),
+      finalize(() => {
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe();
   }
 
   openConnection(accountId: number | null): void {
@@ -121,43 +159,12 @@ export class MonitoringPageComponent {
   }
 
   statusLabel(connection: AccountConnection): string {
-    if (!connection.active) {
-      return "Disabled";
-    }
-    if (connection.lastSyncStatus === AccountConnectionSyncStatus.Failed) {
-      return "Needs attention";
-    }
-    if (connection.lastSyncStatus === AccountConnectionSyncStatus.New) {
-      return "Syncing";
-    }
-    return "Healthy";
+    return connection.active ? "Enabled" : "Disabled";
   }
 
   statusDescription(connection: AccountConnection): string {
-    if (!connection.active) {
-      return "Синхронизация остановлена.";
-    }
-    if (connection.lastSyncStatus === AccountConnectionSyncStatus.Failed) {
-      return "Ошибка синхронизации. Проверьте credentials.";
-    }
-    if (connection.lastSyncStatus === AccountConnectionSyncStatus.New) {
-      return "Идёт первичная синхронизация.";
-    }
-    return "Данные обновляются регулярно.";
-  }
-
-  freshnessLabel(connection: AccountConnection): string {
-    if (!connection.lastSyncAt) {
-      return "No sync yet";
-    }
-    const last = new Date(connection.lastSyncAt).getTime();
-    const hours = Math.floor((Date.now() - last) / 3600000);
-    if (hours < 6) {
-      return "Fresh";
-    }
-    if (hours < 24) {
-      return `Updated ${hours}h ago`;
-    }
-    return "Stale";
+    return connection.active
+      ? "Подключение активно. Запуск синхронизации доступен."
+      : "Подключение отключено. Включите его в Connections.";
   }
 }

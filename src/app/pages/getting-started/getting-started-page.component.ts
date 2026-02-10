@@ -25,7 +25,6 @@ import {
 } from "../../core/state";
 import {
   AccountConnection,
-  AccountConnectionSyncStatus,
   AccountMember,
   AccountMemberStatus,
   EtlScenarioEvent,
@@ -68,8 +67,6 @@ interface OnboardingFlowState {
   activeStepId: OnboardingStepId | null;
   isLocked: boolean;
 }
-
-const SYNC_SUCCESS = AccountConnectionSyncStatus.Success;
 
 const DEFAULT_ETL_EVENTS: EtlScenarioEvent[] = [
   {event: "WAREHOUSE_DICT", dateMode: "LAST_DAYS", lastDays: 30},
@@ -282,15 +279,15 @@ export class GettingStartedPageComponent implements OnInit {
   }
 
   /**
-   * ВАЖНО: New = “ещё не синхронизировали”, это НЕ “in progress”.
-   * Поэтому “Run first sync” должен быть доступен при New.
+   * Connection больше не хранит lastSync*.
+   * Готовность “sync уже был успешным” будет определяться через ETL Event Audit.
+   * До появления аудита считаем, что sync можно запускать, если выполнены шаги.
    */
   get canStartSync(): boolean {
     return (
       this.accountId != null &&
       this.isConnectionReady &&
       this.isInviteResolved &&
-      !this.hasSuccessfulSync(this.connections) &&
       !this.isProcessing
     );
   }
@@ -470,11 +467,6 @@ export class GettingStartedPageComponent implements OnInit {
     .subscribe();
   }
 
-  /**
-   * Должно:
-   * 1) вызвать EtlScenarioApi.run(request) согласно контракту,
-   * 2) после 200/202 — редирект на analytics overview.
-   */
   startSync(): void {
     if (this.accountId == null) {
       this.setStatusState("error", "Создайте workspace, чтобы запустить синхронизацию.");
@@ -505,7 +497,7 @@ export class GettingStartedPageComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef),
       tap((response: HttpResponse<unknown>) => {
         if (response.status === 200 || response.status === 202) {
-          this.setStatusState("success", "Sync started");
+          this.setStatusState("success", "Синхронизация запущена.");
           this.router.navigateByUrl(APP_PATHS.overview(this.accountId!), {replaceUrl: true});
           return;
         }
@@ -596,10 +588,6 @@ export class GettingStartedPageComponent implements OnInit {
     .subscribe();
   }
 
-  private hasSuccessfulSync(connections: AccountConnection[]): boolean {
-    return connections.some((connection) => connection.active && connection.lastSyncStatus === SYNC_SUCCESS);
-  }
-
   private buildScenarioRequest(accountId: number): EtlScenarioRequest {
     return {accountId, events: DEFAULT_ETL_EVENTS};
   }
@@ -616,7 +604,11 @@ export class GettingStartedPageComponent implements OnInit {
     const inviteWasSkipped = this.inviteSkipped;
     const inviteResolved = inviteDone || inviteWasSkipped;
 
-    const syncDone = this.hasSuccessfulSync(this.connections);
+    /**
+     * Без ETL Event Audit мы не можем честно определить “sync уже успешен”.
+     * Шаг будет считаться незавершённым до редиректа (после 200/202 редиректим на Overview).
+     */
+    const syncDone = false;
 
     const activeStepId: OnboardingStepId | null =
       !accountDone

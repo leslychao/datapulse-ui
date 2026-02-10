@@ -14,7 +14,6 @@ import {
 } from "../../core/api";
 import {
   AccountConnection,
-  AccountConnectionSyncStatus,
   AccountMember,
   AccountResponse,
   AccountUpdateRequest,
@@ -44,7 +43,7 @@ interface WorkspaceDetails {
 
 type WorkspaceDetailsByAccount = Record<number, WorkspaceDetails>;
 
-type BadgeTone = "ok" | "warning" | "error" | "muted";
+type BadgeTone = "ok" | "muted";
 
 interface DataSourceBadge {
   label: string;
@@ -330,10 +329,10 @@ export class WorkspacesPageComponent {
       }),
       tap({
         error: (error: ApiError) => {
-          this.toastService.error(shouldBeActive ? "Не удалось восстановить workspace." : "Не удалось архивировать workspace.", {
-            details: error.details,
-            correlationId: error.correlationId
-          });
+          this.toastService.error(
+            shouldBeActive ? "Не удалось восстановить workspace." : "Не удалось архивировать workspace.",
+            {details: error.details, correlationId: error.correlationId}
+          );
         }
       }),
       finalize(() => {
@@ -431,83 +430,11 @@ export class WorkspacesPageComponent {
     });
 
     return Array.from(grouped.entries()).map(([marketplace, items]) => {
-      const {label, tone} = this.getMarketplaceStatus(items);
       const prefix = marketplace === Marketplace.Wildberries ? "WB" : "Ozon";
+      const label = items.length ? "Connected" : "No sources";
+      const tone: BadgeTone = items.length ? "ok" : "muted";
       return {label: `${prefix}: ${label}`, tone};
     });
-  }
-
-  getConnectionStatusLabel(status: AccountConnectionSyncStatus): string {
-    switch (status) {
-      case AccountConnectionSyncStatus.Success:
-        return "OK";
-      case AccountConnectionSyncStatus.NoData:
-        return "No data";
-      case AccountConnectionSyncStatus.Failed:
-        return "Error";
-      default:
-        return "Not synced";
-    }
-  }
-
-  getMarketplaceStatus(connections: AccountConnection[]): DataSourceBadge {
-    if (connections.some((connection) => connection.lastSyncStatus === AccountConnectionSyncStatus.Failed)) {
-      return {label: "Error", tone: "error"};
-    }
-    if (connections.some((connection) => connection.lastSyncStatus === AccountConnectionSyncStatus.NoData)) {
-      return {label: "No data", tone: "warning"};
-    }
-    if (connections.some((connection) => connection.lastSyncStatus === AccountConnectionSyncStatus.New)) {
-      return {label: "Not synced", tone: "muted"};
-    }
-    return {label: "OK", tone: "ok"};
-  }
-
-  getIssuesCount(connections: AccountConnection[]): number {
-    return connections.filter((connection) =>
-      [AccountConnectionSyncStatus.Failed, AccountConnectionSyncStatus.NoData].includes(
-        connection.lastSyncStatus
-      )
-    ).length;
-  }
-
-  getLastSyncSummary(connections: AccountConnection[]): {
-    timestamp: string | null;
-    statusLabel: string | null;
-    reason: string;
-  } {
-    if (!connections.length) {
-      return {timestamp: null, statusLabel: null, reason: "No sources"};
-    }
-    const withSync = connections.filter((connection) => connection.lastSyncAt);
-    if (!withSync.length) {
-      if (connections.some((connection) => connection.lastSyncStatus === AccountConnectionSyncStatus.Failed)) {
-        return {timestamp: null, statusLabel: null, reason: "Sync error"};
-      }
-      if (connections.some((connection) => connection.lastSyncStatus === AccountConnectionSyncStatus.NoData)) {
-        return {timestamp: null, statusLabel: null, reason: "No data"};
-      }
-      return {timestamp: null, statusLabel: null, reason: "Not started"};
-    }
-    const latest = withSync.sort((a, b) => a.lastSyncAt!.localeCompare(b.lastSyncAt!)).at(-1)!;
-    return {
-      timestamp: latest.lastSyncAt,
-      statusLabel: this.getSyncStatusLabel(latest.lastSyncStatus),
-      reason: ""
-    };
-  }
-
-  getSyncStatusLabel(status: AccountConnectionSyncStatus): string {
-    switch (status) {
-      case AccountConnectionSyncStatus.Success:
-        return "Success";
-      case AccountConnectionSyncStatus.NoData:
-        return "No data";
-      case AccountConnectionSyncStatus.Failed:
-        return "Sync error";
-      default:
-        return "Not started";
-    }
   }
 
   getWorkspaceLabel(account: AccountResponse): string {
