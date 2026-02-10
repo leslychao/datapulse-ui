@@ -1,25 +1,102 @@
+<!-- invite-modal.component.html (или как у тебя называется шаблон) -->
+
 <dp-modal [visible]="visible" (close)="requestClose()">
   <div class="modal-content">
-    <h3>Invite teammate</h3>
+    <div class="modal-header">
+      <div class="modal-header__titles">
+        <h3>Пригласить в команду</h3>
+        <p class="modal-subtitle">
+          Укажите e-mail или ID профиля и роль. Можно добавить несколько приглашений сразу.
+        </p>
+      </div>
+    </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="form">
-      <dp-form-field label="Email" [required]="true">
-        <dp-input placeholder="name@company.com" formControlName="email"></dp-input>
-        <div class="field-error" *ngIf="form.controls.email.hasError('duplicate')">
-          Такой email уже добавлен.
-        </div>
-      </dp-form-field>
+      <div class="modal-body">
+        <div class="rows-toolbar">
+          <div class="rows-toolbar__meta">Приглашений: {{ invites.length }}</div>
 
-      <dp-form-field label="Role" [required]="true">
-        <dp-select formControlName="role">
-          <option *ngFor="let role of roleOptions" [value]="role">{{ role }}</option>
-        </dp-select>
-      </dp-form-field>
+          <dp-button
+            class="icon-action icon-action--success"
+            type="button"
+            variant="secondary"
+            size="sm"
+            (click)="addRow()"
+            [disabled]="saving"
+            aria-label="Добавить приглашение"
+            title="Добавить"
+          >
+            <span icon aria-hidden="true">＋</span>
+          </dp-button>
+        </div>
+
+        <div class="rows" formArrayName="invites">
+          <div
+            class="row"
+            *ngFor="let group of invites.controls; let index = index"
+            [formGroupName]="index"
+          >
+            <div class="row__user">
+              <dp-form-field label="Пользователь" [required]="true">
+                <dp-input placeholder="E-mail или ID профиля" formControlName="identifier"></dp-input>
+
+                <div
+                  class="field-hint"
+                  [class.field-hint--error]="isRowErrorVisible(index) && (rowErrorMessage(index) != null)"
+                >
+                  <ng-container
+                    *ngIf="isRowErrorVisible(index) && (rowErrorMessage(index) != null); else userHint"
+                  >
+                    {{ rowErrorMessage(index) }}
+                  </ng-container>
+
+                  <ng-template #userHint>
+                    Например: user&#64;company.com или 123456
+                  </ng-template>
+                </div>
+              </dp-form-field>
+            </div>
+
+            <div class="row__role">
+              <dp-form-field label="Доступ" [required]="true" class="role">
+                <div class="role-row">
+                  <dp-select class="role-row__select" formControlName="role">
+                    <option *ngFor="let role of roleOptions" [value]="role">
+                      {{ roleLabel(role) }}
+                    </option>
+                  </dp-select>
+
+                  <dp-button
+                    *ngIf="invites.length > 1"
+                    class="icon-action icon-action--danger role-row__remove"
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    (click)="removeRow(index)"
+                    [disabled]="saving"
+                    aria-label="Удалить приглашение"
+                    title="Удалить"
+                  >
+                    <span icon aria-hidden="true">×</span>
+                  </dp-button>
+                </div>
+
+                <div class="field-hint">
+                  {{ roleDescription(invites.at(index).value.role) }}
+                </div>
+              </dp-form-field>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="modal-actions">
-        <dp-button variant="secondary" type="button" (click)="requestClose()">Cancel</dp-button>
-        <dp-button variant="primary" type="submit" [disabled]="form.invalid || saving">
-          Send invite
+        <dp-button variant="secondary" type="button" (click)="requestClose()" [disabled]="saving">
+          Отмена
+        </dp-button>
+
+        <dp-button variant="primary" type="submit" [disabled]="saving">
+          {{ saving ? "Отправляем…" : "Отправить приглашения" }}
         </dp-button>
       </div>
     </form>

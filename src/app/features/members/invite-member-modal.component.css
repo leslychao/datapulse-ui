@@ -1,41 +1,113 @@
+/* invite-modal.component.css (или как у тебя называется файл стилей) */
+
+/* ===== layout ===== */
+
 .modal-content{
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 
-  /* было: min-width: min(520px, 90vw);  <-- ломает адаптив и вызывает overflow */
-  width: min(520px, calc(100vw - 32px));
+  /* IMPORTANT: ширину задаёт dp-modal контейнер, тут — 100% */
+  width: 100%;
   max-width: 100%;
   min-width: 0;
 
   box-sizing: border-box;
+  max-height: 80vh;
+
+  /* IMPORTANT: общий контейнер НЕ скроллится */
+  overflow: hidden;
 }
 
-/* чтобы заголовок/контент не распирал контейнер */
+.modal-header__titles{
+  min-width: 0;
+}
+
+.modal-subtitle{
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .modal-content h3{
   margin: 0;
   min-width: 0;
 }
 
 .form{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  min-width: 0;
+  min-height: 0;
+
+  /* IMPORTANT: форма растягивается по высоте, чтобы скролл был только в body */
+  flex: 1 1 auto;
+}
+
+/* ===== scroll only here (inputs area) ===== */
+
+.modal-body{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  min-width: 0;
+  min-height: 0;
+
+  /* IMPORTANT: скролл ТОЛЬКО в зоне инпутов */
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 4px;
+}
+
+/* ===== toolbar + rows ===== */
+
+.rows-toolbar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rows-toolbar__meta{
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rows{
   display: grid;
   gap: 12px;
   min-width: 0;
 }
 
-.modal-actions{
-  display: flex;
-  justify-content: flex-end;
+.row{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 240px);
+  gap: 12px;
+  align-items: start;
+  min-width: 0;
+}
+
+.role-row{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
   gap: 10px;
-  flex-wrap: wrap;     /* на очень узких экранах кнопки не вылезут */
+  align-items: center;
+  min-width: 0;
 }
 
-.field-error{
-  color: var(--danger);
-  font-size: 12px;
-  margin-top: 6px;
+.role-row__select{
+  min-width: 0;
+  width: 100%;
 }
 
-/* страховка: вложенные контролы должны уметь сжиматься */
+/* controls should be shrinkable */
 dp-form-field,
 dp-input,
 dp-select{
@@ -47,7 +119,111 @@ dp-select{
   width: 100%;
 }
 
-/* мобилка */
+/* ===== KILL ALL BUTTON STATES INSIDE THIS MODAL =====
+   hover/focus/active backgrounds, shadows, transforms — OFF
+   IMPORTANT: dp-button renders inner <button>, so we target it via ::ng-deep
+*/
+
+:host ::ng-deep dp-button button,
+:host ::ng-deep dp-button button:hover,
+:host ::ng-deep dp-button button:active,
+:host ::ng-deep dp-button button:focus,
+:host ::ng-deep dp-button button:focus-visible{
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+/* ===== icon buttons (add/remove) ===== */
+
+.icon-action{
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.icon-action:hover,
+.icon-action:active,
+.icon-action:focus,
+.icon-action:focus-visible{
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.icon-action span[icon]{
+  line-height: 1;
+}
+
+/* add: accent by icon size (not "fatter") */
+.icon-action--success{
+  border-color: var(--border, #e6e8ee);
+}
+
+.icon-action--success span[icon]{
+  color: var(--success, #22c55e);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* remove */
+.icon-action--danger{
+  border-color: var(--border, #e6e8ee);
+}
+
+.icon-action--danger span[icon]{
+  color: var(--danger, #ef4444);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* ===== footer ===== */
+
+.modal-actions{
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  /* IMPORTANT: футер НЕ sticky, не участвует в скролле */
+  flex: 0 0 auto;
+
+  padding-top: 12px;
+
+  background: var(--panel, #fff);
+
+  /* IMPORTANT: исключаем любой горизонтальный скролл в футере */
+  overflow: hidden;
+}
+
+/* ===== hints ===== */
+
+.field-hint{
+  min-height: 18px;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--muted);
+}
+
+.field-hint--error{
+  color: var(--danger);
+}
+
+/* ===== mobile ===== */
+
 @media (max-width: 600px){
   .modal-content{
     width: 100%;
@@ -60,4 +236,27 @@ dp-select{
   .modal-actions dp-button{
     width: 100%;
   }
+
+  .row{
+    grid-template-columns: 1fr;
+  }
+
+  .role-row{
+    grid-template-columns: minmax(0, 1fr) 32px;
+  }
+}
+
+/* =======================================================================
+   WIDEN dp-modal WITHOUT CHANGING BASE COMPONENT
+   dp-modal uses .dp-modal width: min(520px, 90vw) — override it locally here
+   ======================================================================= */
+
+:host ::ng-deep dp-modal .dp-modal{
+  width: min(760px, calc(100vw - 32px));
+  max-width: 100%;
+}
+
+:host ::ng-deep dp-modal .dp-modal-backdrop{
+  padding: 16px;
+  box-sizing: border-box;
 }

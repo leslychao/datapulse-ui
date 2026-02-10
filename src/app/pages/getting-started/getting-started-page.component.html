@@ -118,7 +118,8 @@
     [visible]="inviteModalVisible"
     [saving]="inviteSaving"
     [existingMembers]="existingMembers"
+    [results]="inviteResults"
     (close)="closeInviteModal()"
-    (submitInvite)="submitInvite($event)"
+    (submitInvites)="submitInvites($event)"
   ></dp-invite-member-modal>
 </div>

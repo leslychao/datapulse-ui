@@ -3,11 +3,16 @@ import {HttpResponse} from "@angular/common/http";
 import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewChild, inject} from "@angular/core";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {Router} from "@angular/router";
-import {catchError, finalize, of, tap} from "rxjs";
+import {Observable, catchError, finalize, from, map, mergeMap, of, tap, toArray} from "rxjs";
 
 import {AccountFormComponent} from "../../features/accounts/account-form.component";
 import {ConnectionFormComponent} from "../../features/connections";
-import {InviteMemberModalComponent, InviteMemberPayload} from "../../features/members";
+import {
+  InviteMemberModalComponent,
+  InviteMembersPayload,
+  InviteMemberRowPayload,
+  InviteRowResult
+} from "../../features/members";
 import {
   AccountConnectionsApiClient,
   AccountMembersApiClient,
@@ -116,6 +121,7 @@ export class GettingStartedPageComponent implements OnInit {
 
   syncError: ApiError | null = null;
   inviteSaving = false;
+  inviteResults: InviteRowResult[] = [];
   private invitedMembers: AccountMember[] = [];
 
   private readonly destroyRef = inject(DestroyRef);
@@ -328,6 +334,7 @@ export class GettingStartedPageComponent implements OnInit {
     if (!this.canInviteMembers() || this.isAnyModalOpen) {
       return;
     }
+    this.inviteResults = [];
     this.inviteModalVisible = true;
   }
 
@@ -335,6 +342,7 @@ export class GettingStartedPageComponent implements OnInit {
     if (this.inviteSaving) {
       return;
     }
+    this.inviteResults = [];
     this.inviteModalVisible = false;
   }
 
@@ -427,44 +435,80 @@ export class GettingStartedPageComponent implements OnInit {
     this.inviteCompleted = false;
   }
 
-  submitInvite(payload: InviteMemberPayload): void {
+  submitInvites(payload: InviteMembersPayload): void {
     if (this.accountId == null || this.inviteSaving) {
       return;
     }
 
+    const normalizedInvites = payload.invites.map((row) => this.normalizeInviteRow(row));
     this.inviteSaving = true;
 
-    const request = {
-      email: payload.email,
-      role: payload.role,
-      status: AccountMemberStatus.Invited
-    };
-
-    this.membersApi
-    .create(this.accountId, request)
+    from(normalizedInvites)
     .pipe(
+      // В некоторых версиях RxJS сигнатура mergeMap(project, resultSelector?, concurrent?)
+      // поэтому concurrency задаём третьим параметром, чтобы не ломать типизацию.
+      mergeMap((row) => this.sendSingleInvite(this.accountId!, row), undefined, 3),
+      toArray(),
       takeUntilDestroyed(this.destroyRef),
-      tap((member) => {
-        this.invitedMembers = [...this.invitedMembers, member];
+      tap((results) => {
+        this.inviteResults = results.filter((r) => r.status === "failed");
 
-        this.inviteCompleted = true;
-        this.inviteSkipped = false;
-        this.inviteModalVisible = false;
+        const okCount = results.filter((r) => r.status === "sent").length;
+        const failedCount = results.length - okCount;
 
-        this.toastService.success("Инвайт отправлен.");
-      }),
-      catchError((apiError: ApiError) => {
-        this.toastService.error("Не удалось отправить инвайт.", {
-          details: apiError.details,
-          correlationId: apiError.correlationId
-        });
-        return of(null);
+        if (failedCount === 0) {
+          this.inviteCompleted = true;
+          this.inviteSkipped = false;
+          this.inviteModalVisible = false;
+
+          this.toastService.success(`Invites sent: ${okCount}.`);
+          return;
+        }
+
+        this.toastService.error(`Sent ${okCount} of ${results.length}. Fix errors and retry.`);
       }),
       finalize(() => {
         this.inviteSaving = false;
       })
     )
     .subscribe();
+  }
+
+  private sendSingleInvite(accountId: number, row: InviteMemberRowPayload): Observable<InviteRowResult> {
+    const normalizedIdentifier = row.identifier.trim();
+    const isEmail = normalizedIdentifier.includes("@");
+
+    const request = {
+      role: row.role,
+      status: AccountMemberStatus.Invited,
+      ...(isEmail
+        ? {email: normalizedIdentifier.trim().toLowerCase()}
+        : {userId: Number(normalizedIdentifier)})
+    };
+
+    return this.membersApi
+    .create(accountId, request)
+    .pipe(
+      tap((member) => {
+        this.invitedMembers = [...this.invitedMembers, member];
+      }),
+      map(() => ({identifier: normalizedIdentifier, status: "sent" as const})),
+      catchError((apiError: ApiError) => {
+        return of({
+          identifier: normalizedIdentifier,
+          status: "failed" as const,
+          message: this.mapErrorMessage(apiError)
+        });
+      })
+    );
+  }
+
+  private normalizeInviteRow(row: InviteMemberRowPayload): InviteMemberRowPayload {
+    const identifier = row.identifier.trim();
+    if (identifier.includes("@")) {
+      return {identifier: identifier.toLowerCase(), role: row.role};
+    }
+    return {identifier, role: row.role};
   }
 
   startSync(): void {

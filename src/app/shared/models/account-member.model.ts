@@ -36,6 +36,7 @@ export type AccountMember = AccountMemberResponse;
 
 export interface AccountMemberCreateRequest {
   email?: string | null;
+  userId?: number | null;
   message?: string | null;
   role: AccountMemberRole;
   status: AccountMemberStatus;

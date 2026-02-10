@@ -9,8 +9,8 @@ import {
 import {CommonModule} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {FormBuilder, ReactiveFormsModule} from "@angular/forms";
-import {Observable, Subject, combineLatest, map, of, switchMap} from "rxjs";
-import {finalize, startWith, tap} from "rxjs/operators";
+import {Observable, Subject, combineLatest, from, map, of, switchMap, toArray} from "rxjs";
+import {catchError, finalize, mergeMap, startWith, tap} from "rxjs/operators";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 import {AccountMembersApiClient, ApiError} from "../../core/api";
@@ -35,7 +35,12 @@ import {
   SelectComponent,
   ToastService
 } from "../../shared/ui";
-import {InviteMemberModalComponent, InviteMemberPayload} from "../../features/members";
+import {
+  InviteMemberModalComponent,
+  InviteMemberRowPayload,
+  InviteMembersPayload,
+  InviteRowResult
+} from "../../features/members";
 import {LoadState, toLoadState} from "../../shared/operators/to-load-state";
 
 interface UsersViewModel {
@@ -78,6 +83,7 @@ export class UsersAccessPageComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   inviteVisible = false;
+  inviteResults: InviteRowResult[] = [];
   saving = false;
 
   confirmDialogVisible = false;
@@ -148,6 +154,7 @@ export class UsersAccessPageComponent {
 
   openInvite(): void {
     this.inviteVisible = true;
+    this.inviteResults = [];
   }
 
   closeInvite(): void {
@@ -155,36 +162,36 @@ export class UsersAccessPageComponent {
       return;
     }
     this.inviteVisible = false;
+    this.inviteResults = [];
   }
 
-  submitInvite(accountId: number | null, payload: InviteMemberPayload): void {
+  submitInvites(accountId: number | null, payload: InviteMembersPayload): void {
     if (accountId == null || this.saving) {
       return;
     }
 
-    const request: AccountMemberCreateRequest = {
-      email: payload.email,
-      role: payload.role,
-      status: AccountMemberStatus.Active
-    };
-
+    const invites = payload.invites.map((row) => this.normalizeRow(row));
     this.saving = true;
-    this.membersApi
-    .create(accountId, request)
+
+    from(invites)
     .pipe(
+      mergeMap((row) => this.sendSingleInvite(accountId, row), 3),
+      toArray(),
       takeUntilDestroyed(this.destroyRef),
-      tap(() => {
-        this.refresh$.next();
-        this.inviteVisible = false;
-        this.toastService.success("User added.");
-      }),
-      tap({
-        error: (error: ApiError) => {
-          this.toastService.error(this.mapErrorMessage(error, "Не удалось добавить пользователя."), {
-            details: error.details,
-            correlationId: error.correlationId
-          });
+      tap((results) => {
+        this.inviteResults = results.filter((r) => r.status === "failed");
+
+        const okCount = results.filter((r) => r.status === "sent").length;
+        const failedCount = results.length - okCount;
+
+        if (failedCount === 0) {
+          this.refresh$.next();
+          this.inviteVisible = false;
+          this.toastService.success(`Invites sent: ${okCount}.`);
+          return;
         }
+
+        this.toastService.error(`Sent ${okCount} of ${results.length}. Fix errors and retry.`);
       }),
       finalize(() => {
         this.saving = false;
@@ -192,6 +199,37 @@ export class UsersAccessPageComponent {
       })
     )
     .subscribe();
+  }
+
+  private sendSingleInvite(accountId: number, row: InviteMemberRowPayload): Observable<InviteRowResult> {
+    const normalizedIdentifier = row.identifier.trim();
+    const isEmail = normalizedIdentifier.includes("@");
+
+    const request: AccountMemberCreateRequest = {
+      role: row.role,
+      status: AccountMemberStatus.Invited,
+      ...(isEmail
+        ? {email: normalizedIdentifier.trim().toLowerCase()}
+        : {userId: Number(normalizedIdentifier)})
+    };
+
+    return this.membersApi
+    .create(accountId, request)
+    .pipe(
+      map(() => ({identifier: normalizedIdentifier, status: "sent" as const})),
+      catchError((error: ApiError) => {
+        const message = this.mapErrorMessage(error, "Не удалось отправить приглашение.");
+        return of({identifier: normalizedIdentifier, status: "failed" as const, message});
+      })
+    );
+  }
+
+  private normalizeRow(row: InviteMemberRowPayload): InviteMemberRowPayload {
+    const identifier = row.identifier.trim();
+    if (identifier.includes("@")) {
+      return {identifier: identifier.toLowerCase(), role: row.role};
+    }
+    return {identifier, role: row.role};
   }
 
   filteredMembers(members: AccountMember[]): AccountMember[] {
