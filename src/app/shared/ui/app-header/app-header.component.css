@@ -16,13 +16,12 @@
   justify-content: space-between;
   gap: 20px;
 
-  /* горизонтальные отступы задаёт app-container */
   padding-top: 14px;
   padding-bottom: 14px;
 }
 
 /* =========================
-   Brand (PRIMARY ANCHOR)
+   Brand
    ========================= */
 
 .brand-link {
@@ -37,12 +36,10 @@
   color: var(--text);
 }
 
-/* бренд — не кнопка */
 .brand-link:hover {
   background: none;
 }
 
-/* accessibility */
 .brand-link:focus-visible {
   outline: none;
   box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.18);
@@ -67,7 +64,7 @@
   position: relative;
 }
 
-/* trigger */
+/* trigger — TEXT ONLY, NO HOVER */
 
 .profile-trigger {
   display: inline-flex;
@@ -86,16 +83,18 @@
   font-weight: 700;
   line-height: 1;
 
-  transition: background 120ms ease;
+  /* ВАЖНО: никакого hover-перехода */
+  transition: none;
 }
 
+/* hover убран полностью */
 .profile-trigger:hover {
-  background: rgba(17, 24, 39, 0.06);
+  background: transparent;
 }
 
+/* accessibility — оставляем */
 .profile-trigger:focus-visible {
   outline: none;
-  background: rgba(42, 139, 242, 0.12);
   box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.18);
 }
 
@@ -154,7 +153,7 @@
 }
 
 /* =========================
-   Meta (user + workspace)
+   Meta
    ========================= */
 
 .profile-menu__meta {
@@ -183,7 +182,8 @@
   border-top: 1px solid var(--line);
 }
 
-/* Workspaces — чистый текст, не кнопка */
+/* Workspaces — plain text */
+
 .workspace-tree__parent {
   display: inline;
   padding: 0;
@@ -202,12 +202,10 @@
   cursor: pointer;
 }
 
-/* без ховера и заливки */
 .workspace-tree__parent:hover {
   background: transparent;
 }
 
-/* accessibility */
 .workspace-tree__parent:focus-visible {
   outline: none;
   box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.18);
