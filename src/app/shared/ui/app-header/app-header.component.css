@@ -1,4 +1,7 @@
-/* Header shell */
+/* =========================
+   Header shell
+   ========================= */
+
 .app-header {
   position: sticky;
   top: 0;
@@ -8,16 +11,14 @@
 }
 
 .app-header__inner {
-  width: 100%;
-  max-width: var(--layout-max-width);
-  margin: 0 auto;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
 
-  padding: 14px var(--layout-gutter);
+  /* горизонтальные отступы задаёт app-container */
+  padding-top: 14px;
+  padding-bottom: 14px;
 }
 
 /* =========================
@@ -29,14 +30,14 @@
   align-items: center;
   gap: 12px;
 
-  padding: 8px 12px;
+  padding: 0;
   border-radius: 14px;
 
   text-decoration: none;
   color: var(--text);
 }
 
-/* no hover — brand is not a button */
+/* бренд — не кнопка */
 .brand-link:hover {
   background: none;
 }
@@ -47,13 +48,8 @@
   box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.18);
 }
 
-/*
-  SVG contains:
-  - circular icon
-  - DataPulse wordmark
-*/
 .brand-icon {
-  height: 28px;   /* ⬅ ключевое изменение */
+  height: 28px;
   width: auto;
   display: block;
 }
@@ -71,7 +67,8 @@
   position: relative;
 }
 
-/* Profile trigger — intentionally smaller than brand */
+/* trigger */
+
 .profile-trigger {
   display: inline-flex;
   align-items: center;
@@ -121,14 +118,20 @@
   color: var(--muted);
 }
 
-/* Backdrop */
+/* =========================
+   Menu overlay
+   ========================= */
+
 .profile-menu__backdrop {
   position: fixed;
   inset: 0;
   z-index: 19;
 }
 
-/* Panel */
+/* =========================
+   Menu panel
+   ========================= */
+
 .profile-menu__panel {
   position: absolute;
   top: calc(100% + 8px);
@@ -150,7 +153,10 @@
   gap: 4px;
 }
 
-/* Meta */
+/* =========================
+   Meta (user + workspace)
+   ========================= */
+
 .profile-menu__meta {
   padding: 8px;
   border-bottom: 1px solid var(--line);
@@ -167,24 +173,45 @@
   margin-top: 2px;
 }
 
-/* Workspace tree */
+/* =========================
+   Workspace tree
+   ========================= */
+
 .profile-menu__workspace {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--line);
 }
 
+/* Workspaces — чистый текст, не кнопка */
 .workspace-tree__parent {
-  padding: 6px 10px;
-  border-radius: 999px;
+  display: inline;
+  padding: 0;
+  margin: 0;
+
+  background: transparent;
+  border-radius: 0;
+
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.2;
+
   color: var(--accent);
   text-decoration: none;
+
+  cursor: pointer;
 }
 
+/* без ховера и заливки */
 .workspace-tree__parent:hover {
-  background: rgba(42, 139, 242, 0.12);
+  background: transparent;
+}
+
+/* accessibility */
+.workspace-tree__parent:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(42, 139, 242, 0.18);
+  border-radius: 8px;
 }
 
 .workspace-tree__child {
@@ -210,7 +237,10 @@
   font-weight: 600;
 }
 
-/* Menu items */
+/* =========================
+   Menu items
+   ========================= */
+
 .profile-menu__item {
   padding: 9px 10px;
   border-radius: 10px;

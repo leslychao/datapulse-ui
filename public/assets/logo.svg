@@ -1,10 +1,18 @@
-<svg width="240" height="64" viewBox="0 0 240 64" fill="none"
-     xmlns="http://www.w3.org/2000/svg">
-
+<svg
+  width="246"
+  height="64"
+  viewBox="-6 0 246 64"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
   <!-- Icon -->
-  <circle cx="32" cy="32" r="30"
-          stroke="#2A8BF2"
-          stroke-width="4"/>
+  <circle
+    cx="32"
+    cy="32"
+    r="30"
+    stroke="#2A8BF2"
+    stroke-width="4"
+  />
 
   <path
     d="M14 34H22L26 24L32 44L38 30L42 34H50"
@@ -14,8 +22,8 @@
     stroke-linejoin="round"
   />
 
-  <circle cx="22" cy="34" r="3" fill="#2A8BF2"/>
-  <circle cx="42" cy="34" r="3" fill="#2A8BF2"/>
+  <circle cx="22" cy="34" r="3" fill="#2A8BF2" />
+  <circle cx="42" cy="34" r="3" fill="#2A8BF2" />
 
   <!-- Wordmark -->
   <text
@@ -25,7 +33,8 @@
     font-size="28"
     font-weight="600"
     font-family="Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif"
-    letter-spacing="0.2">
+    letter-spacing="0.2"
+  >
     DataPulse
   </text>
 </svg>

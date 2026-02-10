@@ -1,14 +1,16 @@
 <ng-container *ngIf="vm$ | async as vm">
   <nav class="breadcrumb-bar" aria-label="Current location">
-    <ol class="breadcrumb-bar__list">
-      <li
-        class="breadcrumb-bar__item"
-        *ngFor="let item of vm.items; let isLast = last"
-        [class.is-last]="isLast"
-      >
-        <span class="breadcrumb-bar__label">{{ item.label }}</span>
-        <span class="breadcrumb-bar__sep" *ngIf="!isLast" aria-hidden="true">▸</span>
-      </li>
-    </ol>
+    <div class="breadcrumb-bar__inner app-container">
+      <ol class="breadcrumb-bar__list">
+        <li
+          class="breadcrumb-bar__item"
+          *ngFor="let item of vm.items; let isLast = last"
+          [class.is-last]="isLast"
+        >
+          <span class="breadcrumb-bar__label">{{ item.label }}</span>
+          <span class="breadcrumb-bar__sep" *ngIf="!isLast" aria-hidden="true">▸</span>
+        </li>
+      </ol>
+    </div>
   </nav>
 </ng-container>

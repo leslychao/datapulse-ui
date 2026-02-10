@@ -1,14 +1,18 @@
 .breadcrumb-bar {
   width: 100%;
-  max-width: var(--layout-max-width);
-  margin: 0 auto;
-  padding: 8px var(--layout-gutter);
+  /* max-width и горизонтальные отступы задаёт .app-container */
+  padding: 8px 0;
 
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
 }
 
+.breadcrumb-bar__inner {
+  display: block;
+}
+
+/* 🔧 микро-смещение внутрь вправо, чтобы совпасть с левым краем контента */
 .breadcrumb-bar__list {
   list-style: none;
   margin: 0;
@@ -19,6 +23,9 @@
   gap: 6px;
 
   min-height: 18px;
+
+  /* ключевое */
+  padding-left: 6px; /* если нужно "чуть-чуть" — это обычно 8–12px */
 }
 
 .breadcrumb-bar__item {
