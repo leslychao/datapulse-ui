@@ -16,6 +16,8 @@ import {ControlValueAccessor, NG_VALUE_ACCESSOR} from "@angular/forms";
       [disabled]="disabled"
       [value]="value"
       (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+      (cut)="onCut($event)"
       (focus)="handleFocus($event)"
       (blur)="handleBlur()"
     />
@@ -67,6 +69,60 @@ export class InputComponent implements ControlValueAccessor {
     const target = event.target as HTMLInputElement;
     this.value = target.value;
     this.onChange(this.value);
+  }
+
+  onKeydown(event: KeyboardEvent): void {
+    if (this.disabled) {
+      return;
+    }
+
+    const isCutShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "x";
+    if (!isCutShortcut) {
+      return;
+    }
+
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) {
+      return;
+    }
+
+    const selectionStart = target.selectionStart ?? 0;
+    const selectionEnd = target.selectionEnd ?? 0;
+    if (selectionEnd <= selectionStart) {
+      return;
+    }
+
+    // Chrome может блокировать Ctrl+X для password-полей (в зависимости от настроек/расширений).
+    // Нам важно гарантировать именно удаление выделенного текста.
+    event.preventDefault();
+
+    const before = target.value.slice(0, selectionStart);
+    const after = target.value.slice(selectionEnd);
+    const nextValue = `${before}${after}`;
+
+    target.value = nextValue;
+    target.setSelectionRange(selectionStart, selectionStart);
+
+    this.value = nextValue;
+    this.onChange(nextValue);
+  }
+
+  onCut(event: ClipboardEvent): void {
+    if (this.disabled) {
+      return;
+    }
+
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) {
+      return;
+    }
+
+    // После cut браузер обновляет value синхронно/асинхронно в зависимости от окружения.
+    // Считываем значение в следующей микрозадаче и синхронизируем CVA.
+    queueMicrotask(() => {
+      this.value = target.value;
+      this.onChange(this.value);
+    });
   }
 
   handleFocus(event: FocusEvent): void {

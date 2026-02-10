@@ -74,6 +74,7 @@ export class ConnectionsPageComponent {
   isValidating = false;
 
   editVisible = false;
+  editError: string | null = null;
 
   deleteDialogVisible = false;
   disableDialogVisible = false;
@@ -82,6 +83,11 @@ export class ConnectionsPageComponent {
   openActionMenuId: number | null = null;
 
   editingConnection: AccountConnection | null = null;
+
+  // Анти-autofill: браузеры/менеджеры паролей могут подставлять сохранённые значения
+  // даже после form.reset(). Поэтому делаем name полей уникальным на каждое открытие модалки.
+  private wizardInputNameSeed = this.createInputNameSeed();
+  private editInputNameSeed = this.createInputNameSeed();
 
   deletingConnection: AccountConnection | null = null;
   disablingConnection: AccountConnection | null = null;
@@ -148,11 +154,14 @@ export class ConnectionsPageComponent {
   );
 
   constructor() {
-    this.applyCredentialValidators(this.wizardForm, Marketplace.Wildberries);
+    this.applyCredentialValidators(this.wizardForm, Marketplace.Wildberries, true);
+
     this.wizardForm.controls.marketplace.valueChanges
     .pipe(takeUntilDestroyed(this.destroyRef))
     .subscribe((value) => {
-      this.applyCredentialValidators(this.wizardForm, value);
+      this.wizardError = null;
+      this.applyCredentialValidators(this.wizardForm, value, true);
+      this.resetWizardInputsState();
       this.cdr.markForCheck();
     });
   }
@@ -192,6 +201,8 @@ export class ConnectionsPageComponent {
   }
 
   openWizard(): void {
+    this.wizardInputNameSeed = this.createInputNameSeed();
+
     this.wizardForm.reset({
       marketplace: Marketplace.Wildberries,
       token: "",
@@ -199,7 +210,9 @@ export class ConnectionsPageComponent {
       apiKey: ""
     });
 
-    this.applyCredentialValidators(this.wizardForm, Marketplace.Wildberries);
+    this.applyCredentialValidators(this.wizardForm, Marketplace.Wildberries, true);
+    this.resetWizardInputsState();
+
     this.wizardStep = "marketplace";
     this.wizardError = null;
     this.isValidating = false;
@@ -218,11 +231,14 @@ export class ConnectionsPageComponent {
   nextWizardStep(): void {
     if (this.wizardStep === "marketplace") {
       this.wizardStep = "credentials";
+      this.wizardError = null;
+      this.resetWizardInputsState();
       this.cdr.markForCheck();
       return;
     }
 
     if (this.wizardStep === "credentials") {
+      this.normalizeWizardCredentials();
       if (this.wizardForm.invalid) {
         this.wizardForm.markAllAsTouched();
         this.cdr.markForCheck();
@@ -278,6 +294,8 @@ export class ConnectionsPageComponent {
 
   openEditModal(connection: AccountConnection): void {
     this.editingConnection = connection;
+    this.editError = null;
+    this.editInputNameSeed = this.createInputNameSeed();
     this.resetEditFormHard();
     this.editVisible = true;
     this.cdr.markForCheck();
@@ -286,6 +304,7 @@ export class ConnectionsPageComponent {
   closeEditModal(): void {
     this.editVisible = false;
     this.editingConnection = null;
+    this.editError = null;
     this.resetEditFormHard();
     this.cdr.markForCheck();
   }
@@ -314,6 +333,44 @@ export class ConnectionsPageComponent {
     this.editForm.controls.apiKey.updateValueAndValidity();
   }
 
+  private resetWizardInputsState(): void {
+    this.wizardForm.controls.token.markAsPristine();
+    this.wizardForm.controls.token.markAsUntouched();
+
+    this.wizardForm.controls.clientId.markAsPristine();
+    this.wizardForm.controls.clientId.markAsUntouched();
+
+    this.wizardForm.controls.apiKey.markAsPristine();
+    this.wizardForm.controls.apiKey.markAsUntouched();
+  }
+
+  wizardInputName(controlName: "token" | "clientId" | "apiKey"): string {
+    return `wizard-${controlName}-${this.wizardInputNameSeed}`;
+  }
+
+  editInputName(controlName: "token" | "clientId" | "apiKey"): string {
+    const connectionId = this.editingConnection?.id ?? 0;
+    return `edit-${controlName}-${connectionId}-${this.editInputNameSeed}`;
+  }
+
+  private normalizeWizardCredentials(): void {
+    const token = this.wizardForm.controls.token.value.trim();
+    const clientId = this.wizardForm.controls.clientId.value.trim();
+    const apiKey = this.wizardForm.controls.apiKey.value.trim();
+
+    this.wizardForm.controls.token.setValue(token, {emitEvent: false});
+    this.wizardForm.controls.clientId.setValue(clientId, {emitEvent: false});
+    this.wizardForm.controls.apiKey.setValue(apiKey, {emitEvent: false});
+
+    this.wizardForm.controls.token.updateValueAndValidity({onlySelf: true, emitEvent: false});
+    this.wizardForm.controls.clientId.updateValueAndValidity({onlySelf: true, emitEvent: false});
+    this.wizardForm.controls.apiKey.updateValueAndValidity({onlySelf: true, emitEvent: false});
+  }
+
+  private createInputNameSeed(): string {
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
   submitEdit(): void {
     if (!this.editingConnection || this.saving) {
       return;
@@ -330,6 +387,7 @@ export class ConnectionsPageComponent {
     }
 
     this.saving = true;
+    this.editError = null;
     this.cdr.markForCheck();
 
     this.connectionApi
@@ -343,7 +401,9 @@ export class ConnectionsPageComponent {
       }),
       tap({
         error: (error: ApiError) => {
-          this.toastService.error(this.mapErrorMessage(error, "Не удалось обновить подключение."), {
+          const message = this.mapErrorMessage(error, "Не удалось обновить подключение.");
+          this.editError = message;
+          this.toastService.error(message, {
             details: error.details,
             correlationId: error.correlationId
           });
@@ -584,6 +644,7 @@ export class ConnectionsPageComponent {
       tokenControl.setValidators([Validators.required]);
       clientIdControl.clearValidators();
       apiKeyControl.clearValidators();
+
       if (reset) {
         clientIdControl.reset("");
         apiKeyControl.reset("");
@@ -592,6 +653,7 @@ export class ConnectionsPageComponent {
       tokenControl.clearValidators();
       clientIdControl.setValidators([Validators.required]);
       apiKeyControl.setValidators([Validators.required]);
+
       if (reset) {
         tokenControl.reset("");
       }

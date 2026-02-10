@@ -225,3 +225,12 @@
 .modal-content {
   width: 100%;
 }
+
+/* Errors: красным и заметно */
+.error-text {
+  margin: 10px 0 0;
+  color: var(--danger-ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}

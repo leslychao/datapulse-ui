@@ -206,11 +206,11 @@
                 hint="Где взять: WB seller → API access."
               >
                 <dp-input
-                  name="wizard-wb-token"
+                  [name]="wizardInputName('token')"
                   type="password"
                   formControlName="token"
                   [disabled]="isValidating"
-                  [attr.autocomplete]="'new-password'"
+                  [autocomplete]="'new-password'"
                 ></dp-input>
               </dp-form-field>
             </ng-container>
@@ -218,20 +218,20 @@
             <ng-template #ozonCredentials>
               <dp-form-field label="Client ID" [required]="true" hint="Ozon → API keys.">
                 <dp-input
-                  name="wizard-ozon-clientId"
+                  [name]="wizardInputName('clientId')"
                   formControlName="clientId"
                   [disabled]="isValidating"
-                  [attr.autocomplete]="'off'"
+                  [autocomplete]="'off'"
                 ></dp-input>
               </dp-form-field>
 
               <dp-form-field label="API Key" [required]="true">
                 <dp-input
-                  name="wizard-ozon-apiKey"
+                  [name]="wizardInputName('apiKey')"
                   type="password"
                   formControlName="apiKey"
                   [disabled]="isValidating"
-                  [attr.autocomplete]="'new-password'"
+                  [autocomplete]="'new-password'"
                 ></dp-input>
               </dp-form-field>
             </ng-template>
@@ -239,14 +239,6 @@
             <dp-loading-state *ngIf="isValidating" label="Checking credentials"></dp-loading-state>
 
             <p class="error-text" *ngIf="wizardError">{{ wizardError }}</p>
-
-            <dp-button
-              variant="secondary"
-              *ngIf="wizardError && !isValidating"
-              (click)="validateCredentials()"
-            >
-              Retry validation
-            </dp-button>
           </div>
         </form>
 
@@ -274,16 +266,18 @@
         <h3>Edit connection</h3>
         <p class="muted">Поля пустые — значит значение не меняем. Обновим только то, что заполнено.</p>
 
+        <p class="error-text" *ngIf="editError">{{ editError }}</p>
+
         <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="form">
           <ng-container *ngIf="editIsWildberries; else editOzon">
             <dp-form-field label="Token">
               <dp-input
-                [name]="'edit-wb-token-' + (editingConnection?.id ?? 0)"
+                [name]="editInputName('token')"
                 type="password"
                 formControlName="token"
                 placeholder="Leave empty to keep current"
                 (focus)="clearEditControl('token')"
-                [attr.autocomplete]="'new-password'"
+                [autocomplete]="'new-password'"
               ></dp-input>
             </dp-form-field>
           </ng-container>
@@ -291,28 +285,28 @@
           <ng-template #editOzon>
             <dp-form-field label="Client ID">
               <dp-input
-                [name]="'edit-ozon-clientId-' + (editingConnection?.id ?? 0)"
+                [name]="editInputName('clientId')"
                 formControlName="clientId"
                 placeholder="Leave empty to keep current"
                 (focus)="clearEditControl('clientId')"
-                [attr.autocomplete]="'off'"
+                [autocomplete]="'off'"
               ></dp-input>
             </dp-form-field>
 
             <dp-form-field label="API Key">
               <dp-input
-                [name]="'edit-ozon-apiKey-' + (editingConnection?.id ?? 0)"
+                [name]="editInputName('apiKey')"
                 type="password"
                 formControlName="apiKey"
                 placeholder="Leave empty to keep current"
                 (focus)="clearEditControl('apiKey')"
-                [attr.autocomplete]="'new-password'"
+                [autocomplete]="'new-password'"
               ></dp-input>
             </dp-form-field>
           </ng-template>
 
           <div class="modal-actions">
-            <dp-button variant="secondary" type="button" (click)="closeEditModal()">
+            <dp-button variant="secondary" type="button" (click)="closeEditModal()" [disabled]="saving">
               Cancel
             </dp-button>
             <dp-button variant="primary" type="submit" [loading]="saving">Save</dp-button>
