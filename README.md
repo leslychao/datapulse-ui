@@ -1,14 +1,5 @@
 # DataPulse UI
 
-⚠️ **PROPRIETARY SOFTWARE — NO USAGE RIGHTS**
-
-Datapulse is proprietary software owned exclusively by **Vitalii Kim**.
-This repository is provided for **read-only review** purposes only.
-Any use is prohibited, including running, compiling, deploying, modifying, integrating,
-or using it in any business or operational context.
-
-See [LICENSE](./LICENSE).
-
 DataPulse UI is an Angular 18 application for the DataPulse product. It provides authenticated routing, account selection, onboarding, and summary dashboards with a strict, predictable account context model.
 
 ## Requirements
